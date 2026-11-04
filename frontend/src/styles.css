@@ -1,0 +1,440 @@
+:root {
+  --app-page: #f4f6fb;
+  --app-card-shadow: 0 1px 2px rgba(15, 26, 46, 0.05), 0 4px 16px rgba(15, 26, 46, 0.04);
+  --app-navy: #0e1a2e;
+  --app-navy-raised: #1a2940;
+  --app-navy-text: #a9b6cb;
+  --status-review: #b4359c;
+  --status-scheduled: #2f5bea;
+  --status-sent: #0f9d6b;
+  --status-held: #ca9200;
+  --status-failed: #c4232c;
+}
+
+[data-mantine-color-scheme='dark'] {
+  --app-page: #0a101a;
+  --app-card-shadow: none;
+  --status-review: #cf63b8;
+  --status-scheduled: #6189f2;
+  --status-sent: #22a878;
+  --status-held: #bf8820;
+  --status-failed: #d63f4a;
+}
+
+body {
+  background: var(--app-page);
+  -webkit-font-smoothing: antialiased;
+}
+
+.mantine-Paper-root[data-with-border] {
+  box-shadow: var(--app-card-shadow);
+}
+
+/* Shell */
+.app-main {
+  background: var(--app-page);
+}
+
+.app-content {
+  padding-bottom: 32px;
+}
+
+.app-header {
+  background: var(--mantine-color-body);
+}
+
+.app-navbar {
+  background: var(--app-navy);
+  border-right: none !important;
+  color: var(--app-navy-text);
+}
+
+.app-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 14px 14px;
+}
+
+.app-brand-name {
+  color: #fff;
+  font-family: 'Manrope Variable', sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 1.2;
+}
+
+.app-brand-sub {
+  font-size: 11.5px;
+}
+
+.nav-section {
+  padding: 16px 14px 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #71819b;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  margin: 1px 8px;
+  border-radius: 8px;
+  color: var(--app-navy-text);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.nav-item:hover {
+  background: var(--app-navy-raised);
+  color: #fff;
+}
+
+.nav-item[data-active='true'] {
+  background: var(--mantine-color-brand-6);
+  color: #fff;
+}
+
+.nav-item:focus-visible,
+.nav-user-action:focus-visible {
+  outline: 2px solid #90a8fa;
+  outline-offset: 1px;
+}
+
+.nav-user {
+  margin: auto 8px 8px;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 10px;
+  background: var(--app-navy-raised);
+}
+
+.nav-user-email {
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nav-user-role {
+  font-size: 11.5px;
+  text-transform: capitalize;
+}
+
+.nav-user-action {
+  margin-left: auto;
+  flex: none;
+  display: flex;
+  padding: 6px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--app-navy-text);
+  cursor: pointer;
+}
+
+.nav-user-action:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+/* Tables */
+.mantine-Table-thead {
+  background: var(--mantine-color-gray-0);
+}
+
+[data-mantine-color-scheme='dark'] .mantine-Table-thead {
+  background: var(--mantine-color-dark-6);
+}
+
+.mantine-Table-th {
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--mantine-color-dimmed);
+  white-space: nowrap;
+}
+
+/* Page header */
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* Stat tiles */
+.stat-icon {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+}
+
+.stat-value {
+  font-family: 'Manrope Variable', sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+}
+
+.stat-strip > div {
+  padding: 14px 18px;
+  border-right: 1px solid var(--mantine-color-default-border);
+}
+
+.stat-strip > div:last-child {
+  border-right: 0;
+}
+
+/* Status bar: 2px surface gap between segments, rounded outer ends */
+.flow-bar {
+  display: flex;
+  gap: 2px;
+  height: 12px;
+}
+
+.flow-segment {
+  min-width: 6px;
+  border-radius: 2px;
+}
+
+.flow-segment:first-child {
+  border-radius: 6px 2px 2px 6px;
+}
+
+.flow-segment:last-child {
+  border-radius: 2px 6px 6px 2px;
+}
+
+.flow-segment:only-child {
+  border-radius: 6px;
+}
+
+.flow-dot,
+.status-dot {
+  flex: none;
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--status-sent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--status-sent) 22%, transparent);
+}
+
+/* Status pill: the dot and the words carry the state, so it is never colour alone */
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px 3px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--mantine-color-default-border);
+  font-size: 12.5px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .stat-strip > div {
+    border-right: 0;
+    border-bottom: 1px solid var(--mantine-color-default-border);
+  }
+
+  .stat-strip > div:last-child {
+    border-bottom: 0;
+  }
+}
+
+/* Test tools */
+.tool-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 24px;
+  padding: 14px 0;
+  border-top: 1px solid var(--mantine-color-default-border);
+}
+
+.tool-row > div {
+  flex: 1 1 320px;
+}
+
+/* Email preview */
+.preview-frame {
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--mantine-color-gray-1);
+}
+
+[data-mantine-color-scheme='dark'] .preview-frame {
+  background: var(--mantine-color-dark-8);
+}
+
+.preview-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--mantine-color-body);
+  border-bottom: 1px solid var(--mantine-color-default-border);
+}
+
+/* Login */
+.login {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+}
+
+.login-brand {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 40px;
+  padding: 48px;
+  background: var(--app-navy);
+  color: var(--app-navy-text);
+}
+
+.login-spiral {
+  position: absolute;
+  right: -170px;
+  top: -170px;
+  width: 520px;
+  height: 520px;
+  color: var(--mantine-color-brand-5);
+  opacity: 0.32;
+  pointer-events: none;
+}
+
+.login-headline {
+  max-width: 460px;
+  color: #fff;
+  font-family: 'Manrope Variable', sans-serif;
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.login-form {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+  background: var(--mantine-color-body);
+}
+
+@media (max-width: 860px) {
+  .login {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .login-brand {
+    padding: 28px 20px;
+  }
+
+  .login-headline {
+    font-size: 24px;
+  }
+
+  .login-points,
+  .login-spiral {
+    display: none;
+  }
+}
+
+/* Client review portal */
+.review-page {
+  min-height: 100vh;
+  background: var(--app-page);
+}
+
+.review-top {
+  background: var(--app-navy);
+  color: var(--app-navy-text);
+}
+
+.review-top-inner {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.review-layout {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 24px 20px 48px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 20px;
+  align-items: start;
+}
+
+.review-panel {
+  position: sticky;
+  top: 20px;
+}
+
+.review-deadline {
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--mantine-color-yellow-light);
+}
+
+@media (max-width: 900px) {
+  .review-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* On a phone the decision comes first, then the newsletter */
+  .review-panel {
+    position: static;
+    order: -1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-item {
+    transition: none;
+  }
+}
+.brand-spiral {
+  width: 70%;
+  height: 70%;
+}

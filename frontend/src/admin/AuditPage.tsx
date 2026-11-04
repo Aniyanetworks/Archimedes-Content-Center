@@ -1,5 +1,6 @@
+import { PageHeader } from '../components/PageHeader';
 import { useState } from 'react';
-import { Alert, Button, Group, Pagination, Paper, ScrollArea, Stack, Table, Text, TextInput, Title } from '@mantine/core';
+import { Alert, Button, Group, Pagination, Paper, ScrollArea, Stack, Table, Text, TextInput } from '@mantine/core';
 import { useDebouncedValue } from '@mantine/hooks';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../api';
@@ -25,15 +26,12 @@ export function AuditPage() {
 
   return (
     <Stack>
-      <Group justify="space-between">
-        <Title order={2}>Audit log</Title>
-        <Button variant="default" onClick={() => void exportCsv()}>Export CSV</Button>
-      </Group>
+      <PageHeader title="Audit log" description="A permanent record of sends, approvals and operator actions." actions={<><Button variant="default" onClick={() => void exportCsv()}>Export CSV</Button></>} />
       <TextInput placeholder="Filter by event, for example campaign.status" aria-label="Filter audit log" maw={360} value={search} onChange={(e) => { setSearch(e.currentTarget.value); setPage(0); }} />
       {audit.error && <Alert color="red">{(audit.error as Error).message}</Alert>}
       <Paper withBorder p="sm">
         <ScrollArea>
-          <Table striped miw={760}>
+          <Table miw={760}>
             <Table.Thead><Table.Tr><Table.Th>When</Table.Th><Table.Th>Who</Table.Th><Table.Th>Event</Table.Th><Table.Th>Details</Table.Th></Table.Tr></Table.Thead>
             <Table.Tbody>
               {(audit.data?.rows ?? []).map((entry) => (

@@ -1,3 +1,4 @@
+import { PageHeader } from '../components/PageHeader';
 import { useState } from 'react';
 import { Alert, Badge, Group, Paper, ScrollArea, Select, SimpleGrid, Stack, Table, Text, Title } from '@mantine/core';
 import { IconCheck } from '@tabler/icons-react';
@@ -34,7 +35,7 @@ export function TemplatesPage() {
 
   return (
     <Stack>
-      <Title order={2}>Master templates</Title>
+      <PageHeader title="Master templates" description="Five centrally controlled designs. Clients choose a design, never the HTML." />
       <Alert color="blue" title="Pending Archimedes signoff">
         Design names and the two Essentials designs are working choices. Compare the final Protection Report against the original Equinox .msg before approval.
       </Alert>

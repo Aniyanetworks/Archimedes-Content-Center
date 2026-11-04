@@ -62,11 +62,11 @@ export function CampaignTable({ rows, role, showTenant = true }: { rows: Campaig
   return (
     <>
       <ScrollArea>
-        <Table striped highlightOnHover verticalSpacing="xs" miw={880}>
+        <Table highlightOnHover miw={880}>
           <Table.Thead>
             <Table.Tr>
-              {showTenant && <Table.Th>Tenant</Table.Th>}
-              <Table.Th>Edition</Table.Th>
+              {showTenant && <Table.Th miw={210}>Tenant</Table.Th>}
+              <Table.Th miw={230}>Edition</Table.Th>
               <Table.Th>Status</Table.Th>
               <Table.Th>Mode</Table.Th>
               <Table.Th>Send time</Table.Th>
@@ -88,8 +88,8 @@ export function CampaignTable({ rows, role, showTenant = true }: { rows: Campaig
                     </Table.Td>
                   )}
                   <Table.Td>
-                    <Text size="sm" lineClamp={1} maw={280}>{row.edition_subject}</Text>
-                    <Text size="xs" c="dimmed">Week of {formatDate(row.publication_week)} · v{row.edition_version}</Text>
+                    <Text size="sm" lineClamp={1} maw={300}>{row.edition_subject}</Text>
+                    <Text size="xs" c="dimmed" style={{ whiteSpace: 'nowrap' }}>Week of {formatDate(row.publication_week)} · v{row.edition_version}</Text>
                   </Table.Td>
                   <Table.Td>
                     <StatusBadge status={row.status} />
@@ -99,7 +99,7 @@ export function CampaignTable({ rows, role, showTenant = true }: { rows: Campaig
                       </Tooltip>
                     )}
                   </Table.Td>
-                  <Table.Td><Text size="sm">{row.review_mode === 'review' ? 'Review' : 'Automatic'}</Text></Table.Td>
+                  <Table.Td><Text size="sm" c="dimmed">{row.review_mode === 'review' ? 'Review' : 'Automatic'}</Text></Table.Td>
                   <Table.Td><Text size="sm" style={{ whiteSpace: 'nowrap' }}>{formatDateTime(row.sent_at ?? row.scheduled_at, row.timezone)}</Text></Table.Td>
                   <Table.Td><Text size="sm" style={{ whiteSpace: 'nowrap' }}>{formatDateTime(row.review_deadline, row.timezone)}</Text></Table.Td>
                   <Table.Td>

@@ -1,3 +1,4 @@
+import { PageHeader } from '../components/PageHeader';
 import { useState } from 'react';
 import { Alert, Button, Group, NumberInput, Paper, ScrollArea, Select, SimpleGrid, Stack, Switch, Table, TagsInput, Text, TextInput, Title } from '@mantine/core';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -58,8 +59,8 @@ export function ControlsPage() {
   const canPause = reason.trim() && (scope === 'global' || value);
 
   return (
-    <Stack maw={960}>
-      <Title order={2}>Pause and safety</Title>
+    <Stack>
+      <PageHeader title="Pause and safety" description="Stop sending at any level, and control test mode and safety settings." />
       {pauses.error && <Alert color="red">{(pauses.error as Error).message}</Alert>}
       {admin && settings.data && <TestModePanel isTest={settings.data.environment === 'test'} />}
 

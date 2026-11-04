@@ -1,3 +1,4 @@
+import { PageHeader } from '../components/PageHeader';
 import { useEffect, useMemo, useState } from 'react';
 import {
   Alert, Anchor, Badge, Button, Checkbox, ColorInput, Divider, Group, List, NumberInput, Paper, ScrollArea, Select, SimpleGrid, Stack, Switch, Table, TagsInput, Text, Textarea, TextInput, ThemeIcon, Title,
@@ -23,15 +24,12 @@ export function TenantListPage() {
 
   return (
     <Stack>
-      <Group justify="space-between">
-        <Title order={2}>Tenants</Title>
-        {canOperate(session?.role) && <Button component={Link} to="/admin/tenants/new">Add tenant</Button>}
-      </Group>
+      <PageHeader title="Tenants" description="Every client subaccount, its plan and whether it can send." actions={<>{canOperate(session?.role) && <Button component={Link} to="/admin/tenants/new">Add tenant</Button>}</>} />
       <TextInput placeholder="Search by name" aria-label="Search tenants" value={search} onChange={(e) => setSearch(e.currentTarget.value)} maw={320} />
       {tenants.error && <Alert color="red">{(tenants.error as Error).message}</Alert>}
       <Paper withBorder p="sm">
         <ScrollArea>
-          <Table striped highlightOnHover miw={760}>
+          <Table highlightOnHover miw={760}>
             <Table.Thead>
               <Table.Tr>
                 <Table.Th>Name</Table.Th><Table.Th>Industry</Table.Th><Table.Th>Plan</Table.Th><Table.Th>Cadence</Table.Th><Table.Th>Mode</Table.Th><Table.Th>Sending</Table.Th>
@@ -267,7 +265,7 @@ export function TenantFormPage() {
 
   return (
     <form onSubmit={(event) => void save(event)}>
-      <Stack maw={900}>
+      <Stack>
         <Title order={2}>{id ? `Edit ${tenant.name ?? 'tenant'}` : 'Add tenant'}</Title>
 
         <Paper withBorder p="md">

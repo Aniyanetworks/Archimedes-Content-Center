@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { createAuthFetch } from './authFetch';
 import type {
   Api, AuditEntry, BrandProfile, CampaignFilters, CampaignRow, ChecklistItem, ContentItem, DashboardCards, Edition, EditionItem,
   Industry, MetricRow, NewsletterPrefs, PauseSwitch, Plan, ReviewView, Session, StaffRole, TemplateInfo, Tenant, TenantListRow,
@@ -7,7 +8,14 @@ import type {
 // Every write goes through an RPC or RLS-protected table. The database enforces access and
 // approvals; this file only displays and requests.
 export function createSupabaseApi(url: string, anonKey: string): Api {
-  const db = createClient(url, anonKey);
+  const db = createClient(url, anonKey, {
+    global: {
+      fetch: createAuthFetch(fetch.bind(globalThis), async (): Promise<string | null> => {
+        const { data } = await db.auth.refreshSession();
+        return data.session?.access_token ?? null;
+      }),
+    },
+  });
 
   async function rpc<T = unknown>(name: string, args: Record<string, unknown> = {}): Promise<T> {
     const { data, error } = await db.rpc(name, args);
@@ -57,7 +65,8 @@ export function createSupabaseApi(url: string, anonKey: string): Api {
     async getSession(): Promise<Session | null> {
       const { data } = await db.auth.getSession();
       if (!data.session) return null;
-      const { data: role } = await db.from('staff_roles').select('role').eq('user_id', data.session.user.id).maybeSingle();
+      const { data: role, error } = await db.from('staff_roles').select('role').eq('user_id', data.session.user.id).maybeSingle();
+      if (error) throw new Error(error.message);
       return { email: data.session.user.email ?? '', role: (role?.role as StaffRole) ?? null };
     },
     async signIn(email, password) {

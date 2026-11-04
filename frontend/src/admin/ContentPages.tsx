@@ -1,3 +1,4 @@
+import { PageHeader } from '../components/PageHeader';
 import { useEffect, useState } from 'react';
 import { Alert, Anchor, Badge, Button, Group, Paper, ScrollArea, Select, SimpleGrid, Stack, Table, TagsInput, Text, Textarea, TextInput, Title } from '@mantine/core';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -29,15 +30,12 @@ export function ContentListPage() {
 
   return (
     <Stack>
-      <Group justify="space-between">
-        <Title order={2}>Content library</Title>
-        {canEdit(session?.role) && <Button component={Link} to="/admin/content/new">New story</Button>}
-      </Group>
+      <PageHeader title="Content library" description="Reusable stories, from draft through fact and rights review." actions={<>{canEdit(session?.role) && <Button component={Link} to="/admin/content/new">New story</Button>}</>} />
       <Select placeholder="All statuses" aria-label="Filter by status" clearable maw={260} value={status} onChange={setStatus} data={Object.keys(CONTENT_COLORS).map((value) => ({ value, label: humanize(value) }))} />
       {content.error && <Alert color="red">{(content.error as Error).message}</Alert>}
       <Paper withBorder p="sm">
         <ScrollArea>
-          <Table striped highlightOnHover miw={760}>
+          <Table highlightOnHover miw={760}>
             <Table.Thead><Table.Tr><Table.Th>Headline</Table.Th><Table.Th>Industry</Table.Th><Table.Th>Regions</Table.Th><Table.Th>Version</Table.Th><Table.Th>Status</Table.Th><Table.Th>Updated</Table.Th></Table.Tr></Table.Thead>
             <Table.Tbody>
               {rows.map((item) => (
@@ -108,7 +106,7 @@ export function ContentEditorPage() {
   }, 'New draft version created');
 
   return (
-    <Stack maw={860}>
+    <Stack>
       <Group justify="space-between">
         <Title order={2}>{id ? `Story v${item.version ?? 1}` : 'New story'}</Title>
         <Badge size="lg" variant="light" color={CONTENT_COLORS[status]}>{humanize(status)}</Badge>

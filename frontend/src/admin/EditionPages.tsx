@@ -1,3 +1,4 @@
+import { PageHeader } from '../components/PageHeader';
 import { useEffect, useMemo, useState } from 'react';
 import { Alert, Anchor, Badge, Button, Checkbox, Group, Modal, MultiSelect, Paper, Radio, ScrollArea, Select, SimpleGrid, Stack, Table, Text, Textarea, TextInput, Title } from '@mantine/core';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -41,14 +42,11 @@ export function EditionListPage() {
 
   return (
     <Stack>
-      <Group justify="space-between">
-        <Title order={2}>Editions</Title>
-        {canEdit(session?.role) && <Button onClick={() => setCreating(true)}>New edition</Button>}
-      </Group>
+      <PageHeader title="Editions" description="Weekly industry editions. Approve one and every eligible tenant gets a branded version." actions={<>{canEdit(session?.role) && <Button onClick={() => setCreating(true)}>New edition</Button>}</>} />
       {editions.error && <Alert color="red">{(editions.error as Error).message}</Alert>}
       <Paper withBorder p="sm">
         <ScrollArea>
-          <Table striped highlightOnHover miw={680}>
+          <Table highlightOnHover miw={680}>
             <Table.Thead><Table.Tr><Table.Th>Week of</Table.Th><Table.Th>Industry</Table.Th><Table.Th>Subject</Table.Th><Table.Th>Version</Table.Th><Table.Th>Status</Table.Th></Table.Tr></Table.Thead>
             <Table.Tbody>
               {(editions.data ?? []).map((edition) => (
@@ -160,7 +158,7 @@ export function EditionDetailPage() {
   const division = edition.division;
 
   return (
-    <Stack maw={1000}>
+    <Stack>
       <Group justify="space-between">
         <div>
           <Title order={2}>{humanize(edition.industry)} edition</Title>
