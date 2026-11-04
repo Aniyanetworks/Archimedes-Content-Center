@@ -1,0 +1,107 @@
+{
+  "name": "Archimedes 10 Workflow error handler",
+  "nodes": [
+    {
+      "id": "ae3c00a2-c54d-4c1e-9a7c-f1f9a4a86a7a",
+      "name": "On workflow error",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "a769d4ec-b5f2-4c3f-a65c-c807c868018c",
+      "name": "Config",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        300
+      ],
+      "parameters": {
+        "mode": "manual",
+        "includeOtherFields": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "27fd7df7-ef73-477e-add8-a91723647fed",
+              "name": "supabaseUrl",
+              "value": "https://YOUR-PROJECT.supabase.co",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "e50e2da5-c0da-4922-b4fa-366d2ee717d1",
+      "name": "Record workflow error",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Config').first().json.supabaseUrl }}/rest/v1/rpc/record_workflow_error",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ p_workflow: $('On workflow error').first().json.workflow?.name ?? 'unknown', p_node: $('On workflow error').first().json.execution?.lastNodeExecuted ?? null, p_message: String($('On workflow error').first().json.execution?.error?.message ?? 'Unknown error').slice(0, 500), p_execution: String($('On workflow error').first().json.execution?.id ?? '') }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "credentials": {
+        "supabaseApi": {
+          "id": "nhNQM44yDbiWIFG5",
+          "name": "Archemedies"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    }
+  ],
+  "connections": {
+    "On workflow error": {
+      "main": [
+        [
+          {
+            "node": "Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config": {
+      "main": [
+        [
+          {
+            "node": "Record workflow error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "UTC",
+    "saveManualExecutions": true
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

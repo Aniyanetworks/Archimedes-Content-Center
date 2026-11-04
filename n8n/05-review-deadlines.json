@@ -1,0 +1,182 @@
+{
+  "name": "Archimedes 05 Hold missed review deadlines",
+  "nodes": [
+    {
+      "id": "05361d07-3e33-4dce-a210-26911e7a2b16",
+      "name": "Every 15 min",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 15
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "21f19499-1bc7-4614-9a2b-86d829b211f5",
+      "name": "Config",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        300
+      ],
+      "parameters": {
+        "mode": "manual",
+        "includeOtherFields": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "36116b56-bb55-49da-bde9-b3c5790a517d",
+              "name": "supabaseUrl",
+              "value": "https://YOUR-PROJECT.supabase.co",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "2e5354d4-232e-4534-9273-29c3c6da45e9",
+      "name": "Hold expired reviews",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Config').first().json.supabaseUrl }}/rest/v1/rpc/hold_expired_reviews",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({}) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "credentials": {
+        "supabaseApi": {
+          "id": "nhNQM44yDbiWIFG5",
+          "name": "Archemedies"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "id": "5c01f2c1-2e8d-4bfa-9737-bc475adb51af",
+      "name": "Build notice",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const esc = (v) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\"/g, '&quot;');\nreturn $input.all().map(({ json: c }) => ({ json: {\n  to: c.notify_email,\n  subject: 'Newsletter held: ' + c.newsletter_name,\n  html: '<p>The review deadline for <strong>' + esc(c.newsletter_name) + '</strong> passed without a decision, so this issue has been held and will not be sent.</p><p>Contact Archimedes support if you would still like it to go out.</p>',\n} }));"
+      }
+    },
+    {
+      "id": "e0d1bfaf-d08c-4fd6-a5bd-52dd16247947",
+      "name": "Notify reviewer",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        880,
+        300
+      ],
+      "parameters": {
+        "fromEmail": "newsletters@YOUR-DOMAIN.example",
+        "toEmail": "={{ $json.to }}",
+        "subject": "={{ $json.subject }}",
+        "emailFormat": "html",
+        "html": "={{ $json.html }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "credentials": {
+        "smtp": {
+          "id": "archimedes-smtp",
+          "name": "Archimedes SMTP"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
+    }
+  ],
+  "connections": {
+    "Every 15 min": {
+      "main": [
+        [
+          {
+            "node": "Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config": {
+      "main": [
+        [
+          {
+            "node": "Hold expired reviews",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hold expired reviews": {
+      "main": [
+        [
+          {
+            "node": "Build notice",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build notice": {
+      "main": [
+        [
+          {
+            "node": "Notify reviewer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "UTC",
+    "saveManualExecutions": true
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

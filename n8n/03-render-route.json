@@ -1,0 +1,341 @@
+{
+  "name": "Archimedes 03 Render and route",
+  "nodes": [
+    {
+      "id": "8d381e0c-04b8-4d86-99bd-f545c553fc6c",
+      "name": "Every 5 min",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 5
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "e6ab2b68-e6cc-4b5d-b2c8-a3cf74c6b63d",
+      "name": "Config",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        300
+      ],
+      "parameters": {
+        "mode": "manual",
+        "includeOtherFields": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7df6cd91-f25e-4b5f-b551-0d24905f835c",
+              "name": "supabaseUrl",
+              "value": "https://YOUR-PROJECT.supabase.co",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "e04cd9f1-4904-4d7a-807b-1caba631b925",
+      "name": "Claim campaigns to render",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Config').first().json.supabaseUrl }}/rest/v1/rpc/claim_campaigns_for_render",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ p_limit: 50 }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "credentials": {
+        "supabaseApi": {
+          "id": "nhNQM44yDbiWIFG5",
+          "name": "Archemedies"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "id": "38f841c1-e1a6-4fda-a7ec-56fbe89adfbb",
+      "name": "Loop",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        660,
+        300
+      ],
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      }
+    },
+    {
+      "id": "d631d240-b9da-4578-a1e4-c4b8f033285b",
+      "name": "Render HTML",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// Single source of truth for newsletter rendering. Pure JS with no imports, so scripts/build.mjs\n// can inline it into the n8n Code node and copy it into the frontend for previews.\n//\n// Template syntax: [[key]] is HTML-escaped, [[#key]]...[[/key]] repeats for arrays and shows for\n// truthy values, and keys ending in _html are inserted as already-safe markup built here.\n// GHL's own {{...}} merge tags are left untouched for GHL to resolve at send time.\n\nconst UNSUBSCRIBE_TAG = '{{email.unsubscribe_link}}';\n\nfunction escapeHtml(value) {\n  return String(value ?? '')\n    .replace(/&/g, '&amp;')\n    .replace(/</g, '&lt;')\n    .replace(/>/g, '&gt;')\n    .replace(/\"/g, '&quot;')\n    .replace(/'/g, '&#39;');\n}\n\nfunction safeUrl(value) {\n  const url = String(value ?? '').trim();\n  return /^(https:\\/\\/|http:\\/\\/|mailto:|tel:)/i.test(url) ? url : '';\n}\n\nfunction safeColor(value, fallback) {\n  return /^#[0-9a-fA-F]{6}$/.test(String(value ?? '')) ? value : fallback;\n}\n\nfunction bodyToHtml(body) {\n  return String(body ?? '')\n    .split(/\\n\\s*\\n/)\n    .map((part) => part.trim())\n    .filter(Boolean)\n    .map((part) => `<p style=\"margin:0 0 14px 0;\">${escapeHtml(part).replace(/\\n/g, '<br>')}</p>`)\n    .join('');\n}\n\nfunction fillTemplate(template, data) {\n  // One pass only: text coming from content is never scanned again, so it cannot expand slots.\n  return template.replace(/\\[\\[#([\\w.]+)\\]\\]([\\s\\S]*?)\\[\\[\\/\\1\\]\\]|\\[\\[([\\w.]+)\\]\\]/g, (_, section, inner, key) => {\n    if (section) {\n      const value = data[section];\n      if (Array.isArray(value)) return value.map((item) => fillTemplate(inner, { ...data, ...item })).join('');\n      return value ? fillTemplate(inner, data) : '';\n    }\n    const value = data[key];\n    return key.endsWith('_html') ? String(value ?? '') : escapeHtml(value);\n  });\n}\n\nfunction storyData(story, ctaUrl) {\n  return {\n    headline: story.headline,\n    teaser: story.teaser,\n    body_html: bodyToHtml(story.body),\n    image_url: safeUrl(story.image_url),\n    image_alt: story.image_alt || story.headline,\n    cta_label: story.cta_label || '',\n    cta_url: story.cta_label ? ctaUrl : '',\n  };\n}\n\nfunction toText(data, hero, secondary) {\n  const lines = [data.newsletter_name, data.edition_subject, '', hero.headline, '', hero.body || hero.teaser || ''];\n  for (const story of secondary) lines.push('', story.headline, story.teaser || story.body || '');\n  if (data.local_note) lines.push('', data.local_heading, data.local_note);\n  if (data.offer_headline) lines.push('', data.offer_headline, data.offer_body || '', data.offer_url || '');\n  lines.push('', data.legal_business_name, data.postal_address, data.phone, data.website, '', `Unsubscribe: ${UNSUBSCRIBE_TAG}`);\n  return lines.filter((line) => line !== undefined && line !== null).join('\\n');\n}\n\n// bundle: { template_html, labels, division, edition, tenant, brand, hero, secondary, offer }\nfunction renderNewsletter(bundle) {\n  const { brand = {}, edition = {}, tenant = {}, hero, secondary = [], offer } = bundle;\n  const errors = [];\n  if (!hero) errors.push('missing_hero_story');\n  for (const [field, label] of [\n    ['legal_business_name', 'missing_legal_business_name'],\n    ['postal_address', 'missing_postal_address'],\n    ['newsletter_name', 'missing_newsletter_name'],\n  ]) {\n    if (!String(brand[field] ?? '').trim()) errors.push(label);\n  }\n  const ctaUrl = safeUrl(brand.booking_url) || safeUrl(brand.website);\n  if (brand.booking_url && !safeUrl(brand.booking_url)) errors.push('invalid_booking_url');\n  if (brand.website && !safeUrl(brand.website)) errors.push('invalid_website_url');\n  if (brand.logo_url && !safeUrl(brand.logo_url)) errors.push('invalid_logo_url');\n  if (offer?.url && !safeUrl(offer.url)) errors.push('invalid_offer_url');\n  if (errors.length) return { html: null, text: null, subject: null, errors };\n\n  const labels = (bundle.labels && bundle.labels[bundle.division || tenant.division]) || {};\n  const heroData = storyData(hero, ctaUrl);\n  const social = Object.entries(brand.social_links || {})\n    .map(([name, url]) => ({ social_name: name, social_url: safeUrl(url) }))\n    .filter((link) => link.social_url);\n\n  const data = {\n    ...labels,\n    newsletter_name: brand.newsletter_name,\n    edition_subject: edition.subject || hero.headline,\n    preview_text: edition.preview_text || hero.teaser || '',\n    logo_url: safeUrl(brand.logo_url),\n    primary_color: safeColor(brand.primary_color, '#1f3a5f'),\n    secondary_color: safeColor(brand.secondary_color, '#c8553d'),\n    legal_business_name: brand.legal_business_name,\n    postal_address: brand.postal_address,\n    phone: brand.phone,\n    phone_url: brand.phone ? `tel:${String(brand.phone).replace(/[^\\d+]/g, '')}` : '',\n    website: safeUrl(brand.website),\n    social,\n    local_note: brand.local_note,\n    hero_headline: heroData.headline,\n    hero_teaser: heroData.teaser,\n    hero_body_html: heroData.body_html,\n    hero_image_url: heroData.image_url,\n    hero_image_alt: heroData.image_alt,\n    hero_cta_label: heroData.cta_label,\n    hero_cta_url: heroData.cta_url,\n    secondary: secondary.map((story) => storyData(story, ctaUrl)),\n    offer_headline: offer?.headline,\n    offer_body: offer?.body,\n    offer_cta_label: offer?.cta_label,\n    offer_url: safeUrl(offer?.url) || ctaUrl,\n    unsubscribe_html: `<a data-slot=\"unsubscribe\" href=\"${UNSUBSCRIBE_TAG}\" style=\"color:inherit;\">Unsubscribe</a>`,\n  };\n\n  const html = fillTemplate(bundle.template_html, data);\n  if (/\\[\\[[#/\\w.]+\\]\\]/.test(html)) errors.push('unresolved_template_slot');\n  if (!html.includes('data-slot=\"unsubscribe\"')) errors.push('missing_unsubscribe');\n  if (!html.includes('data-slot=\"legal\"')) errors.push('missing_legal_footer');\n  if (errors.length) return { html: null, text: null, subject: null, errors };\n\n  return { html, text: toText(data, hero, secondary), subject: data.edition_subject, errors: [] };\n}\n\nconst bundle = $('Loop').first().json;\nconst result = renderNewsletter(bundle);\nreturn [{ json: { campaign_id: bundle.campaign_id, html: result.html, text: result.text, subject: result.subject, errors: result.errors } }];"
+      }
+    },
+    {
+      "id": "5403c8ae-7060-4507-b19b-c9ac7201b8e6",
+      "name": "Rendered cleanly?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1100,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "0f1e9c87-13c0-4b3f-9385-d589f596737b",
+              "leftValue": "={{ $json.errors.length === 0 }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "16285b2b-21f0-4c09-944d-64e7251be0c8",
+      "name": "Store render and route",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1320,
+        200
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Config').first().json.supabaseUrl }}/rest/v1/rpc/record_render",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ p_id: $('Render HTML').first().json.campaign_id, p_html: $('Render HTML').first().json.html, p_text: $('Render HTML').first().json.text, p_subject: $('Render HTML').first().json.subject }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "credentials": {
+        "supabaseApi": {
+          "id": "nhNQM44yDbiWIFG5",
+          "name": "Archemedies"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "id": "79edb7cc-30f3-42a8-9502-bf60220b6a1c",
+      "name": "Hold render failure",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1320,
+        400
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Config').first().json.supabaseUrl }}/rest/v1/rpc/record_render_failure",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ p_id: $('Render HTML').first().json.campaign_id, p_errors: $('Render HTML').first().json.errors }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "credentials": {
+        "supabaseApi": {
+          "id": "nhNQM44yDbiWIFG5",
+          "name": "Archemedies"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "id": "376d75e4-0858-44a5-b6d4-d21913ce9595",
+      "name": "Pace",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1540,
+        300
+      ],
+      "parameters": {
+        "amount": 1,
+        "unit": "seconds"
+      },
+      "webhookId": "f95258ef-160f-4250-bcd0-2f43e970e438"
+    }
+  ],
+  "connections": {
+    "Every 5 min": {
+      "main": [
+        [
+          {
+            "node": "Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config": {
+      "main": [
+        [
+          {
+            "node": "Claim campaigns to render",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claim campaigns to render": {
+      "main": [
+        [
+          {
+            "node": "Loop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Render HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Render HTML": {
+      "main": [
+        [
+          {
+            "node": "Rendered cleanly?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rendered cleanly?": {
+      "main": [
+        [
+          {
+            "node": "Store render and route",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Hold render failure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store render and route": {
+      "main": [
+        [
+          {
+            "node": "Pace",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hold render failure": {
+      "main": [
+        [
+          {
+            "node": "Pace",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pace": {
+      "main": [
+        [
+          {
+            "node": "Loop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "UTC",
+    "saveManualExecutions": true
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

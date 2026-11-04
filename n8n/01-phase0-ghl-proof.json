@@ -1,0 +1,383 @@
+{
+  "name": "Archimedes 01 Phase 0 - GHL proof of concept",
+  "nodes": [
+    {
+      "id": "e35f09d2-2051-46bf-8790-916121c2d2e4",
+      "name": "Run manually",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "373f47d8-a457-4ad1-b723-0abef49dceee",
+      "name": "Config",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        300
+      ],
+      "parameters": {
+        "mode": "manual",
+        "includeOtherFields": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "19716a05-f6ae-42ce-9198-e260782b92c2",
+              "name": "testLocationId",
+              "value": "SET_TEST_SUBACCOUNT_LOCATION_ID",
+              "type": "string"
+            },
+            {
+              "id": "5d95758c-1cba-4451-9783-e89ab85e78e0",
+              "name": "testUserId",
+              "value": "SET_TEST_SUBACCOUNT_USER_ID",
+              "type": "string"
+            },
+            {
+              "id": "9e5358a0-a546-4d2e-9234-64f079ebd239",
+              "name": "testContactId",
+              "value": "SET_INTERNAL_TEST_CONTACT_ID",
+              "type": "string"
+            },
+            {
+              "id": "0970e060-fffa-4369-9ddd-bec892782786",
+              "name": "fromName",
+              "value": "Archimedes Test",
+              "type": "string"
+            },
+            {
+              "id": "ad8a8229-b703-4171-8a2c-5e0fd87414ea",
+              "name": "fromEmail",
+              "value": "SET_VERIFIED_SENDER@YOUR-DOMAIN.example",
+              "type": "string"
+            },
+            {
+              "id": "d2e9cf29-f704-4cbe-83dd-c492af1dc5f2",
+              "name": "timeZone",
+              "value": "America/Denver",
+              "type": "string"
+            },
+            {
+              "id": "d578cdfe-bfbb-4e3b-96d1-3e2700aee5d6",
+              "name": "sendAt",
+              "value": "2030-01-01 09:00 AM",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "0f351dba-86ab-4436-a225-7f2cbde484a5",
+      "name": "Render test email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "return [{ json: { html: '<html><body><h1>Archimedes Phase 0 test</h1><p>Internal test only.</p><p><a href=\"{{email.unsubscribe_link}}\">Unsubscribe</a></p></body></html>', name: 'Archimedes Phase 0 test ' + Date.now() } }];"
+      }
+    },
+    {
+      "id": "7db9c1ff-c13b-4cfd-9777-c151936a4db8",
+      "name": "Create draft",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        300
+      ],
+      "parameters": {
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Version",
+              "value": "v3"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 30000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        },
+        "method": "POST",
+        "url": "=https://services.leadconnectorhq.com/emails/locations/{{ $('Config').first().json.testLocationId }}/campaigns/emails",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ name: $('Render test email').first().json.name, editorType: 'html', editorContent: $('Render test email').first().json.html, timeZone: $('Config').first().json.timeZone, userId: $('Config').first().json.testUserId }) }}"
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "ghl-phase0-token",
+          "name": "GHL Phase 0 Test Token"
+        }
+      }
+    },
+    {
+      "id": "9494e6d4-c8ea-473e-9f7a-d7c1d3ce2ab8",
+      "name": "Schedule to test contact",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        300
+      ],
+      "parameters": {
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Version",
+              "value": "v3"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 30000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        },
+        "method": "POST",
+        "url": "=https://services.leadconnectorhq.com/emails/locations/{{ $('Config').first().json.testLocationId }}/campaigns/emails/{{ $('Create draft').first().json.body.id }}/schedule",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ scheduleType: 'scheduled', timeZone: $('Config').first().json.timeZone, userId: $('Config').first().json.testUserId, emailMeta: { subject: 'Archimedes Phase 0 test', fromName: $('Config').first().json.fromName, fromEmail: $('Config').first().json.fromEmail }, recipients: { type: 'contact', contactIds: [$('Config').first().json.testContactId] }, scheduleConfig: { sendAt: $('Config').first().json.sendAt } }) }}"
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "ghl-phase0-token",
+          "name": "GHL Phase 0 Test Token"
+        }
+      }
+    },
+    {
+      "id": "7371fd71-1528-4e93-88b2-e81ec6f3314b",
+      "name": "Read back status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1100,
+        300
+      ],
+      "parameters": {
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Version",
+              "value": "v3"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 30000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        },
+        "method": "GET",
+        "url": "=https://services.leadconnectorhq.com/emails/locations/{{ $('Config').first().json.testLocationId }}/campaigns/emails/{{ $('Create draft').first().json.body.id }}"
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "ghl-phase0-token",
+          "name": "GHL Phase 0 Test Token"
+        }
+      }
+    },
+    {
+      "id": "a888c071-c6b9-4a1d-b800-c5af56a39e66",
+      "name": "Try delete (cancel test)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1320,
+        300
+      ],
+      "parameters": {
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Version",
+              "value": "v3"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 30000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        },
+        "method": "DELETE",
+        "url": "=https://services.leadconnectorhq.com/emails/locations/{{ $('Config').first().json.testLocationId }}/campaigns/emails/{{ $('Create draft').first().json.body.id }}"
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "ghl-phase0-token",
+          "name": "GHL Phase 0 Test Token"
+        }
+      }
+    },
+    {
+      "id": "8e17e351-a3a8-4f5f-870f-990f083bff98",
+      "name": "Feasibility result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1540,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const step = (name) => { const r = $(name).first().json; return { status: r.statusCode, body: r.body }; };\nreturn [{ json: { create: step('Create draft'), schedule: step('Schedule to test contact'), readBack: step('Read back status'), deleteScheduled: step('Try delete (cancel test)') } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Run manually": {
+      "main": [
+        [
+          {
+            "node": "Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config": {
+      "main": [
+        [
+          {
+            "node": "Render test email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Render test email": {
+      "main": [
+        [
+          {
+            "node": "Create draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create draft": {
+      "main": [
+        [
+          {
+            "node": "Schedule to test contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule to test contact": {
+      "main": [
+        [
+          {
+            "node": "Read back status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read back status": {
+      "main": [
+        [
+          {
+            "node": "Try delete (cancel test)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Try delete (cancel test)": {
+      "main": [
+        [
+          {
+            "node": "Feasibility result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "UTC",
+    "saveManualExecutions": true
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}
