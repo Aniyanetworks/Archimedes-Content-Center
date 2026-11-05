@@ -1,0 +1,22 @@
+# The app lives in frontend/. These settings override anything set in the Netlify UI.
+[build]
+  base = "frontend"
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+  # Both values are public by design: they ship in the site code, and RLS protects the data.
+  SECRETS_SCAN_OMIT_KEYS = "VITE_SUPABASE_URL,VITE_SUPABASE_ANON_KEY"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[[headers]]
+  for = "/review/*"
+  [headers.values]
+    Referrer-Policy = "no-referrer"
+    X-Robots-Tag = "noindex"
+    Cache-Control = "no-store"
