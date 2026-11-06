@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ActionIcon, Alert, Anchor, Badge, Button, Checkbox, Group, Modal, MultiSelect, Paper, Radio, ScrollArea, Select, SimpleGrid, Stack, Table, Text, Textarea, TextInput, Title } from '@mantine/core';
 import { IconTrash } from '@tabler/icons-react';
 import { FilterBar } from '../components/FilterBar';
+import { hintLabel } from '../components/HintLabel';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api';
@@ -179,13 +180,13 @@ export function EditionListPage() {
       <Modal opened={creating} onClose={() => setCreating(false)} title="New edition">
         <Stack>
           <Select label="Industry" placeholder="Choose an industry" allowDeselect={false} value={industry} onChange={changeIndustry} data={(industries.data ?? []).map((i) => ({ value: i.key, label: i.label }))} />
-          <TextInput label="Publication week" description="The Monday of the week" type="date" error={!weekIsMonday ? 'Pick a Monday' : existing ? `${industryLabel} already has an edition this week` : undefined} value={week} onChange={(e) => setWeek(e.currentTarget.value)} />
+          <TextInput label={hintLabel('Publication week', 'The Monday of the week this newsletter is for. Each sub-account sends it on its own chosen day that week.')} type="date" error={!weekIsMonday ? 'Pick a Monday' : existing ? `${industryLabel} already has an edition this week` : undefined} value={week} onChange={(e) => setWeek(e.currentTarget.value)} />
           {existing && (
             <Alert color="blue" p="sm">
               Each industry has one edition per week. <Anchor component="button" type="button" size="sm" onClick={() => navigate(`/admin/editions/${existing.id}`)}>Open “{existing.subject || 'Untitled'}”</Anchor> or pick another week.
             </Alert>
           )}
-          <TextInput label="Subject line" placeholder="What to check on your roof after a storm" value={subject} onChange={(e) => setSubject(e.currentTarget.value)} />
+          <TextInput label={hintLabel('Subject line', 'The subject people see in their inbox. Keep it short and specific.')} placeholder="What to check on your roof after a storm" value={subject} onChange={(e) => setSubject(e.currentTarget.value)} />
           <Button disabled={!weekIsMonday || !!existing || !subject.trim()} onClick={() => void create()}>Create edition</Button>
         </Stack>
       </Modal>
@@ -295,23 +296,22 @@ export function EditionDetailPage() {
       <Paper withBorder p="md">
         <Title order={4} mb="sm">Details</Title>
         <SimpleGrid cols={{ base: 1, sm: 2 }}>
-          <TextInput label="Subject line" placeholder="What to check on your roof after a storm" disabled={!editor} value={form.subject ?? ''} onChange={(e) => { const subject = e.currentTarget.value; setForm((c) => ({ ...c, subject })); }} />
-          <TextInput label="Preview text" placeholder="A ten-minute walk-around that can save you a costly repair" description="The line inboxes show after the subject" disabled={!editor} value={form.preview_text ?? ''} onChange={(e) => { const preview_text = e.currentTarget.value; setForm((c) => ({ ...c, preview_text })); }} />
-          <MultiSelect label="Eligible plans" placeholder="All plans in this division" description="Leave empty for every plan in this division" disabled={!editor} value={form.eligible_plans ?? []} data={(plans.data ?? []).filter((p) => p.division === division).map((p) => ({ value: p.plan_key, label: p.label }))} onChange={(eligible_plans) => setForm((c) => ({ ...c, eligible_plans }))} />
+          <TextInput label={hintLabel('Subject line', 'The subject people see in their inbox. Keep it short and specific.')} placeholder="What to check on your roof after a storm" disabled={!editor} value={form.subject ?? ''} onChange={(e) => { const subject = e.currentTarget.value; setForm((c) => ({ ...c, subject })); }} />
+          <TextInput label={hintLabel('Preview text', 'The short line most inboxes show after the subject. Use it to add a reason to open the email.')} placeholder="A ten-minute walk-around that can save you a costly repair" disabled={!editor} value={form.preview_text ?? ''} onChange={(e) => { const preview_text = e.currentTarget.value; setForm((c) => ({ ...c, preview_text })); }} />
+          <MultiSelect label={hintLabel('Eligible plans', 'Which plans get this edition. Leave it empty to send it to every plan in this division.')} placeholder="All plans in this division" disabled={!editor} value={form.eligible_plans ?? []} data={(plans.data ?? []).filter((p) => p.division === division).map((p) => ({ value: p.plan_key, label: p.label }))} onChange={(eligible_plans) => setForm((c) => ({ ...c, eligible_plans }))} />
           <SimpleGrid cols={2}>
-            <TextInput label="Embargo until" description="Not sent before this date" type="date" disabled={!editor} value={form.embargo_at?.slice(0, 10) ?? ''} onChange={(e) => { const embargo_at = e.currentTarget.value; setForm((c) => ({ ...c, embargo_at })); }} />
-            <TextInput label="Expires on" description="Not sent after this date" type="date" disabled={!editor} value={form.expires_at?.slice(0, 10) ?? ''} onChange={(e) => { const expires_at = e.currentTarget.value; setForm((c) => ({ ...c, expires_at })); }} />
+            <TextInput label={hintLabel('Embargo until', 'Optional. Nothing is sent before this date, even if the send time comes earlier.')} type="date" disabled={!editor} value={form.embargo_at?.slice(0, 10) ?? ''} onChange={(e) => { const embargo_at = e.currentTarget.value; setForm((c) => ({ ...c, embargo_at })); }} />
+            <TextInput label={hintLabel('Expires on', 'Optional. Nothing is sent after this date, for example when the content would be out of date.')} type="date" disabled={!editor} value={form.expires_at?.slice(0, 10) ?? ''} onChange={(e) => { const expires_at = e.currentTarget.value; setForm((c) => ({ ...c, expires_at })); }} />
           </SimpleGrid>
         </SimpleGrid>
       </Paper>
 
       <Paper withBorder p="md">
-        <Title order={4}>Stories</Title>
-        <Text size="sm" c="dimmed" mb="sm">Approved {humanize(edition.industry).toLowerCase()} stories only. Region-specific stories are dropped for tenants outside those regions at render time.</Text>
+        <Title order={4} mb="sm">{hintLabel('Stories', `Only approved ${humanize(edition.industry).toLowerCase()} stories are listed. A story limited to certain regions is left out for sub-accounts outside those regions.`)}</Title>
         {candidates.length === 0 ? <Text c="dimmed" size="sm">No approved stories for this industry yet.</Text> : (
           <ScrollArea>
             <Table miw={620}>
-              <Table.Thead><Table.Tr><Table.Th>Hero</Table.Th><Table.Th>Secondary</Table.Th><Table.Th>Story</Table.Th><Table.Th>Regions</Table.Th></Table.Tr></Table.Thead>
+              <Table.Thead><Table.Tr><Table.Th>{hintLabel('Main', 'The main story at the top of the newsletter. Pick exactly one.')}</Table.Th><Table.Th>{hintLabel('Extra', 'Shorter stories under the main one. Pick as many as you like.')}</Table.Th><Table.Th>Story</Table.Th><Table.Th>{hintLabel('Regions', 'All means the story suits every area. Otherwise only sub-accounts serving those regions get it.')}</Table.Th></Table.Tr></Table.Thead>
               <Table.Tbody>
                 {candidates.map((story) => (
                   <Table.Tr key={story.id}>
@@ -328,8 +328,7 @@ export function EditionDetailPage() {
       </Paper>
 
       <Paper withBorder p="md">
-        <Title order={4} mb="sm">Preview with example branding</Title>
-        <Text size="xs" c="dimmed" mb="xs">Uses placeholder branding to check the content. Each tenant's real version is rendered after approval.</Text>
+        <Title order={4} mb="sm">{hintLabel('Preview with example branding', "Shows the content with an example business's branding. Each sub-account's own version is made after approval.")}</Title>
         <EmailPreview html={previewHtml} height={520} />
       </Paper>
 

@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Alert, Badge, Button, Group, Modal, Paper, ScrollArea, Select, SimpleGrid, Stack, Table, Text, TextInput, Title } from '@mantine/core';
+import { Alert, Badge, Button, Group, Modal, Paper, ScrollArea, Select, Stack, Table, Text, TextInput } from '@mantine/core';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../api';
 import type { StaffMember, StaffRole } from '../api/types';
 import { PageHeader } from '../components/PageHeader';
 import { formatDateTime, showError, showSuccess } from '../lib/util';
+import { hintLabel } from '../components/HintLabel';
 import { useAuth } from './AuthContext';
 
 const ROLES: Array<{ value: StaffRole; label: string; description: string }> = [
@@ -13,6 +14,13 @@ const ROLES: Array<{ value: StaffRole; label: string; description: string }> = [
   { value: 'operator', label: 'Operator', description: 'Adds sub-accounts, looks after sending and pauses' },
 ];
 const ROLE_OPTIONS = ROLES.map((r) => ({ value: r.value, label: r.label }));
+// What each role can do, shown in the hint next to every Role label.
+const ROLE_HINT = (
+  <Stack gap={6}>
+    {ROLES.map((r) => <div key={r.value}><b>{r.label}:</b> {r.description}</div>)}
+    <div>There must always be at least one admin, and you cannot remove your own access.</div>
+  </Stack>
+);
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function StaffPage() {
@@ -114,7 +122,7 @@ export function StaffPage() {
         <ScrollArea>
           <Table miw={680} verticalSpacing="sm">
             <Table.Thead>
-              <Table.Tr><Table.Th>Email</Table.Th><Table.Th w={180}>Role</Table.Th><Table.Th>Last signed in</Table.Th><Table.Th aria-label="Actions" /></Table.Tr>
+              <Table.Tr><Table.Th>Email</Table.Th><Table.Th w={180}>{hintLabel("Role", ROLE_HINT)}</Table.Th><Table.Th>Last signed in</Table.Th><Table.Th aria-label="Actions" /></Table.Tr>
             </Table.Thead>
             <Table.Tbody>
               {staff.data?.map((member) => (
@@ -157,26 +165,12 @@ export function StaffPage() {
         </ScrollArea>
       </Paper>
 
-      <Paper withBorder p="md">
-        <Title order={4} mb="sm">What each role can do</Title>
-        <SimpleGrid cols={{ base: 1, sm: 3 }}>
-          {ROLES.map((r) => (
-            <div key={r.value}>
-              <Text fw={600} size="sm">{r.label}</Text>
-              <Text size="sm" c="dimmed">{r.description}</Text>
-            </div>
-          ))}
-        </SimpleGrid>
-        <Text size="xs" c="dimmed" mt="md">There must always be at least one admin. You cannot remove your own access.</Text>
-      </Paper>
-
       <Modal opened={inviting} onClose={() => setInviting(false)} title="Invite staff member">
         <form onSubmit={(event) => { event.preventDefault(); if (emailValid && !emailTaken) void invite(); }}>
           <Stack>
             <TextInput
-              label="Email"
+              label={hintLabel('Email', 'They get an email with a link to choose their own password.')}
               placeholder="name@yourcompany.com"
-              description="They get an email with a link to choose their password"
               type="email"
               required
               data-autofocus
@@ -185,11 +179,10 @@ export function StaffPage() {
               onChange={(e) => setEmail(e.currentTarget.value)}
             />
             <Select
-              label="Role"
+              label={hintLabel('Role', ROLE_HINT)}
               allowDeselect={false}
               data={ROLE_OPTIONS}
               value={role}
-              description={ROLES.find((r) => r.value === role)?.description}
               onChange={(next) => next && setRole(next as StaffRole)}
             />
             <Group justify="flex-end">

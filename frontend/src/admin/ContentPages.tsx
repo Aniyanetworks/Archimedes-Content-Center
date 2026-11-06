@@ -5,6 +5,7 @@ import { IconTrash } from '@tabler/icons-react';
 import { FilterBar } from '../components/FilterBar';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ConfirmDelete } from '../components/ConfirmDelete';
+import { hintLabel } from '../components/HintLabel';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api';
 import type { ContentItem, ContentStatus, Division } from '../api/types';
@@ -185,24 +186,24 @@ export function ContentEditorPage() {
         <Stack>
           <SimpleGrid cols={{ base: 1, sm: 3 }}>
             <Select
-              label="Division" allowDeselect={false} readOnly={!editable} value={item.division}
+              label={hintLabel("Division", "Home ServiceGenius or Hospitality.")} allowDeselect={false} readOnly={!editable} value={item.division}
               data={[{ value: 'hsg', label: 'Home ServiceGenius' }, { value: 'hospitality', label: 'Hospitality' }]}
               onChange={(value) => setItem((c) => ({ ...c, division: value as Division, industry: industries.data?.find((i) => i.division === value)?.key }))}
             />
-            <Select label="Industry" placeholder="Choose an industry" allowDeselect={false} readOnly={!editable} value={item.industry ?? null} data={(industries.data ?? []).filter((i) => i.division === item.division).map((i) => ({ value: i.key, label: i.label }))} onChange={(value) => setItem((c) => ({ ...c, industry: value ?? undefined }))} />
-            <TextInput label="Season" placeholder="e.g. Fall" readOnly={!editable} value={item.season ?? ''} onChange={field('season')} />
+            <Select label={hintLabel("Industry", "Which industry's newsletters can use this story.")} placeholder="Choose an industry" allowDeselect={false} readOnly={!editable} value={item.industry ?? null} data={(industries.data ?? []).filter((i) => i.division === item.division).map((i) => ({ value: i.key, label: i.label }))} onChange={(value) => setItem((c) => ({ ...c, industry: value ?? undefined }))} />
+            <TextInput label={hintLabel("Season", "Optional. When the story fits best, for example Fall.")} placeholder="e.g. Fall" readOnly={!editable} value={item.season ?? ''} onChange={field('season')} />
           </SimpleGrid>
-          <TagsInput label="Regions" placeholder="Type a region code, then press Enter (e.g. US-CO)" description="Leave empty for all markets. A story with regions only reaches tenants serving one of them." readOnly={!editable} value={item.regions ?? []} onChange={(regions) => setItem((c) => ({ ...c, regions }))} />
-          <TextInput label="Headline" placeholder="What to check on your roof after a storm" required readOnly={!editable} value={item.headline ?? ''} onChange={field('headline')} />
-          <Textarea label="Teaser" placeholder="One or two sentences that make readers want to open the story" readOnly={!editable} autosize minRows={2} value={item.teaser ?? ''} onChange={field('teaser')} />
-          <Textarea label="Body" placeholder="Write the article here. Leave a blank line between paragraphs." description="Separate paragraphs with a blank line. Avoid unverified statistics, guarantees, weather claims and promotional terms." readOnly={!editable} autosize minRows={8} value={item.body ?? ''} onChange={field('body')} />
+          <TagsInput label={hintLabel("Regions", "Leave empty for every area. Add region codes such as US-CO to send it only to sub-accounts serving those regions. Press Enter after each one.")} placeholder="Type a region code, then press Enter (e.g. US-CO)" readOnly={!editable} value={item.regions ?? []} onChange={(regions) => setItem((c) => ({ ...c, regions }))} />
+          <TextInput label={hintLabel("Headline", "The story's title.")} placeholder="What to check on your roof after a storm" required readOnly={!editable} value={item.headline ?? ''} onChange={field('headline')} />
+          <Textarea label={hintLabel("Teaser", "One or two sentences that make readers want to read the story.")} placeholder="One or two sentences that make readers want to open the story" readOnly={!editable} autosize minRows={2} value={item.teaser ?? ''} onChange={field('teaser')} />
+          <Textarea label={hintLabel("Body", "The full story. Leave a blank line between paragraphs. Avoid unchecked statistics, guarantees, weather claims and sales language.")} placeholder="Write the article here. Leave a blank line between paragraphs." readOnly={!editable} autosize minRows={8} value={item.body ?? ''} onChange={field('body')} />
           <SimpleGrid cols={{ base: 1, sm: 2 }}>
-            <TextInput label="Image URL" placeholder="https://yourcompany.com/images/roof-inspection.jpg" type="url" readOnly={!editable} value={item.image_url ?? ''} onChange={field('image_url')} />
-            <TextInput label="Image alt text" placeholder="e.g. Roofer checking shingles after a storm" description="Describes the image for screen readers" readOnly={!editable} value={item.image_alt ?? ''} onChange={field('image_alt')} />
-            <TextInput label="Image license" placeholder="e.g. Own photo, or stock licence and ID" description="Required before the story can be approved" readOnly={!editable} value={item.image_license ?? ''} onChange={field('image_license')} />
-            <TextInput label="Expires on" description="The story stops appearing in editions after this date" type="date" readOnly={!editable} value={item.expires_at?.slice(0, 10) ?? ''} onChange={field('expires_at')} />
-            <TextInput label="CTA class" placeholder="e.g. assessment" description="For example assessment or booking" readOnly={!editable} value={item.cta_class ?? ''} onChange={field('cta_class')} />
-            <TextInput label="CTA label" placeholder="Schedule a roof assessment" description="The button text under the story" readOnly={!editable} value={item.cta_label ?? ''} onChange={field('cta_label')} />
+            <TextInput label={hintLabel("Image URL", "Optional. A public link to the story's picture.")} placeholder="https://yourcompany.com/images/roof-inspection.jpg" type="url" readOnly={!editable} value={item.image_url ?? ''} onChange={field('image_url')} />
+            <TextInput label={hintLabel("Image alt text", "Describes the picture for people who use screen readers.")} placeholder="e.g. Roofer checking shingles after a storm" readOnly={!editable} value={item.image_alt ?? ''} onChange={field('image_alt')} />
+            <TextInput label={hintLabel("Image license", "Where the picture comes from, for example your own photo or a stock licence and its ID. Needed before the story can be approved.")} placeholder="e.g. Own photo, or stock licence and ID" readOnly={!editable} value={item.image_license ?? ''} onChange={field('image_license')} />
+            <TextInput label={hintLabel("Expires on", "Optional. The story stops appearing in newsletters after this date.")} type="date" readOnly={!editable} value={item.expires_at?.slice(0, 10) ?? ''} onChange={field('expires_at')} />
+            <TextInput label={hintLabel("Button type", "The kind of button, for example assessment or booking.")} placeholder="e.g. assessment" readOnly={!editable} value={item.cta_class ?? ''} onChange={field('cta_class')} />
+            <TextInput label={hintLabel("Button text", "The text on the button under the story, for example Schedule a roof assessment.")} placeholder="Schedule a roof assessment" readOnly={!editable} value={item.cta_label ?? ''} onChange={field('cta_label')} />
           </SimpleGrid>
           {editable && <Group justify="flex-end"><Button loading={busy} disabled={!item.headline?.trim()} onClick={() => void save()}>Save draft</Button></Group>}
         </Stack>
@@ -211,7 +212,7 @@ export function ContentEditorPage() {
       {id && canEdit(session?.role) && (
         <Paper withBorder p="md">
           <Title order={4} mb="sm">Approval workflow</Title>
-          {NEXT_STEPS[status].length > 0 && <Textarea label="Notes" placeholder="What the next reviewer should know" autosize minRows={2} mb="sm" value={notes} onChange={(e) => setNotes(e.currentTarget.value)} />}
+          {NEXT_STEPS[status].length > 0 && <Textarea label={hintLabel("Notes", "A note for the next person who reviews this story.")} placeholder="What the next reviewer should know" autosize minRows={2} mb="sm" value={notes} onChange={(e) => setNotes(e.currentTarget.value)} />}
           <Group>
             {NEXT_STEPS[status].map((step) => (
               <Button key={step.to} variant={step.color === 'gray' ? 'default' : 'filled'} color={step.color} loading={busy} onClick={() => void run(() => api.advanceContent(id, step.to, notes || undefined), humanize(step.to))}>
