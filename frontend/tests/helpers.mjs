@@ -10,7 +10,7 @@ const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 const SUPABASE_STUBS = `
   create role anon nologin; create role authenticated nologin; create role service_role nologin bypassrls;
   create schema auth; create schema vault;
-  create table auth.users (id uuid primary key default gen_random_uuid(), email text);
+  create table auth.users (id uuid primary key default gen_random_uuid(), email text, last_sign_in_at timestamptz, email_confirmed_at timestamptz);
   create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.sub', true), '')::uuid $$;
   create table vault.secrets (name text primary key, decrypted_secret text);
   create view vault.decrypted_secrets as select * from vault.secrets;
@@ -32,6 +32,8 @@ export async function createDb() {
   await db.exec(read('supabase/migrations/0005_delivery_and_settings.sql'));
   await db.exec(read('supabase/migrations/0006_realistic_test_data.sql'));
   await db.exec(read('supabase/migrations/0007_reset_safeupdate.sql'));
+  await db.exec(read('supabase/migrations/0008_staff_management.sql'));
+  await db.exec(read('supabase/migrations/0009_template_examples.sql'));
   await db.exec(read('supabase/seed/reference.sql'));
   await db.exec(read('supabase/seed/templates.sql'));
   return db;

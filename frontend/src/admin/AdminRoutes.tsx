@@ -1,6 +1,6 @@
 import { ActionIcon, AppShell, Avatar, Badge, Burger, Button, Center, Group, Loader, Stack, Text, Title, Tooltip, useComputedColorScheme, useMantineColorScheme } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { IconAdjustments, IconFileText, IconHistory, IconLayoutDashboard, IconLogout, IconMoon, IconNews, IconSun, IconTemplate, IconUsers } from '@tabler/icons-react';
+import { IconAdjustments, IconFileText, IconHistory, IconLayoutDashboard, IconLogout, IconMoon, IconNews, IconSun, IconTemplate, IconUserShield, IconUsers } from '@tabler/icons-react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { api } from '../api';
@@ -12,10 +12,13 @@ import { ControlsPage } from './ControlsPage';
 import { DashboardPage } from './DashboardPage';
 import { EditionDetailPage, EditionListPage } from './EditionPages';
 import { LoginPage, ResetPasswordPage } from './LoginPage';
+import { StaffPage } from './StaffPage';
 import { TemplatesPage } from './TemplatesPage';
 import { TenantDetailPage, TenantFormPage, TenantListPage } from './TenantPages';
 
-const NAV = [
+interface NavItem { to: string; label: string; icon: typeof IconUsers; exact?: boolean; adminOnly?: boolean }
+
+const NAV: Array<{ section: string; items: NavItem[] }> = [
   {
     section: 'Operate',
     items: [
@@ -36,6 +39,7 @@ const NAV = [
     items: [
       { to: '/admin/controls', label: 'Pause and safety', icon: IconAdjustments },
       { to: '/admin/audit', label: 'Audit log', icon: IconHistory },
+      { to: '/admin/staff', label: 'Staff', icon: IconUserShield, adminOnly: true },
     ],
   },
 ];
@@ -86,7 +90,7 @@ function Shell() {
           {NAV.map((group) => (
             <div key={group.section}>
               <div className="nav-section">{group.section}</div>
-              {group.items.map((item) => {
+              {group.items.filter((item) => !item.adminOnly || session?.role === 'admin').map((item) => {
                 const active = item.exact ? location.pathname === item.to : location.pathname.startsWith(item.to);
                 return (
                   <Link key={item.to} to={item.to} className="nav-item" data-active={active} aria-current={active ? 'page' : undefined} onClick={close}>
@@ -127,6 +131,7 @@ function Shell() {
             <Route path="templates" element={<TemplatesPage />} />
             <Route path="controls" element={<ControlsPage />} />
             <Route path="audit" element={<AuditPage />} />
+            <Route path="staff" element={<StaffPage />} />
             <Route path="*" element={<Navigate to="/admin" replace />} />
           </Routes>
         </div>

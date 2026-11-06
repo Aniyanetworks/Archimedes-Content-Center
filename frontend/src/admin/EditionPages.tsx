@@ -7,7 +7,7 @@ import { api } from '../api';
 import type { Division, Edition, EditionItem, EditionStatus } from '../api/types';
 import { EmailPreview } from '../components/EmailPreview';
 import { renderNewsletter } from '../lib/render.js';
-import { SAMPLE_ISSUES } from '../lib/sampleContent';
+import { sampleIssue } from '../lib/sampleContent';
 import { canEdit, formatDate, humanize, showError, showSuccess } from '../lib/util';
 import { useAuth } from './AuthContext';
 
@@ -110,6 +110,7 @@ export function EditionDetailPage() {
   const content = useQuery({ queryKey: ['content'], queryFn: api.listContent });
   const plans = useQuery({ queryKey: ['plans'], queryFn: api.listPlans });
   const templates = useQuery({ queryKey: ['templates'], queryFn: api.listTemplates });
+  const settings = useQuery({ queryKey: ['settings'], queryFn: api.getSettings });
 
   const [form, setForm] = useState<Partial<Edition>>({});
   const [items, setItems] = useState<EditionItem[]>([]);
@@ -172,12 +173,12 @@ export function EditionDetailPage() {
       division: edition.division,
       edition: { ...edition, ...form },
       tenant: { division: edition.division },
-      brand: SAMPLE_ISSUES[edition.division].brand,
+      brand: sampleIssue(edition.division, settings.data).brand,
       hero: heroStory,
       secondary: secondary.map((sid) => candidates.find((c) => c.id === sid)).filter(Boolean),
     });
     return result.html as string | null;
-  }, [templates.data, candidates, hero, secondary, edition, form]);
+  }, [templates.data, candidates, hero, secondary, edition, form, settings.data]);
 
   if (detail.error) return <Alert color="red" title="Could not load this edition">{(detail.error as Error).message}</Alert>;
   if (!edition) return <Text c="dimmed">Loading…</Text>;

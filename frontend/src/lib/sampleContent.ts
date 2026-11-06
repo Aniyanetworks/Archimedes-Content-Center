@@ -1,16 +1,20 @@
 // Realistic example issues for previews. Businesses are fictional, so no real company's contact
 // details are invented. Content follows the editorial rules: practical advice first, no statistics,
 // guarantees, weather claims or promotional terms that would need verifying.
-import type { Division } from '../api/types';
+import type { Division, Settings } from '../api/types';
 
-interface Story {
+export interface SampleStory {
   headline: string;
   teaser: string;
   body?: string;
   cta_label?: string;
+  image_url?: string;
+  image_alt?: string;
 }
 
-interface SampleIssue {
+type Story = SampleStory;
+
+export interface SampleIssue {
   brand: Record<string, string | null>;
   subject: string;
   preview_text: string;
@@ -97,3 +101,19 @@ export const SAMPLE_ISSUES: Record<Division, SampleIssue> = {
     },
   },
 };
+
+export const sampleSettingKey = (division: Division) => `template_sample_${division}`;
+
+// The example content admins saved on the Templates page, or the built-in one.
+export function sampleIssue(division: Division, settings?: Settings | null): SampleIssue {
+  const saved = settings?.[sampleSettingKey(division)] as SampleIssue | null | undefined;
+  const fallback = SAMPLE_ISSUES[division];
+  if (!saved || typeof saved !== 'object' || !saved.hero?.headline) return fallback;
+  return {
+    ...fallback,
+    ...saved,
+    brand: { ...fallback.brand, ...(saved.brand ?? {}) },
+    secondary: Array.isArray(saved.secondary) ? saved.secondary : fallback.secondary,
+    offer: { ...fallback.offer, ...(saved.offer ?? {}) },
+  };
+}

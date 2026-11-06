@@ -5,7 +5,7 @@ import { renderNewsletter } from '../lib/render.js';
 import templatesJson from '../generated/templates.json';
 import type {
   Api, AuditEntry, BrandProfile, CampaignRow, CampaignStatus, ChecklistItem, ContentItem, ContentStatus, Edition, EditionItem,
-  Industry, NewsletterPrefs, PauseSwitch, Plan, ReviewAction, ReviewView, Session, Settings, StaffRole, TemplateInfo, Tenant,
+  Industry, NewsletterPrefs, PauseSwitch, Plan, ReviewAction, ReviewView, Session, Settings, StaffMember, StaffRole, TemplateInfo, Tenant,
 } from './types';
 
 const templates = templatesJson as unknown as TemplateInfo[];
@@ -90,6 +90,15 @@ export function createDemoApi(): Api {
   const notify = () => listeners.forEach((listener) => listener());
   let session: Session | null = null;
   let auditId = 1;
+  const staff: Array<Omit<StaffMember, 'is_me'>> = [
+    { user_id: uid(), email: 'admin@archimedes.example', role: 'admin', added_at: days(-120), last_sign_in_at: days(-0.1), invite_pending: false },
+    { user_id: uid(), email: 'editor@archimedes.example', role: 'editor', added_at: days(-90), last_sign_in_at: days(-2), invite_pending: false },
+    { user_id: uid(), email: 'operator@archimedes.example', role: 'operator', added_at: days(-60), last_sign_in_at: days(-5), invite_pending: false },
+  ];
+  const requireAdmin = () => {
+    if (session?.role !== 'admin') throw new Error('Your role does not allow this action');
+  };
+  const adminCount = () => staff.filter((s) => s.role === 'admin').length;
 
   const tenants: DemoTenant[] = [
     demoTenant('equinox', 'Equinox Roofing', 'hsg', 'roofing', 'hsg_growth', ['US-CO'], {
@@ -550,6 +559,53 @@ export function createDemoApi(): Api {
       if (tenants.length) throw new Error('Reset the test data before going live.');
       settings.environment = 'production';
       log('system.go_live', {});
+    },
+
+    async setTemplateSample(division, value) {
+      if (session?.role !== 'admin' && session?.role !== 'editor') throw new Error('Your role does not allow this action');
+      settings[`template_sample_${division}`] = value ?? null;
+      log(value ? 'templates.example_changed' : 'templates.example_reset', { division });
+    },
+    async listStaff() {
+      requireAdmin();
+      if (session && !staff.some((s) => s.email === session!.email)) {
+        staff.push({ user_id: uid(), email: session.email, role: session.role ?? 'admin', added_at: now(), last_sign_in_at: now(), invite_pending: false });
+      }
+      return staff.map((s) => ({ ...s, is_me: s.email === session?.email })).sort((a, b) => a.email.localeCompare(b.email));
+    },
+    async inviteStaff(email, role) {
+      requireAdmin();
+      const clean = email.trim().toLowerCase();
+      if (!/^[^s@]+@[^s@]+.[^s@]+$/.test(clean)) throw new Error('Enter a valid email address.');
+      const existing = staff.find((s) => s.email === clean);
+      if (existing) {
+        existing.role = role;
+        log('staff.role_changed', { email: clean, to: role });
+        return { status: 'added', email: clean };
+      }
+      staff.push({ user_id: uid(), email: clean, role, added_at: now(), last_sign_in_at: null, invite_pending: true });
+      log('staff.added', { email: clean, to: role });
+      return { status: 'invited', email: clean };
+    },
+    async setStaffRole(userId, role) {
+      requireAdmin();
+      const member = staff.find((s) => s.user_id === userId);
+      if (!member) throw new Error('That user does not exist');
+      if (member.role === role) return;
+      if (member.role === 'admin' && adminCount() <= 1) throw new Error('There must always be at least one admin');
+      log('staff.role_changed', { email: member.email, from: member.role, to: role });
+      member.role = role;
+      if (member.email === session?.email && session) session = { ...session, role };
+    },
+    async removeStaff(userId) {
+      requireAdmin();
+      const index = staff.findIndex((s) => s.user_id === userId);
+      if (index < 0) throw new Error('That person is not on the staff list');
+      const member = staff[index];
+      if (member.email === session?.email) throw new Error('You cannot remove your own access');
+      if (member.role === 'admin' && adminCount() <= 1) throw new Error('There must always be at least one admin');
+      staff.splice(index, 1);
+      log('staff.removed', { email: member.email, role: member.role });
     },
 
     async listAudit(search, page, pageSize) {

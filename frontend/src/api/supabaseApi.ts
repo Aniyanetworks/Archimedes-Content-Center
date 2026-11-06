@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import { createAuthFetch } from './authFetch';
 import type {
   Api, AuditEntry, BrandProfile, CampaignFilters, CampaignRow, ChecklistItem, ContentItem, DashboardCards, Edition, EditionItem,
-  Industry, MetricRow, NewsletterPrefs, PauseSwitch, Plan, ReviewView, Session, StaffRole, TemplateInfo, Tenant, TenantListRow,
+  Industry, MetricRow, NewsletterPrefs, PauseSwitch, Plan, ReviewView, Session, StaffMember, StaffRole, TemplateInfo, Tenant, TenantListRow,
 } from './types';
 
 // Every write goes through an RPC or RLS-protected table. The database enforces access and
@@ -248,6 +248,29 @@ export function createSupabaseApi(url: string, anonKey: string): Api {
     },
     goLive: async (confirm) => {
       await rpc('go_live', { p_confirm: confirm });
+    },
+
+    setTemplateSample: async (division, value) => {
+      await rpc('set_template_sample', { p_division: division, p_value: value });
+    },
+    listStaff: () => rpc<StaffMember[]>('list_staff'),
+    async inviteStaff(email, role) {
+      const { data } = await db.auth.getSession();
+      if (!data.session) throw new Error('Please sign in again.');
+      const response = await fetch(`${url}/functions/v1/staff-invite`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', apikey: anonKey, Authorization: `Bearer ${data.session.access_token}` },
+        body: JSON.stringify({ email, role }),
+      });
+      const json = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(json.error ?? 'The invite could not be sent.');
+      return json as { status: 'invited' | 'added'; email: string };
+    },
+    setStaffRole: async (userId, role) => {
+      await rpc('set_staff_role', { p_user: userId, p_role: role });
+    },
+    removeStaff: async (userId) => {
+      await rpc('remove_staff', { p_user: userId });
     },
 
     async listAudit(search, page, pageSize) {

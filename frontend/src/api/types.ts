@@ -281,6 +281,16 @@ export interface ReviewView {
 
 export type ReviewAction = 'approve' | 'request_changes' | 'skip';
 
+export interface StaffMember {
+  user_id: string;
+  email: string;
+  role: StaffRole;
+  added_at: string;
+  last_sign_in_at: string | null;
+  invite_pending: boolean;
+  is_me: boolean;
+}
+
 export interface Api {
   mode: 'demo' | 'live';
   getSession(): Promise<Session | null>;
@@ -330,6 +340,13 @@ export interface Api {
   testSendNow(): Promise<void>;
   resetTestData(confirm: string): Promise<void>;
   goLive(confirm: string): Promise<void>;
+
+  setTemplateSample(division: Division, value: unknown | null): Promise<void>;
+
+  listStaff(): Promise<StaffMember[]>;
+  inviteStaff(email: string, role: StaffRole): Promise<{ status: 'invited' | 'added'; email: string }>;
+  setStaffRole(userId: string, role: StaffRole): Promise<void>;
+  removeStaff(userId: string): Promise<void>;
 
   listAudit(search: string, page: number, pageSize: number): Promise<{ rows: AuditEntry[]; total: number }>;
   exportAudit(search: string): Promise<AuditEntry[]>;

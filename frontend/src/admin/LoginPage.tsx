@@ -176,8 +176,9 @@ export function ResetPasswordPage() {
     );
   }
 
+  const welcome = new URLSearchParams(window.location.search).has('welcome');
   return (
-    <AuthLayout title="Choose a new password" subtitle={`Use at least ${MIN_PASSWORD} characters.`}>
+    <AuthLayout title={welcome ? 'Welcome to Archimedes' : 'Choose a new password'} subtitle={welcome ? `Choose a password to finish setting up your account. Use at least ${MIN_PASSWORD} characters.` : `Use at least ${MIN_PASSWORD} characters.`}>
       <form onSubmit={(event) => { event.preventDefault(); void save(); }}>
         <Stack>
           <PasswordInput label="New password" size="md" required autoComplete="new-password" value={password} error={tooShort ? `At least ${MIN_PASSWORD} characters` : undefined} onChange={(e) => setPassword(e.currentTarget.value)} />
