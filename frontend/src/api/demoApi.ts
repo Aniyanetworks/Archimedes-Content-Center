@@ -268,7 +268,7 @@ export function createDemoApi(): Api {
     throw new Error('This review link is invalid or has expired.');
   };
 
-  return {
+  const demo: Api = {
     mode: 'demo',
 
     async getSession() {
@@ -461,6 +461,9 @@ export function createDemoApi(): Api {
         }
         return existing.id;
       }
+      if (editions.some((e) => e.industry === (edition.industry ?? 'roofing') && e.publication_week === edition.publication_week)) {
+        throw new Error('duplicate key value violates unique constraint "editions_division_industry_publication_week_key"');
+      }
       const id = uid();
       editions.push({
         id, division: edition.division ?? 'hsg', industry: edition.industry ?? 'roofing', publication_week: edition.publication_week ?? monday(1), version: 1, subject: edition.subject ?? '',
@@ -573,4 +576,13 @@ export function createDemoApi(): Api {
       return reviewView(c, 'decided', 'Your decision has been recorded. Thank you.', action);
     },
   };
+
+  // Hand out copies, like a real API: the page then sees each change as new data and redraws.
+  // Without this, a record changed in place looks unchanged and the screen keeps showing the old value.
+  // Subscriptions return an unsubscribe function right away, so they are passed through untouched.
+  const SUBSCRIPTIONS = new Set(['onAuthChange', 'subscribeCampaigns']);
+  const copy = <T,>(value: T): T => (value === undefined || value === null ? value : structuredClone(value));
+  return Object.fromEntries(
+    Object.entries(demo).map(([key, value]) => [key, typeof value === 'function' && !SUBSCRIPTIONS.has(key) ? async (...args: unknown[]) => copy(await (value as (...a: unknown[]) => unknown)(...args)) : value]),
+  ) as unknown as Api;
 }

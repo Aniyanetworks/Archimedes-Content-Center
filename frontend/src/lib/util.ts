@@ -19,8 +19,22 @@ export function humanize(value: string | null | undefined): string {
   return (text.charAt(0).toUpperCase() + text.slice(1)).replace(/\b(hsg|hvac|ghl)\b/gi, (word) => word.toUpperCase());
 }
 
+const FRIENDLY_ERRORS: Array<[RegExp, string]> = [
+  [/editions_division_industry_publication_week_key/, 'This industry already has an edition for that week. Open the existing edition or pick another week.'],
+  [/tenants_ghl_location_id_key/, 'Another tenant already uses this GHL location ID.'],
+  [/content_items_content_id_version_key/, 'That story version already exists. Reload the page and try again.'],
+  [/violates check constraint ".*color/, 'Colors must be hex values like #14344F.'],
+  [/permission denied|role does not allow/i, 'Your role does not allow this action.'],
+  [/Failed to fetch|NetworkError/i, 'Could not reach the server. Check your connection and try again.'],
+];
+
+export function friendlyError(error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error);
+  return FRIENDLY_ERRORS.find(([pattern]) => pattern.test(message))?.[1] ?? message;
+}
+
 export function showError(error: unknown) {
-  notifications.show({ color: 'red', title: 'That did not work', message: error instanceof Error ? error.message : String(error) });
+  notifications.show({ color: 'red', title: 'That did not work', message: friendlyError(error) });
 }
 
 export function showSuccess(message: string) {

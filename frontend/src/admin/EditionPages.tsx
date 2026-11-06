@@ -19,6 +19,14 @@ function nextMonday(): string {
   return date.toISOString().slice(0, 10);
 }
 
+// Each industry has one edition per week, so suggest the first week that is still free.
+function nextFreeMonday(industry: string | null, editions: Edition[]): string {
+  const taken = new Set(editions.filter((e) => e.industry === industry).map((e) => e.publication_week.slice(0, 10)));
+  const date = new Date(`${nextMonday()}T00:00:00Z`);
+  while (taken.has(date.toISOString().slice(0, 10))) date.setUTCDate(date.getUTCDate() + 7);
+  return date.toISOString().slice(0, 10);
+}
+
 export function EditionListPage() {
   const { session } = useAuth();
   const navigate = useNavigate();
@@ -40,10 +48,22 @@ export function EditionListPage() {
   }
 
   const weekIsMonday = new Date(`${week}T00:00:00Z`).getUTCDay() === 1;
+  const existing = (editions.data ?? []).find((e) => e.industry === industry && e.publication_week.slice(0, 10) === week);
+  const industryLabel = industries.data?.find((i) => i.key === industry)?.label ?? 'This industry';
+
+  function openNew() {
+    setWeek(nextFreeMonday(industry, editions.data ?? []));
+    setCreating(true);
+  }
+
+  function changeIndustry(value: string | null) {
+    setIndustry(value);
+    setWeek(nextFreeMonday(value, editions.data ?? []));
+  }
 
   return (
     <Stack>
-      <PageHeader title="Editions" description="Weekly industry editions. Approve one and every eligible tenant gets a branded version." actions={<>{canEdit(session?.role) && <Button onClick={() => setCreating(true)}>New edition</Button>}</>} />
+      <PageHeader title="Editions" description="Weekly industry editions. Approve one and every eligible tenant gets a branded version." actions={<>{canEdit(session?.role) && <Button onClick={openNew}>New edition</Button>}</>} />
       {editions.error && <Alert color="red">{(editions.error as Error).message}</Alert>}
       <Paper withBorder p="sm">
         <ScrollArea>
@@ -67,10 +87,15 @@ export function EditionListPage() {
 
       <Modal opened={creating} onClose={() => setCreating(false)} title="New edition">
         <Stack>
-          <Select label="Industry" allowDeselect={false} value={industry} onChange={setIndustry} data={(industries.data ?? []).map((i) => ({ value: i.key, label: i.label }))} />
-          <TextInput label="Publication week" description="The Monday of the week" type="date" error={weekIsMonday ? undefined : 'Pick a Monday'} value={week} onChange={(e) => setWeek(e.currentTarget.value)} />
-          <TextInput label="Subject line" value={subject} onChange={(e) => setSubject(e.currentTarget.value)} />
-          <Button disabled={!weekIsMonday || !subject.trim()} onClick={() => void create()}>Create edition</Button>
+          <Select label="Industry" placeholder="Choose an industry" allowDeselect={false} value={industry} onChange={changeIndustry} data={(industries.data ?? []).map((i) => ({ value: i.key, label: i.label }))} />
+          <TextInput label="Publication week" description="The Monday of the week" type="date" error={!weekIsMonday ? 'Pick a Monday' : existing ? `${industryLabel} already has an edition this week` : undefined} value={week} onChange={(e) => setWeek(e.currentTarget.value)} />
+          {existing && (
+            <Alert color="blue" p="sm">
+              Each industry has one edition per week. <Anchor component="button" type="button" size="sm" onClick={() => navigate(`/admin/editions/${existing.id}`)}>Open “{existing.subject || 'Untitled'}”</Anchor> or pick another week.
+            </Alert>
+          )}
+          <TextInput label="Subject line" placeholder="What to check on your roof after a storm" value={subject} onChange={(e) => setSubject(e.currentTarget.value)} />
+          <Button disabled={!weekIsMonday || !!existing || !subject.trim()} onClick={() => void create()}>Create edition</Button>
         </Stack>
       </Modal>
     </Stack>
@@ -176,12 +201,12 @@ export function EditionDetailPage() {
       <Paper withBorder p="md">
         <Title order={4} mb="sm">Details</Title>
         <SimpleGrid cols={{ base: 1, sm: 2 }}>
-          <TextInput label="Subject line" disabled={!editor} value={form.subject ?? ''} onChange={(e) => { const subject = e.currentTarget.value; setForm((c) => ({ ...c, subject })); }} />
-          <TextInput label="Preview text" disabled={!editor} value={form.preview_text ?? ''} onChange={(e) => { const preview_text = e.currentTarget.value; setForm((c) => ({ ...c, preview_text })); }} />
-          <MultiSelect label="Eligible plans" description="Leave empty for every plan in this division" disabled={!editor} value={form.eligible_plans ?? []} data={(plans.data ?? []).filter((p) => p.division === division).map((p) => ({ value: p.plan_key, label: p.label }))} onChange={(eligible_plans) => setForm((c) => ({ ...c, eligible_plans }))} />
+          <TextInput label="Subject line" placeholder="What to check on your roof after a storm" disabled={!editor} value={form.subject ?? ''} onChange={(e) => { const subject = e.currentTarget.value; setForm((c) => ({ ...c, subject })); }} />
+          <TextInput label="Preview text" placeholder="A ten-minute walk-around that can save you a costly repair" description="The line inboxes show after the subject" disabled={!editor} value={form.preview_text ?? ''} onChange={(e) => { const preview_text = e.currentTarget.value; setForm((c) => ({ ...c, preview_text })); }} />
+          <MultiSelect label="Eligible plans" placeholder="All plans in this division" description="Leave empty for every plan in this division" disabled={!editor} value={form.eligible_plans ?? []} data={(plans.data ?? []).filter((p) => p.division === division).map((p) => ({ value: p.plan_key, label: p.label }))} onChange={(eligible_plans) => setForm((c) => ({ ...c, eligible_plans }))} />
           <SimpleGrid cols={2}>
-            <TextInput label="Embargo until" type="date" disabled={!editor} value={form.embargo_at?.slice(0, 10) ?? ''} onChange={(e) => { const embargo_at = e.currentTarget.value; setForm((c) => ({ ...c, embargo_at })); }} />
-            <TextInput label="Expires on" type="date" disabled={!editor} value={form.expires_at?.slice(0, 10) ?? ''} onChange={(e) => { const expires_at = e.currentTarget.value; setForm((c) => ({ ...c, expires_at })); }} />
+            <TextInput label="Embargo until" description="Not sent before this date" type="date" disabled={!editor} value={form.embargo_at?.slice(0, 10) ?? ''} onChange={(e) => { const embargo_at = e.currentTarget.value; setForm((c) => ({ ...c, embargo_at })); }} />
+            <TextInput label="Expires on" description="Not sent after this date" type="date" disabled={!editor} value={form.expires_at?.slice(0, 10) ?? ''} onChange={(e) => { const expires_at = e.currentTarget.value; setForm((c) => ({ ...c, expires_at })); }} />
           </SimpleGrid>
         </SimpleGrid>
       </Paper>
@@ -231,7 +256,7 @@ export function EditionDetailPage() {
 
       <Modal opened={rejectOpen} onClose={() => setRejectOpen(false)} title="Reject edition">
         <Stack>
-          <Textarea label="Notes for the editor" required autosize minRows={3} value={rejectNotes} onChange={(e) => setRejectNotes(e.currentTarget.value)} />
+          <Textarea label="Notes for the editor" placeholder="What needs to change before this can be approved" required autosize minRows={3} value={rejectNotes} onChange={(e) => setRejectNotes(e.currentTarget.value)} />
           <Button color="red" disabled={!rejectNotes.trim()} onClick={() => { setRejectOpen(false); void run(() => api.rejectEdition(id, rejectNotes.trim()), 'Edition rejected'); }}>Reject edition</Button>
         </Stack>
       </Modal>

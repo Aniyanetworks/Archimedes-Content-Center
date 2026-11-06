@@ -71,8 +71,8 @@ export function ControlsPage() {
         {operate && (
           <SimpleGrid cols={{ base: 1, sm: 4 }} mb="md">
             <Select label="Level" allowDeselect={false} value={scope} onChange={(next) => { setScope(next as PauseScope); setValue(null); }} data={['global', 'division', 'industry', 'tenant', 'edition'].map((s) => ({ value: s, label: humanize(s) }))} />
-            {scope !== 'global' ? <Select label="Target" searchable value={value} onChange={setValue} data={options[scope]} /> : <TextInput label="Target" value="All sending" disabled />}
-            <TextInput label="Reason" required value={reason} onChange={(e) => setReason(e.currentTarget.value)} />
+            {scope !== 'global' ? <Select label="Target" placeholder="Choose what to pause" searchable value={value} onChange={setValue} data={options[scope]} /> : <TextInput label="Target" placeholder="Choose what to pause" value="All sending" disabled />}
+            <TextInput label="Reason" placeholder="e.g. Waiting for the client to confirm their offer" required value={reason} onChange={(e) => setReason(e.currentTarget.value)} />
             <Button mt={{ base: 0, sm: 25 }} color="orange" disabled={!canPause} onClick={() => void pause(scope, scope === 'global' ? '*' : value!, true, reason.trim())}>Pause</Button>
           </SimpleGrid>
         )}
@@ -102,19 +102,19 @@ export function ControlsPage() {
           <Stack>
             <Switch disabled={!admin} label="GHL dry run" description="n8n logs what it would do and makes no GHL calls" checked={settings.data.ghl_dry_run === true} onChange={(e) => void saveSetting('ghl_dry_run', e.currentTarget.checked)} />
             <Switch disabled={!admin} label="Safe test mode" description="Every send goes only to each tenant's test contacts" checked={settings.data.safe_test_mode === true} onChange={(e) => void saveSetting('safe_test_mode', e.currentTarget.checked)} />
-            <TagsInput disabled={!admin} label="Internal preview addresses" description="Review invites for tenants in test mode go here instead of to the client" value={(settings.data.internal_preview_addresses as string[]) ?? []} onChange={(next) => void saveSetting('internal_preview_addresses', next)} />
+            <TagsInput disabled={!admin} label="Internal preview addresses" placeholder="Type an email address, then press Enter" description="Review invites for tenants in test mode go here instead of to the client" value={(settings.data.internal_preview_addresses as string[]) ?? []} onChange={(next) => void saveSetting('internal_preview_addresses', next)} />
             <Group grow align="flex-start">
-              <TextInput disabled={!admin} label="Operations alert email" defaultValue={(settings.data.ops_alert_email as string) ?? ''} onBlur={(e) => void saveSetting('ops_alert_email', e.currentTarget.value || null)} />
-              <NumberInput disabled={!admin} label="Daily send cap" description="Campaigns per UTC day. Empty means dispatch is blocked." min={0} defaultValue={(settings.data.daily_send_cap as number) ?? ''} onBlur={(e) => void saveSetting('daily_send_cap', e.currentTarget.value === '' ? null : Number(e.currentTarget.value))} />
-              <NumberInput disabled={!admin} label="Cost per 1,000 emails (USD)" description="Used for the cost estimate card" min={0} decimalScale={4} defaultValue={(settings.data.cost_per_1000_emails_usd as number) ?? ''} onBlur={(e) => void saveSetting('cost_per_1000_emails_usd', e.currentTarget.value === '' ? null : Number(e.currentTarget.value))} />
+              <TextInput disabled={!admin} label="Operations alert email" placeholder="ops@yourcompany.com" defaultValue={(settings.data.ops_alert_email as string) ?? ''} onBlur={(e) => void saveSetting('ops_alert_email', e.currentTarget.value || null)} />
+              <NumberInput disabled={!admin} label="Daily send cap" placeholder="e.g. 500" description="Campaigns per UTC day. Empty means dispatch is blocked." min={0} defaultValue={(settings.data.daily_send_cap as number) ?? ''} onBlur={(e) => void saveSetting('daily_send_cap', e.currentTarget.value === '' ? null : Number(e.currentTarget.value))} />
+              <NumberInput disabled={!admin} label="Cost per 1,000 emails (USD)" placeholder="e.g. 0.675" description="Used for the cost estimate card" min={0} decimalScale={4} defaultValue={(settings.data.cost_per_1000_emails_usd as number) ?? ''} onBlur={(e) => void saveSetting('cost_per_1000_emails_usd', e.currentTarget.value === '' ? null : Number(e.currentTarget.value))} />
             </Group>
             <Group grow align="flex-start">
-              <TextInput disabled={!admin} label="Notification sender email" description="From address for review invites and alerts. Email workflows stop until it is set." type="email" defaultValue={(settings.data.notification_from_email as string) ?? ''} onBlur={(e) => void saveSetting('notification_from_email', e.currentTarget.value.trim() || null)} />
-              <TextInput disabled={!admin} label="Notification sender name" defaultValue={(settings.data.notification_from_name as string) ?? ''} onBlur={(e) => void saveSetting('notification_from_name', e.currentTarget.value.trim() || 'Archimedes')} />
+              <TextInput disabled={!admin} label="Notification sender email" placeholder="notifications@yourdomain.com" description="From address for review invites and alerts. Email workflows stop until it is set." type="email" defaultValue={(settings.data.notification_from_email as string) ?? ''} onBlur={(e) => void saveSetting('notification_from_email', e.currentTarget.value.trim() || null)} />
+              <TextInput disabled={!admin} label="Notification sender name" placeholder="Archimedes" defaultValue={(settings.data.notification_from_name as string) ?? ''} onBlur={(e) => void saveSetting('notification_from_name', e.currentTarget.value.trim() || 'Archimedes')} />
             </Group>
             <Group grow align="flex-start">
-              <NumberInput disabled={!admin} label="Check delivery after (minutes)" description="How long after sending before delivery is judged" min={5} defaultValue={(settings.data.delivery_check_after_minutes as number) ?? 30} onBlur={(e) => void saveSetting('delivery_check_after_minutes', Number(e.currentTarget.value) || 30)} />
-              <NumberInput disabled={!admin} label="Keep re-checking for (hours)" description="Queued or partial deliveries are re-checked this long" min={1} defaultValue={(settings.data.delivery_recheck_hours as number) ?? 24} onBlur={(e) => void saveSetting('delivery_recheck_hours', Number(e.currentTarget.value) || 24)} />
+              <NumberInput disabled={!admin} label="Check delivery after (minutes)" placeholder="30" description="How long after sending before delivery is judged" min={5} defaultValue={(settings.data.delivery_check_after_minutes as number) ?? 30} onBlur={(e) => void saveSetting('delivery_check_after_minutes', Number(e.currentTarget.value) || 30)} />
+              <NumberInput disabled={!admin} label="Keep re-checking for (hours)" placeholder="24" description="Queued or partial deliveries are re-checked this long" min={1} defaultValue={(settings.data.delivery_recheck_hours as number) ?? 24} onBlur={(e) => void saveSetting('delivery_recheck_hours', Number(e.currentTarget.value) || 24)} />
             </Group>
           </Stack>
         )}

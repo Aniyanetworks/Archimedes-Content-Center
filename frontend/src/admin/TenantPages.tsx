@@ -201,8 +201,9 @@ export function TenantDetailPage() {
   );
 }
 
-// Industry and plan are filled from the database once loaded; timezone and locale start as the user's own.
-const EMPTY_TENANT: Partial<Tenant> = { name: '', ghl_location_id: '', division: 'hsg', timezone: Intl.DateTimeFormat().resolvedOptions().timeZone, locale: navigator.language || 'en-US', service_areas: [], status: 'active', opted_in: false, entitlement_status: 'active' };
+// Industry and plan are filled from the database once loaded. Timezone starts empty on purpose:
+// it sets the send time, so it must be the tenant's, never the staff member's own.
+const EMPTY_TENANT: Partial<Tenant> = { name: '', ghl_location_id: '', division: 'hsg', timezone: '', locale: navigator.language || 'en-US', service_areas: [], status: 'active', opted_in: false, entitlement_status: 'active' };
 const EMPTY_BRAND: Partial<BrandProfile> = { newsletter_name: '', primary_color: '#1f3a5f', secondary_color: '#c8553d', sender_verified: false, domain_authenticated: false, offer_approved: false, social_links: {} };
 const EMPTY_PREFS: Partial<NewsletterPrefs> = { cadence: 'biweekly', preferred_weekday: 4, preferred_local_time: '09:00', review_mode: 'auto', approval_deadline_hours: 24, allowed_segments: [], test_contact_ids: [] };
 
@@ -283,8 +284,8 @@ export function TenantFormPage() {
         <Paper withBorder p="md">
           <Title order={4} mb="sm">Business and plan</Title>
           <SimpleGrid cols={{ base: 1, sm: 2 }}>
-            <TextInput label="Business name" required value={tenant.name ?? ''} onChange={text(setTenant, 'name')} />
-            <TextInput label="GHL location ID" required value={tenant.ghl_location_id ?? ''} onChange={text(setTenant, 'ghl_location_id')} />
+            <TextInput label="Business name" placeholder="Ridgeline Roofing" required value={tenant.name ?? ''} onChange={text(setTenant, 'name')} />
+            <TextInput label="GHL location ID" placeholder="e.g. aBcD1234EfGh5678IjKl" description="In GHL: Settings → Business Profile → Location ID" required value={tenant.ghl_location_id ?? ''} onChange={text(setTenant, 'ghl_location_id')} />
             <Select
               label="Division" required allowDeselect={false} value={tenant.division}
               data={[{ value: 'hsg', label: 'Home ServiceGenius' }, { value: 'hospitality', label: 'Hospitality' }]}
@@ -295,10 +296,10 @@ export function TenantFormPage() {
                 setTenant((current) => ({ ...current, division, industry: firstIndustry, plan_key: firstPlan }));
               }}
             />
-            <Select label="Industry" required allowDeselect={false} value={tenant.industry ?? null} data={(industries.data ?? []).filter((i) => i.division === tenant.division).map((i) => ({ value: i.key, label: i.label }))} onChange={(value) => setTenant((c) => ({ ...c, industry: value ?? undefined }))} />
-            <Select label="Plan" required allowDeselect={false} value={tenant.plan_key ?? null} data={(plans.data ?? []).filter((p) => p.division === tenant.division).map((p) => ({ value: p.plan_key, label: p.label }))} onChange={(value) => setTenant((c) => ({ ...c, plan_key: value ?? undefined }))} />
-            <TextInput label="Timezone" description="IANA name, for example America/Denver" required value={tenant.timezone ?? ''} onChange={text(setTenant, 'timezone')} />
-            <TagsInput label="Service areas" description="Region codes such as US-CO. Region-specific stories only reach matching tenants." value={tenant.service_areas ?? []} onChange={(service_areas) => setTenant((c) => ({ ...c, service_areas }))} />
+            <Select label="Industry" placeholder="Choose an industry" required allowDeselect={false} value={tenant.industry ?? null} data={(industries.data ?? []).filter((i) => i.division === tenant.division).map((i) => ({ value: i.key, label: i.label }))} onChange={(value) => setTenant((c) => ({ ...c, industry: value ?? undefined }))} />
+            <Select label="Plan" placeholder="Choose a plan" required allowDeselect={false} value={tenant.plan_key ?? null} data={(plans.data ?? []).filter((p) => p.division === tenant.division).map((p) => ({ value: p.plan_key, label: p.label }))} onChange={(value) => setTenant((c) => ({ ...c, plan_key: value ?? undefined }))} />
+            <TextInput label="Timezone" placeholder="America/Denver" description="The tenant's own timezone, which sets the send time. IANA name, for example America/Denver" required value={tenant.timezone ?? ''} onChange={text(setTenant, 'timezone')} />
+            <TagsInput label="Service areas" placeholder="Type a region code, then press Enter (e.g. US-CO)" description="Region codes such as US-CO. Region-specific stories only reach matching tenants." value={tenant.service_areas ?? []} onChange={(service_areas) => setTenant((c) => ({ ...c, service_areas }))} />
             <Select label="Tenant status" allowDeselect={false} value={tenant.status ?? 'active'} data={[{ value: 'active', label: 'Active' }, { value: 'paused', label: 'Paused' }]} onChange={(value) => setTenant((c) => ({ ...c, status: value as Tenant['status'] }))} />
           </SimpleGrid>
           {plan?.signoff_pending && <Alert color="yellow" mt="sm">This plan's commercial terms are not signed off yet, so it stays test-only.</Alert>}
@@ -307,26 +308,26 @@ export function TenantFormPage() {
         <Paper withBorder p="md">
           <Title order={4} mb="sm">Brand</Title>
           <SimpleGrid cols={{ base: 1, sm: 2 }}>
-            <TextInput label="Newsletter title" required value={brand.newsletter_name ?? ''} onChange={text(setBrand, 'newsletter_name')} />
-            <TextInput label="Logo URL" type="url" value={brand.logo_url ?? ''} onChange={text(setBrand, 'logo_url')} />
-            <ColorInput label="Primary color" format="hex" value={brand.primary_color ?? ''} onChange={(primary_color) => setBrand((c) => ({ ...c, primary_color }))} />
-            <ColorInput label="Secondary color" format="hex" value={brand.secondary_color ?? ''} onChange={(secondary_color) => setBrand((c) => ({ ...c, secondary_color }))} />
-            <TextInput label="Phone" value={brand.phone ?? ''} onChange={text(setBrand, 'phone')} />
-            <TextInput label="Website" type="url" value={brand.website ?? ''} onChange={text(setBrand, 'website')} />
-            <TextInput label="Booking URL" type="url" value={brand.booking_url ?? ''} onChange={text(setBrand, 'booking_url')} />
+            <TextInput label="Newsletter title" placeholder="The Ridgeline Home Protection Report" description="Shown at the top of every issue" required value={brand.newsletter_name ?? ''} onChange={text(setBrand, 'newsletter_name')} />
+            <TextInput label="Logo URL" placeholder="https://yourcompany.com/logo.png" description="A public link to a PNG or JPG" type="url" value={brand.logo_url ?? ''} onChange={text(setBrand, 'logo_url')} />
+            <ColorInput label="Primary color" placeholder="#14344F" description="Header and headings" format="hex" value={brand.primary_color ?? ''} onChange={(primary_color) => setBrand((c) => ({ ...c, primary_color }))} />
+            <ColorInput label="Secondary color" placeholder="#D9822B" description="Buttons and accents" format="hex" value={brand.secondary_color ?? ''} onChange={(secondary_color) => setBrand((c) => ({ ...c, secondary_color }))} />
+            <TextInput label="Phone" placeholder="(303) 555-0142" value={brand.phone ?? ''} onChange={text(setBrand, 'phone')} />
+            <TextInput label="Website" placeholder="https://yourcompany.com" type="url" value={brand.website ?? ''} onChange={text(setBrand, 'website')} />
+            <TextInput label="Booking URL" placeholder="https://yourcompany.com/book" description="Where booking buttons send readers" type="url" value={brand.booking_url ?? ''} onChange={text(setBrand, 'booking_url')} />
           </SimpleGrid>
-          <Textarea mt="sm" label="Local note" autosize minRows={2} value={brand.local_note ?? ''} onChange={text(setBrand, 'local_note')} />
+          <Textarea mt="sm" label="Local note" placeholder="A short, current update for local readers, such as crew availability or a community event" autosize minRows={2} value={brand.local_note ?? ''} onChange={text(setBrand, 'local_note')} />
         </Paper>
 
         <Paper withBorder p="md">
           <Title order={4} mb="sm">Sender and compliance</Title>
           <SimpleGrid cols={{ base: 1, sm: 2 }}>
-            <TextInput label="Legal business name" required value={brand.legal_business_name ?? ''} onChange={text(setBrand, 'legal_business_name')} />
-            <TextInput label="Postal address" required value={brand.postal_address ?? ''} onChange={text(setBrand, 'postal_address')} />
-            <TextInput label="From name" value={brand.from_name ?? ''} onChange={text(setBrand, 'from_name')} />
-            <TextInput label="From email" type="email" value={brand.from_email ?? ''} onChange={text(setBrand, 'from_email')} />
-            <TextInput label="Reply-to" type="email" value={brand.reply_to ?? ''} onChange={text(setBrand, 'reply_to')} />
-            <TextInput label="GHL user ID" description="GHL requires an acting user when scheduling" value={prefs.ghl_user_id ?? ''} onChange={text(setPrefs, 'ghl_user_id')} />
+            <TextInput label="Legal business name" placeholder="Ridgeline Roofing & Exteriors LLC" description="Shown in the email footer" required value={brand.legal_business_name ?? ''} onChange={text(setBrand, 'legal_business_name')} />
+            <TextInput label="Postal address" placeholder="2150 Market Street, Suite 200, Denver, CO 80205" description="Required in every email footer" required value={brand.postal_address ?? ''} onChange={text(setBrand, 'postal_address')} />
+            <TextInput label="From name" placeholder="Ridgeline Roofing" description="Shown as the sender in the inbox" value={brand.from_name ?? ''} onChange={text(setBrand, 'from_name')} />
+            <TextInput label="From email" placeholder="news@yourdomain.com" description="Must be on a sending domain verified in GHL" type="email" value={brand.from_email ?? ''} onChange={text(setBrand, 'from_email')} />
+            <TextInput label="Reply-to" placeholder="office@yourdomain.com" description="Where customer replies go" type="email" value={brand.reply_to ?? ''} onChange={text(setBrand, 'reply_to')} />
+            <TextInput label="GHL user ID" placeholder="e.g. aBcD1234EfGh5678IjKl" description="GHL requires an acting user when scheduling" value={prefs.ghl_user_id ?? ''} onChange={text(setPrefs, 'ghl_user_id')} />
           </SimpleGrid>
           <Stack mt="sm" gap="xs">
             <Checkbox label="Sender identity verified in GHL" checked={!!brand.sender_verified} onChange={(e) => { const sender_verified = e.currentTarget.checked; setBrand((c) => ({ ...c, sender_verified })); }} />
@@ -340,7 +341,7 @@ export function TenantFormPage() {
           <Title order={4} mb="sm">Newsletter preferences</Title>
           <SimpleGrid cols={{ base: 1, sm: 2 }}>
             <Select
-              label="Design"
+              label="Design" placeholder="Choose a design"
               description={plan ? `${plan.label} includes ${plan.template_keys.length} of ${templates.data?.length ?? 5} designs` : undefined}
               required
               value={prefs.template_key ?? null}
@@ -350,17 +351,17 @@ export function TenantFormPage() {
             <Select label="Cadence" allowDeselect={false} value={prefs.cadence} data={(plan?.allowed_cadences ?? []).map((c) => ({ value: c, label: CADENCE_LABELS[c] }))} onChange={(value) => setPrefs((c) => ({ ...c, cadence: value as Cadence }))} />
             <Select label="Send day" allowDeselect={false} value={String(prefs.preferred_weekday ?? 4)} data={WEEKDAYS} onChange={(value) => setPrefs((c) => ({ ...c, preferred_weekday: Number(value) }))} />
             <TextInput label="Send time (tenant local)" type="time" value={(prefs.preferred_local_time ?? '09:00').slice(0, 5)} onChange={text(setPrefs, 'preferred_local_time')} />
-            <TagsInput label="Contact segment (GHL tag IDs)" description="Only contacts with these tags receive the newsletter" value={prefs.allowed_segments ?? []} onChange={(allowed_segments) => setPrefs((c) => ({ ...c, allowed_segments }))} />
-            <TagsInput label="Test contacts (GHL contact IDs)" description="The only recipients while in test mode" value={prefs.test_contact_ids ?? []} onChange={(test_contact_ids) => setPrefs((c) => ({ ...c, test_contact_ids }))} />
+            <TagsInput label="Contact segment (GHL tag IDs)" placeholder="Paste a GHL tag ID, then press Enter" description="Only contacts with these tags receive the newsletter" value={prefs.allowed_segments ?? []} onChange={(allowed_segments) => setPrefs((c) => ({ ...c, allowed_segments }))} />
+            <TagsInput label="Test contacts (GHL contact IDs)" placeholder="Paste a GHL contact ID, then press Enter" description="The only recipients while in test mode" value={prefs.test_contact_ids ?? []} onChange={(test_contact_ids) => setPrefs((c) => ({ ...c, test_contact_ids }))} />
           </SimpleGrid>
           <Divider my="md" />
           <SimpleGrid cols={{ base: 1, sm: 2 }}>
             <Select label="Approval mode" allowDeselect={false} value={prefs.review_mode} data={[{ value: 'auto', label: 'Automatic after central approval' }, { value: 'review', label: 'Client reviews before sending' }]} onChange={(value) => setPrefs((c) => ({ ...c, review_mode: value as NewsletterPrefs['review_mode'] }))} />
-            <NumberInput label="Approval deadline" description="Hours before the send time. A missed deadline holds the send." min={1} max={168} value={prefs.approval_deadline_hours ?? 24} onChange={(value) => setPrefs((c) => ({ ...c, approval_deadline_hours: Number(value) }))} />
+            <NumberInput label="Approval deadline" placeholder="24" description="Hours before the send time. A missed deadline holds the send." min={1} max={168} value={prefs.approval_deadline_hours ?? 24} onChange={(value) => setPrefs((c) => ({ ...c, approval_deadline_hours: Number(value) }))} />
             {prefs.review_mode === 'review' && (
               <>
-                <TextInput label="Reviewer name" value={prefs.reviewer_name ?? ''} onChange={text(setPrefs, 'reviewer_name')} />
-                <TextInput label="Reviewer email" type="email" required value={prefs.reviewer_email ?? ''} onChange={text(setPrefs, 'reviewer_email')} />
+                <TextInput label="Reviewer name" placeholder="Jordan Smith" value={prefs.reviewer_name ?? ''} onChange={text(setPrefs, 'reviewer_name')} />
+                <TextInput label="Reviewer email" placeholder="owner@yourcompany.com" description="Receives the review link for each issue" type="email" required value={prefs.reviewer_email ?? ''} onChange={text(setPrefs, 'reviewer_email')} />
               </>
             )}
           </SimpleGrid>
@@ -369,12 +370,12 @@ export function TenantFormPage() {
         <Paper withBorder p="md">
           <Title order={4} mb="sm">Offer</Title>
           <SimpleGrid cols={{ base: 1, sm: 2 }}>
-            <TextInput label="Headline" value={brand.offer_headline ?? ''} onChange={text(setBrand, 'offer_headline')} />
-            <TextInput label="Button label" value={brand.offer_cta_label ?? ''} onChange={text(setBrand, 'offer_cta_label')} />
-            <TextInput label="Link" type="url" value={brand.offer_url ?? ''} onChange={text(setBrand, 'offer_url')} />
-            <TextInput label="Expires on" type="date" value={brand.offer_expires_at?.slice(0, 10) ?? ''} onChange={text(setBrand, 'offer_expires_at')} />
+            <TextInput label="Headline" placeholder="Book your pre-winter roof check" value={brand.offer_headline ?? ''} onChange={text(setBrand, 'offer_headline')} />
+            <TextInput label="Button label" placeholder="Pick a time" value={brand.offer_cta_label ?? ''} onChange={text(setBrand, 'offer_cta_label')} />
+            <TextInput label="Link" placeholder="https://yourcompany.com/offer" type="url" value={brand.offer_url ?? ''} onChange={text(setBrand, 'offer_url')} />
+            <TextInput label="Expires on" description="The offer stops appearing after this date" type="date" value={brand.offer_expires_at?.slice(0, 10) ?? ''} onChange={text(setBrand, 'offer_expires_at')} />
           </SimpleGrid>
-          <Textarea mt="sm" label="Offer text" autosize minRows={2} value={brand.offer_body ?? ''} onChange={text(setBrand, 'offer_body')} />
+          <Textarea mt="sm" label="Offer text" placeholder="One or two sentences on the offer. Use only current, verified terms." autosize minRows={2} value={brand.offer_body ?? ''} onChange={text(setBrand, 'offer_body')} />
           <Checkbox mt="sm" label="Offer and terms verified as current" description="Unverified or expired offers never appear in a send" checked={!!brand.offer_approved} onChange={(e) => { const offer_approved = e.currentTarget.checked; setBrand((c) => ({ ...c, offer_approved })); }} />
         </Paper>
 
