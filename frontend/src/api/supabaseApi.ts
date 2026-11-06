@@ -8,6 +8,9 @@ import type {
 // Every write goes through an RPC or RLS-protected table. The database enforces access and
 // approvals; this file only displays and requests.
 export function createSupabaseApi(url: string, anonKey: string): Api {
+  // Read before the client starts, because it clears the reset link's details from the URL.
+  const linkParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+  const linkError = linkParams.get('error_description');
   const db = createClient(url, anonKey, {
     global: {
       fetch: createAuthFetch(fetch.bind(globalThis), async (): Promise<string | null> => {
@@ -75,6 +78,19 @@ export function createSupabaseApi(url: string, anonKey: string): Api {
     },
     async signOut() {
       await db.auth.signOut();
+    },
+    async requestPasswordReset(email) {
+      const { error } = await db.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/admin/reset-password` });
+      if (error) throw new Error(error.message);
+    },
+    async updatePassword(password) {
+      const { error } = await db.auth.updateUser({ password });
+      if (error) throw new Error(error.message);
+    },
+    async recoveryStatus() {
+      if (linkError) return { ready: false, error: linkError };
+      const { data } = await db.auth.getSession(); // waits until the client has read the link
+      return { ready: !!data.session, error: null };
     },
     onAuthChange(callback) {
       const { data } = db.auth.onAuthStateChange(() => callback());

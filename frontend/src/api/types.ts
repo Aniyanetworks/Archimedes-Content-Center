@@ -285,6 +285,9 @@ export interface Api {
   getSession(): Promise<Session | null>;
   signIn(email: string, password: string): Promise<void>;
   signOut(): Promise<void>;
+  requestPasswordReset(email: string): Promise<void>;
+  updatePassword(password: string): Promise<void>;
+  recoveryStatus(): Promise<{ ready: boolean; error: string | null }>;
   onAuthChange(callback: () => void): () => void;
 
   dashboardCards(filters: CampaignFilters): Promise<DashboardCards>;

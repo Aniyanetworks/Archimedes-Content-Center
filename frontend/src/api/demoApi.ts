@@ -283,6 +283,15 @@ export function createDemoApi(): Api {
       session = null;
       authListeners.forEach((listener) => listener());
     },
+    async requestPasswordReset() {
+      // Demo mode has no email, so this only shows the confirmation screen.
+    },
+    async updatePassword() {
+      throw new Error('Password reset needs a connected Supabase project.');
+    },
+    async recoveryStatus() {
+      return { ready: false, error: 'Password reset needs a connected Supabase project.' };
+    },
     onAuthChange(callback) {
       authListeners.add(callback);
       return () => authListeners.delete(callback);

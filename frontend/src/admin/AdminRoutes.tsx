@@ -1,18 +1,17 @@
-import { useState } from 'react';
-import { ActionIcon, Alert, AppShell, Avatar, Badge, Burger, Button, Center, Group, Loader, PasswordInput, Stack, Text, TextInput, Title, Tooltip, useComputedColorScheme, useMantineColorScheme } from '@mantine/core';
+import { ActionIcon, AppShell, Avatar, Badge, Burger, Button, Center, Group, Loader, Stack, Text, Title, Tooltip, useComputedColorScheme, useMantineColorScheme } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { IconAdjustments, IconCheck, IconFileText, IconHistory, IconLayoutDashboard, IconLogout, IconMoon, IconNews, IconSun, IconTemplate, IconUsers } from '@tabler/icons-react';
+import { IconAdjustments, IconFileText, IconHistory, IconLayoutDashboard, IconLogout, IconMoon, IconNews, IconSun, IconTemplate, IconUsers } from '@tabler/icons-react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { api } from '../api';
-import { BrandMark, Spiral } from '../components/BrandMark';
-import { showError } from '../lib/util';
+import { BrandMark } from '../components/BrandMark';
 import { AuditPage } from './AuditPage';
 import { AuthProvider, useAuth } from './AuthContext';
 import { ContentEditorPage, ContentListPage } from './ContentPages';
 import { ControlsPage } from './ControlsPage';
 import { DashboardPage } from './DashboardPage';
 import { EditionDetailPage, EditionListPage } from './EditionPages';
+import { LoginPage, ResetPasswordPage } from './LoginPage';
 import { TemplatesPage } from './TemplatesPage';
 import { TenantDetailPage, TenantFormPage, TenantListPage } from './TenantPages';
 
@@ -41,78 +40,6 @@ const NAV = [
   },
 ];
 
-const LOGIN_POINTS = [
-  'Approve one edition, and every client gets their own branded version',
-  'Clients can review the exact version through a secure link',
-  'Every send, approval and operator action is recorded',
-];
-
-function Login() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [busy, setBusy] = useState(false);
-
-  async function signIn(address: string, secret: string) {
-    setBusy(true);
-    try {
-      await api.signIn(address, secret);
-    } catch (error) {
-      showError(error);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <div className="login">
-      <div className="login-brand">
-        <Spiral className="login-spiral" turns={5} strokeWidth={1.5} />
-        <Group gap="sm" wrap="nowrap">
-          <BrandMark />
-          <div>
-            <div className="app-brand-name">Archimedes</div>
-            <div className="app-brand-sub">Content Center</div>
-          </div>
-        </Group>
-        <div className="login-headline">One approved edition. Every client newsletter, sent safely.</div>
-        <Stack gap="sm" className="login-points" style={{ position: 'relative' }}>
-          {LOGIN_POINTS.map((point) => (
-            <Group key={point} gap="sm" wrap="nowrap" align="flex-start">
-              <IconCheck size={18} color="var(--mantine-color-brand-3)" style={{ flex: 'none', marginTop: 2 }} />
-              <Text size="sm" c="inherit">{point}</Text>
-            </Group>
-          ))}
-        </Stack>
-      </div>
-      <div className="login-form">
-        <Stack w={360} maw="100%" gap="lg">
-          <div>
-            <Title order={2}>Staff sign in</Title>
-            <Text c="dimmed" size="sm" mt={2}>Use your Archimedes staff account.</Text>
-          </div>
-          {api.mode === 'demo' ? (
-            <>
-              <Alert color="blue" title="Demo mode">No Supabase project is connected. Choose a role to explore sample data held in this browser tab.</Alert>
-              {(['admin', 'editor', 'operator'] as const).map((role) => (
-                <Button key={role} variant="default" size="md" onClick={() => void signIn(`${role}@archimedes.example.com`, 'demo')}>
-                  Continue as {role}
-                </Button>
-              ))}
-            </>
-          ) : (
-            <form onSubmit={(event) => { event.preventDefault(); void signIn(email, password); }}>
-              <Stack>
-                <TextInput label="Email" type="email" size="md" required autoComplete="username" value={email} onChange={(e) => setEmail(e.currentTarget.value)} />
-                <PasswordInput label="Password" size="md" required autoComplete="current-password" value={password} onChange={(e) => setPassword(e.currentTarget.value)} />
-                <Button type="submit" size="md" loading={busy}>Sign in</Button>
-              </Stack>
-            </form>
-          )}
-        </Stack>
-      </div>
-    </div>
-  );
-}
 
 function SchemeToggle() {
   const { setColorScheme } = useMantineColorScheme();
@@ -226,7 +153,7 @@ function Gate() {
       </Center>
     );
   }
-  if (!session) return <Login />;
+  if (!session) return <LoginPage />;
   if (!session.role) {
     return (
       <Center mih="100vh" p="md">
@@ -242,6 +169,9 @@ function Gate() {
 }
 
 export default function AdminRoutes() {
+  const location = useLocation();
+  // The emailed reset link signs the user in from the URL, so it is handled before the normal sign-in gate.
+  if (location.pathname === '/admin/reset-password') return <ResetPasswordPage />;
   return (
     <AuthProvider>
       <Gate />
