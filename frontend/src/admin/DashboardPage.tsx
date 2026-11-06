@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Badge, Button, Collapse, Group, Pagination, Paper, Select, SimpleGrid, Stack, Text, TextInput, ThemeIcon, Title, Tooltip } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { type Icon as TablerIcon, IconAlertTriangle, IconBuildingStore, IconCalendarCheck, IconChecks, IconClockPause, IconFilter, IconHourglass, IconX } from '@tabler/icons-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../api';
 import { CAMPAIGN_STATUSES, type CampaignFilters, type DashboardCards } from '../api/types';
 import { CampaignTable } from '../components/CampaignTable';
@@ -13,9 +13,9 @@ import { useAuth } from './AuthContext';
 
 const PAGE_SIZE = 50;
 
-function StatTile({ label, value, icon: Icon, color }: { label: string; value: number | string; icon: TablerIcon; color: string }) {
+function StatTile({ label, value, icon: Icon, color, active = false, onClick }: { label: string; value: number | string; icon: TablerIcon; color: string; active?: boolean; onClick: () => void }) {
   return (
-    <Paper withBorder p="md">
+    <Paper withBorder p="md" component="button" type="button" className="stat-tile" data-active={active} aria-pressed={active} onClick={onClick}>
       <Group justify="space-between" align="flex-start" wrap="nowrap" gap="xs">
         <div>
           <Text size="xs" fw={500} c="dimmed">{label}</Text>
@@ -75,6 +75,15 @@ export function DashboardPage() {
   const [filters, setFilters] = useState<CampaignFilters>({});
   const [page, setPage] = useState(0);
   const [filtersOpen, { toggle: toggleFilters }] = useDisclosure(false);
+  const navigate = useNavigate();
+  const listRef = useRef<HTMLDivElement>(null);
+
+  // A tile filters the list to its status; the same tile again clears it.
+  const showStatus = (status: string) => {
+    setPage(0);
+    setFilters((current) => ({ ...current, status: current.status === status ? null : status }));
+    listRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
   const cards = useQuery({ queryKey: ['cards', filters], queryFn: () => api.dashboardCards(filters) });
   const campaigns = useQuery({ queryKey: ['campaigns', filters, page], queryFn: () => api.listCampaigns(filters, page, PAGE_SIZE) });
@@ -126,24 +135,24 @@ export function DashboardPage() {
       {cards.error && <Alert color="red" title="Could not load the dashboard">{(cards.error as Error).message}</Alert>}
 
       <SimpleGrid cols={{ base: 2, sm: 3, xl: 6 }} spacing="sm">
-        <StatTile label="Active tenants" value={value?.active_tenants ?? '—'} icon={IconBuildingStore} color="gray" />
-        <StatTile label="Pending approvals" value={value?.pending_approvals ?? '—'} icon={IconHourglass} color="grape" />
-        <StatTile label="Scheduled" value={value?.scheduled ?? '—'} icon={IconCalendarCheck} color="brand" />
-        <StatTile label="Sent" value={value?.sent ?? '—'} icon={IconChecks} color="teal" />
-        <StatTile label="Held" value={value?.held ?? '—'} icon={IconClockPause} color="orange" />
-        <StatTile label="Failed" value={value?.failed ?? '—'} icon={IconAlertTriangle} color="red" />
+        <StatTile label="Active tenants" value={value?.active_tenants ?? '—'} icon={IconBuildingStore} color="gray" onClick={() => navigate('/admin/tenants')} />
+        <StatTile label="Pending approvals" value={value?.pending_approvals ?? '—'} icon={IconHourglass} color="grape" active={filters.status === 'CLIENT_REVIEW_PENDING'} onClick={() => showStatus('CLIENT_REVIEW_PENDING')} />
+        <StatTile label="Scheduled" value={value?.scheduled ?? '—'} icon={IconCalendarCheck} color="brand" active={filters.status === 'SCHEDULED'} onClick={() => showStatus('SCHEDULED')} />
+        <StatTile label="Sent" value={value?.sent ?? '—'} icon={IconChecks} color="teal" active={filters.status === 'SENT'} onClick={() => showStatus('SENT')} />
+        <StatTile label="Held" value={value?.held ?? '—'} icon={IconClockPause} color="orange" active={filters.status === 'HELD'} onClick={() => showStatus('HELD')} />
+        <StatTile label="Failed" value={value?.failed ?? '—'} icon={IconAlertTriangle} color="red" active={filters.status === 'FAILED'} onClick={() => showStatus('FAILED')} />
       </SimpleGrid>
 
       {value && <CampaignFlow cards={value} />}
 
       <Paper withBorder className="stat-strip">
-        <div><Text size="xs" c="dimmed">Upcoming editions</Text><Text fw={600}>{value?.upcoming_editions ?? '—'}</Text></div>
-        <div><Text size="xs" c="dimmed">Recipients scheduled</Text><Text fw={600}>{value?.scheduled_recipients ?? '—'}</Text></div>
-        <div><Text size="xs" c="dimmed">Unsubscribed or invalid</Text><Text fw={600}>{value?.unsubscribed_invalid ?? '—'}</Text></div>
-        <div><Text size="xs" c="dimmed">Cost estimate</Text><Text fw={600}>{value?.cost_estimate_usd == null ? 'Rate not set' : `$${value.cost_estimate_usd.toFixed(2)}`}</Text></div>
+        <button type="button" className="strip-item" onClick={() => navigate('/admin/editions')}><Text size="xs" c="dimmed">Upcoming editions</Text><Text fw={600}>{value?.upcoming_editions ?? '—'}</Text></button>
+        <button type="button" className="strip-item" data-active={filters.status === 'SCHEDULED'} aria-pressed={filters.status === 'SCHEDULED'} onClick={() => showStatus('SCHEDULED')}><Text size="xs" c="dimmed">Recipients scheduled</Text><Text fw={600}>{value?.scheduled_recipients ?? '—'}</Text></button>
+        <button type="button" className="strip-item" data-active={filters.status === 'SENT'} aria-pressed={filters.status === 'SENT'} onClick={() => showStatus('SENT')}><Text size="xs" c="dimmed">Unsubscribed or invalid</Text><Text fw={600}>{value?.unsubscribed_invalid ?? '—'}</Text></button>
+        <button type="button" className="strip-item" onClick={() => navigate('/admin/controls')}><Text size="xs" c="dimmed">Cost estimate</Text><Text fw={600}>{value?.cost_estimate_usd == null ? 'Rate not set' : `$${value.cost_estimate_usd.toFixed(2)}`}</Text></button>
       </Paper>
 
-      <Paper withBorder p="md">
+      <Paper withBorder p="md" ref={listRef} style={{ scrollMarginTop: 76 }}>
         <Group justify="space-between" mb="sm" gap="xs">
           <div>
             <Title order={4}>Campaigns</Title>

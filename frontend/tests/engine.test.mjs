@@ -236,7 +236,7 @@ describe('approval gates', () => {
     assert.equal(after.rendered_html_hash, c.rendered_html_hash);
     assert.equal(after.template_version_id, c.template_version_id);
     assert.equal(after.status, 'APPROVED_FOR_SEND');
-    await assert.rejects(db.query(`update template_versions set compiled_html = 'changed' where version = 1`), /immutable/);
+    await assert.rejects(db.query(`update template_versions set compiled_html = 'changed' where template_key = 'seasonal_guide' and version <> 99`), /immutable/);
   });
 });
 

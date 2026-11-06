@@ -2,7 +2,7 @@
   "name": "Archimedes 09 Operations alerts",
   "nodes": [
     {
-      "id": "251e1aa6-837e-4c0b-a585-f32736c653c8",
+      "id": "f373cc22-a358-4293-8063-880f77869ca9",
       "name": "Every 15 min",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
@@ -22,7 +22,7 @@
       }
     },
     {
-      "id": "ddafd4a8-4306-4ffd-9793-bc84fb8a83c9",
+      "id": "efda82dc-0053-438e-b288-6947b443b357",
       "name": "Config",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
@@ -36,7 +36,7 @@
         "assignments": {
           "assignments": [
             {
-              "id": "ef88cdcb-14ea-4747-a838-021222ea003b",
+              "id": "c90be06c-08fe-4d37-aaa4-b995cf54807f",
               "name": "supabaseUrl",
               "value": "https://YOUR-PROJECT.supabase.co",
               "type": "string"
@@ -47,7 +47,7 @@
       }
     },
     {
-      "id": "ad505860-7c85-4753-b7c3-7124c08a34bd",
+      "id": "ee77b8f2-d240-4051-8700-0a1a5b59b836",
       "name": "Claim alerts",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -78,7 +78,7 @@
       "waitBetweenTries": 2000
     },
     {
-      "id": "14fa6c3c-3376-4e4e-8f64-9894b95adb92",
+      "id": "58a0232b-9772-4dc0-8146-98297ce6b7fa",
       "name": "Build digest",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -93,7 +93,7 @@
       }
     },
     {
-      "id": "b43a48ef-d8fa-465b-8ab8-32f2e81b3ce6",
+      "id": "544ead5e-94c0-4939-a632-612facfbb2e0",
       "name": "Email operations",
       "type": "n8n-nodes-base.emailSend",
       "typeVersion": 2.1,
@@ -102,7 +102,7 @@
         300
       ],
       "parameters": {
-        "fromEmail": "newsletters@YOUR-DOMAIN.example",
+        "fromEmail": "={{ $('Get sender').first().json.from }}",
         "toEmail": "={{ $json.to }}",
         "subject": "={{ $json.subject }}",
         "emailFormat": "html",
@@ -120,6 +120,37 @@
       "retryOnFail": true,
       "maxTries": 2,
       "waitBetweenTries": 5000
+    },
+    {
+      "id": "d69baf37-7193-4fb9-9f1c-240b2c026e48",
+      "name": "Get sender",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        330,
+        480
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Config').first().json.supabaseUrl }}/rest/v1/rpc/notification_sender",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({}) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "credentials": {
+        "supabaseApi": {
+          "id": "nhNQM44yDbiWIFG5",
+          "name": "Archemedies"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
     }
   ],
   "connections": {
@@ -135,6 +166,17 @@
       ]
     },
     "Config": {
+      "main": [
+        [
+          {
+            "node": "Get sender",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get sender": {
       "main": [
         [
           {

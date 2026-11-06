@@ -2,7 +2,7 @@
   "name": "Archimedes 06 Dispatch to GHL",
   "nodes": [
     {
-      "id": "782545ef-9b6c-4f0a-81b9-e1e7ad5731eb",
+      "id": "831376fe-9cf1-4855-98de-21a00cbba6e5",
       "name": "Every 5 min",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
@@ -22,7 +22,7 @@
       }
     },
     {
-      "id": "587f416a-2622-4274-b2d7-5a63159a703b",
+      "id": "0e5bdd66-3295-45a8-b2f9-c0fd587052e0",
       "name": "Config",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
@@ -36,7 +36,7 @@
         "assignments": {
           "assignments": [
             {
-              "id": "793a8e27-3e94-41f6-9532-3610c60f07a4",
+              "id": "a531b418-06b5-4d49-ba04-c45a1ed8a97a",
               "name": "supabaseUrl",
               "value": "https://YOUR-PROJECT.supabase.co",
               "type": "string"
@@ -47,7 +47,7 @@
       }
     },
     {
-      "id": "51bc65b6-f7aa-4bc9-9150-10f51dc639f5",
+      "id": "ae0ef5cf-72fe-4aa7-a2d3-1e91e176dabf",
       "name": "Claim campaigns to dispatch",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -78,7 +78,7 @@
       "waitBetweenTries": 2000
     },
     {
-      "id": "01ffaf6e-1e55-4cb2-b583-de5c79237866",
+      "id": "e502dbc0-5c48-4e47-a108-69a07b82b05e",
       "name": "Loop",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
@@ -92,7 +92,7 @@
       }
     },
     {
-      "id": "3c6de721-2e81-49ee-b307-124f0d0d7ac5",
+      "id": "f9b5dbf6-b268-47c1-a3fb-6089990265a4",
       "name": "Dry run?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
@@ -110,7 +110,7 @@
           },
           "conditions": [
             {
-              "id": "aed4d79a-fdde-46a9-824d-d915259ff295",
+              "id": "81bb3c2c-fe33-4a9a-b368-6b2a08bdb12c",
               "leftValue": "={{ $('Loop').first().json.dry_run === true }}",
               "rightValue": "",
               "operator": {
@@ -126,7 +126,7 @@
       }
     },
     {
-      "id": "07b30c53-aa7d-40a5-ad57-621d14b84653",
+      "id": "cba36647-dc04-4bc7-8455-674af7c18bdc",
       "name": "Record dry run",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -157,7 +157,7 @@
       "waitBetweenTries": 2000
     },
     {
-      "id": "83765246-7f64-4338-bcf8-f8430bd0d9ee",
+      "id": "f01a0cfb-24d2-4dfb-a184-d1f1e1b83118",
       "name": "Get GHL Token",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -188,7 +188,7 @@
       "waitBetweenTries": 2000
     },
     {
-      "id": "4101f1c4-839b-4629-b991-524bece79b72",
+      "id": "b35acab2-133c-4950-a15b-f5d97021f36a",
       "name": "Draft already exists?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
@@ -206,7 +206,7 @@
           },
           "conditions": [
             {
-              "id": "e6299667-65b9-4179-8ad8-368aa967c2dc",
+              "id": "8c480101-1e1a-43db-87c2-d22bde025072",
               "leftValue": "={{ !!$('Loop').first().json.ghl_campaign_id }}",
               "rightValue": "",
               "operator": {
@@ -222,7 +222,7 @@
       }
     },
     {
-      "id": "124bbd6b-cd7a-45d4-aae4-cc2718590643",
+      "id": "2debcdfb-c374-4bca-8750-2ee34af9d032",
       "name": "Create GHL draft",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -267,7 +267,7 @@
       "onError": "continueRegularOutput"
     },
     {
-      "id": "27578fdb-ee15-402a-9a22-d9bc73665990",
+      "id": "ccad0257-8ea8-4d2a-b708-548dfe3f7077",
       "name": "Classify create",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -282,7 +282,7 @@
       }
     },
     {
-      "id": "78498fad-5f3b-49ef-982e-bb9afa9bb776",
+      "id": "db72fcbe-9773-473a-9ab2-546e3ef5d947",
       "name": "Draft created?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
@@ -300,7 +300,7 @@
           },
           "conditions": [
             {
-              "id": "4d5c7e36-a377-47bb-acaa-41e14af3255b",
+              "id": "7b3f23fe-ae59-411d-9656-7540e7d0e933",
               "leftValue": "={{ $json.outcome === 'created' }}",
               "rightValue": "",
               "operator": {
@@ -316,7 +316,7 @@
       }
     },
     {
-      "id": "37371892-f416-4694-8cc8-e9cf87f17cd7",
+      "id": "82c8974e-7d05-4c8b-9ef3-932879476d9e",
       "name": "Store draft id",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -347,7 +347,7 @@
       "waitBetweenTries": 2000
     },
     {
-      "id": "49dd7966-3869-480d-bffc-7795c974202c",
+      "id": "edfd5f83-5e64-4acd-812a-f6a89dd624c6",
       "name": "Record create outcome",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -378,7 +378,7 @@
       "waitBetweenTries": 2000
     },
     {
-      "id": "1b481e08-3210-42c9-83a9-9721e50748bf",
+      "id": "36fe6d1a-2039-4574-873e-29c6869661bb",
       "name": "Pre-schedule check",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -409,7 +409,7 @@
       "waitBetweenTries": 2000
     },
     {
-      "id": "218baf4c-3168-41e1-a2e8-a5a5dfb4dd66",
+      "id": "ef73b7b7-9d60-4a9f-aa27-f25f70f8c372",
       "name": "Clear to schedule?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
@@ -427,7 +427,7 @@
           },
           "conditions": [
             {
-              "id": "871bc2b8-6d94-4ed2-809f-aa4112eb0773",
+              "id": "5df39bfb-c3c3-4fcb-aa7f-a0ec3fbf9a94",
               "leftValue": "={{ $json.clear === true }}",
               "rightValue": "",
               "operator": {
@@ -443,7 +443,7 @@
       }
     },
     {
-      "id": "2e4f4006-e66f-405d-b626-b161231aa5ea",
+      "id": "d36b6a26-776b-4cda-a41b-17290391afbd",
       "name": "Schedule in GHL",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -488,7 +488,7 @@
       "onError": "continueRegularOutput"
     },
     {
-      "id": "ef9768bd-2bac-4ed8-bcfa-fed784412d80",
+      "id": "b0e978c8-a196-459c-b1b0-5c33eb09eb32",
       "name": "Classify schedule",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -503,7 +503,7 @@
       }
     },
     {
-      "id": "6a304e81-31f4-492b-bcb4-2e337d42efdf",
+      "id": "f3f860d8-c39e-4afd-b86d-b20216a27f0e",
       "name": "Record schedule outcome",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -534,7 +534,7 @@
       "waitBetweenTries": 2000
     },
     {
-      "id": "a19e3801-ed72-4f2a-81d2-60fcb29aa315",
+      "id": "cd20089f-11ae-401f-9a26-7e35a330fa19",
       "name": "Pace",
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
@@ -546,7 +546,7 @@
         "amount": 1,
         "unit": "seconds"
       },
-      "webhookId": "610b0cdd-f81f-4f5e-ac2f-bcce0f97d127"
+      "webhookId": "03472dcb-3dfb-4e3b-aacc-4299293a7464"
     }
   ],
   "connections": {

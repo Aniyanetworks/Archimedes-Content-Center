@@ -94,8 +94,8 @@ export function createDemoApi(): Api {
   const tenants: DemoTenant[] = [
     demoTenant('equinox', 'Equinox Roofing', 'hsg', 'roofing', 'hsg_growth', ['US-CO'], {
       newsletter_name: 'The Equinox Home Protection Report', primary_color: '#14344f', secondary_color: '#d9822b',
-      local_note: 'Sample local note. The Equinox team would add a current service-area update here.',
-      offer_headline: 'Book a roofing assessment', offer_body: 'Sample offer text. Only verified, current offers go here.', offer_cta_label: 'Schedule an assessment', offer_url: 'https://equinox.example.com/book', offer_approved: true,
+      local_note: 'Our crews are booking fall roof assessments across the service area now, so earlier slots fill first.',
+      offer_headline: 'Book a roofing assessment', offer_body: 'Every assessment comes with a written report and photos of anything that needs attention.', offer_cta_label: 'Schedule an assessment', offer_url: 'https://equinox.example.com/book', offer_approved: true,
     }, { review_mode: 'review', reviewer_name: 'Equinox reviewer', reviewer_email: 'reviewer@equinox.example.com' }),
     demoTenant('summit', 'Summit Peak Roofing', 'hsg', 'roofing', 'hsg_essentials', ['US-TX'], {
       newsletter_name: 'Summit Peak Homeowner Tips', primary_color: '#3b2f63', secondary_color: '#1d8a7a', phone: '(555) 010-0222',
@@ -105,37 +105,37 @@ export function createDemoApi(): Api {
     }, { template_key: 'seasonal_guide' }),
     demoTenant('craft', 'Craft Mountain Brewery', 'hospitality', 'brewery', 'hospitality_pilot', ['US-CO'], {
       newsletter_name: 'The Craft Mountain Taproom', primary_color: '#5b3a1e', secondary_color: '#b7791f', phone: '(555) 010-0444',
-      local_note: 'Sample community note. Events and member news go here once verified.',
+      local_note: 'Thank you to everyone who joined the neighborhood cleanup. The next one is on the community board by the bar.',
     }, { template_key: 'premium_magazine', review_mode: 'review', reviewer_name: 'Brewery reviewer', reviewer_email: 'reviewer@craft.example.com' }),
   ];
 
   const contentItems: ContentItem[] = [
-    content('roof-hero', 'hsg', 'roofing', 'Sample: what to check on your roof after a storm', 'Sample teaser about a simple homeowner walk-around.', 'Sample article. Editors replace this with reviewed homeowner education.\n\nLook for missing shingles, debris in gutters, and water stains on ceilings, then call a professional for anything that needs a closer look.', { cta_label: 'Schedule a roof assessment' }),
-    content('roof-gutters', 'hsg', 'roofing', 'Sample: why clean gutters protect your roof', 'Sample teaser about water flow and fascia boards.', 'Sample article body about gutter care.'),
-    content('roof-colorado', 'hsg', 'roofing', 'Sample: a note for Colorado homeowners', 'Sample Colorado-only story. It must never reach tenants outside Colorado.', 'Sample regional article body.', { regions: ['US-CO'] }),
-    content('hvac-hero', 'hsg', 'hvac', 'Sample: get your furnace ready for winter', 'Sample teaser about seasonal maintenance.', 'Sample HVAC article. Replace filters, test the thermostat, and book a tune-up.', { cta_label: 'Book a tune-up' }),
-    content('brew-hero', 'hospitality', 'brewery', 'Sample: what is on tap this month', 'Sample teaser about seasonal releases.', 'Sample brewery article covering events, new releases and community news.', { cta_label: 'See what is on' }),
-    content('roof-draft', 'hsg', 'roofing', 'Sample draft: choosing a ventilation upgrade', 'Still in editing.', 'Draft body.', { status: 'draft' }),
-    content('roof-review', 'hsg', 'roofing', 'Sample: ice dams explained', 'Waiting on a fact and rights check.', 'Body awaiting review.', { status: 'fact_rights_review' }),
+    content('roof-hero', 'hsg', 'roofing', 'What to check on your roof after a storm', 'A ten-minute walk-around from the ground can catch small problems before they become leaks.', 'After strong wind or hail, start with a slow walk around the house. Look for shingles that are missing, curled or lifted at the edges, and for dents in gutters, vents and flashing.\n\nInside, check ceilings and the attic for new water stains. Take dated photos of anything you find, and please do not climb onto a wet or damaged roof.', { cta_label: 'Schedule a roof assessment' }),
+    content('roof-gutters', 'hsg', 'roofing', 'Why clean gutters protect more than your roof', 'Blocked gutters push water under shingles and against your foundation. Clearing them twice a year keeps water moving away from the house.', 'Clear gutters in late spring and again after the leaves fall.'),
+    content('roof-colorado', 'hsg', 'roofing', 'Colorado homeowners: get ready for freeze-thaw season', 'Water that gets under shingles expands when it freezes. A quick check of flashing and sealant before winter keeps small gaps from growing.', 'Look closely at flashing around chimneys, vents and skylights.', { regions: ['US-CO'] }),
+    content('hvac-hero', 'hsg', 'hvac', 'Get your furnace ready before the first cold night', 'A few simple checks now help your system run smoothly all winter.', 'Replace the air filter, test the thermostat, clear anything stored around the furnace, and make sure carbon monoxide detectors have fresh batteries. A professional tune-up checks the parts you cannot see.', { cta_label: 'Book a tune-up' }),
+    content('brew-hero', 'hospitality', 'brewery', 'New on tap: our autumn release lineup', 'Three new beers join the taps this month, from a toasty brown ale to a crisp fresh-hop lager.', 'Ask for a tasting flight to try all three side by side. Our bar team is happy to walk you through what makes each one different.', { cta_label: 'See what is on' }),
+    content('roof-draft', 'hsg', 'roofing', 'Choosing the right attic ventilation upgrade', 'Ridge vents, soffit vents and attic fans each solve different problems.', 'Draft: comparison of ventilation options, waiting for editor notes.', { status: 'draft' }),
+    content('roof-review', 'hsg', 'roofing', 'Ice dams explained, and how to prevent them', 'Ice dams form when heat escapes into the roof and melts snow that refreezes at the edge.', 'Better insulation and ventilation are the long-term fix. Waiting on a fact and rights check.', { status: 'fact_rights_review' }),
   ];
 
   const editions: Edition[] = [];
   const editionItems = new Map<string, EditionItem[]>();
   const addEdition = (id: string, industry: string, division: Tenant['division'], week: string, subject: string, status: Edition['status'], items: EditionItem[]) => {
     editions.push({
-      id, division, industry, publication_week: week, version: 1, subject, preview_text: 'Sample preview text', status, eligible_plans: [], embargo_at: null, expires_at: null,
+      id, division, industry, publication_week: week, version: 1, subject, preview_text: 'Practical tips for your home this month', status, eligible_plans: [], embargo_at: null, expires_at: null,
       central_approved_at: status === 'approved' ? now() : null, notes: null, updated_at: now(),
     });
     editionItems.set(id, items);
   };
-  addEdition('ed-roof', 'roofing', 'hsg', monday(0), 'Sample: storm-season roof check', 'approved', [
+  addEdition('ed-roof', 'roofing', 'hsg', monday(0), 'What to check on your roof after a storm', 'approved', [
     { content_item_id: 'roof-hero', slot: 'hero', position: 0 },
     { content_item_id: 'roof-gutters', slot: 'secondary', position: 1 },
     { content_item_id: 'roof-colorado', slot: 'secondary', position: 2 },
   ]);
-  addEdition('ed-hvac', 'hvac', 'hsg', monday(0), 'Sample: get ready for winter', 'approved', [{ content_item_id: 'hvac-hero', slot: 'hero', position: 0 }]);
-  addEdition('ed-brew', 'brewery', 'hospitality', monday(0), 'Sample: on tap this month', 'approved', [{ content_item_id: 'brew-hero', slot: 'hero', position: 0 }]);
-  addEdition('ed-roof-next', 'roofing', 'hsg', monday(1), 'Sample: next week in roofing', 'pending_approval', [
+  addEdition('ed-hvac', 'hvac', 'hsg', monday(0), 'Get your furnace ready before the first cold night', 'approved', [{ content_item_id: 'hvac-hero', slot: 'hero', position: 0 }]);
+  addEdition('ed-brew', 'brewery', 'hospitality', monday(0), 'New on tap: our autumn release lineup', 'approved', [{ content_item_id: 'brew-hero', slot: 'hero', position: 0 }]);
+  addEdition('ed-roof-next', 'roofing', 'hsg', monday(1), 'Ice dams explained, and how to prevent them', 'pending_approval', [
     { content_item_id: 'roof-hero', slot: 'hero', position: 0 },
   ]);
 
@@ -212,7 +212,7 @@ export function createDemoApi(): Api {
   createCampaign(summit, roof, 'SCHEDULED', { ghl_campaign_id: 'dry-run-001', dispatch_state: 'done', dispatch_attempts: 1, scheduled_at: days(2) });
   createCampaign(timber, editionById('ed-hvac'), 'FAILED', { last_error: 'GHL 503 while scheduling. Campaign state reconciled: not scheduled, safe to retry.', dispatch_state: 'retry_safe', dispatch_attempts: 2, scheduled_at: days(1) });
   createCampaign(craft, editionById('ed-brew'), 'HELD', { status_reason: 'review_deadline_missed', review_deadline: days(-1), scheduled_at: days(1) });
-  createCampaign(equinox, { ...roof, id: 'ed-roof', subject: 'Sample: last edition', publication_week: monday(-1) }, 'SENT', {
+  createCampaign(equinox, { ...roof, id: 'ed-roof', subject: 'Five signs your gutters need attention', publication_week: monday(-1) }, 'SENT', {
     idempotency_key: 'equinox:ed-roof-last:default', sent_at: days(-5), scheduled_at: days(-5), ghl_campaign_id: 'dry-run-000', dispatch_state: 'done',
   });
 

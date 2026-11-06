@@ -2,7 +2,7 @@
   "name": "Archimedes 04 Send review invites",
   "nodes": [
     {
-      "id": "1dbd49de-1eac-4692-9492-dbbcb08bceff",
+      "id": "b4c8a6c3-0098-497e-ad9a-3a96ac3b3799",
       "name": "Every 5 min",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
@@ -22,7 +22,7 @@
       }
     },
     {
-      "id": "17e6c430-e7e2-484a-a672-5fdc7e61a950",
+      "id": "8901340b-a950-48dd-b8a2-93a7afda8191",
       "name": "Config",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
@@ -36,7 +36,7 @@
         "assignments": {
           "assignments": [
             {
-              "id": "24eb1fcb-57ff-43cc-8576-d8dd24f73837",
+              "id": "8b372075-e4a0-4269-ace7-f6a4fc51a601",
               "name": "supabaseUrl",
               "value": "https://YOUR-PROJECT.supabase.co",
               "type": "string"
@@ -47,7 +47,7 @@
       }
     },
     {
-      "id": "3c78f830-1762-47e4-81d3-77ec3eec92aa",
+      "id": "315b10b4-e77d-4779-931e-088e8daaee1b",
       "name": "Invites due",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -78,7 +78,7 @@
       "waitBetweenTries": 2000
     },
     {
-      "id": "a84b87f9-1b03-4506-8eb7-5b522c0c6636",
+      "id": "1aa4478b-c98a-482b-bc25-661f7c13749a",
       "name": "Loop",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
@@ -92,7 +92,7 @@
       }
     },
     {
-      "id": "f7f8d16f-a5e7-424e-941b-57926f653512",
+      "id": "708fea06-9a3f-4f22-a9e6-d96900d780d4",
       "name": "Issue signed link",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -123,7 +123,7 @@
       "waitBetweenTries": 2000
     },
     {
-      "id": "a4371868-edfc-4704-9fb9-230102c01245",
+      "id": "2ef50db6-c056-4c5c-9acb-5414edb3c608",
       "name": "Build email",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -138,7 +138,7 @@
       }
     },
     {
-      "id": "dd70195d-59f5-4104-820f-052ed2f87896",
+      "id": "2086a6a1-5d97-4f97-8f8b-3c53671b3664",
       "name": "Send invite",
       "type": "n8n-nodes-base.emailSend",
       "typeVersion": 2.1,
@@ -147,7 +147,7 @@
         300
       ],
       "parameters": {
-        "fromEmail": "newsletters@YOUR-DOMAIN.example",
+        "fromEmail": "={{ $('Get sender').first().json.from }}",
         "toEmail": "={{ $json.to }}",
         "subject": "={{ $json.subject }}",
         "emailFormat": "html",
@@ -167,7 +167,7 @@
       "waitBetweenTries": 5000
     },
     {
-      "id": "015874e6-4fe9-4c8b-9a9f-3e75d55b0f1a",
+      "id": "a591dccd-af28-414e-8908-829f1155716a",
       "name": "Mark invite sent",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -198,7 +198,7 @@
       "waitBetweenTries": 2000
     },
     {
-      "id": "729bc75c-898d-4af5-856e-81a54711e41f",
+      "id": "813eacde-0a4f-48c9-8e52-f6045529702b",
       "name": "Pace",
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
@@ -210,7 +210,38 @@
         "amount": 1,
         "unit": "seconds"
       },
-      "webhookId": "ecf944b2-4eb9-499b-a42b-112057a1ade7"
+      "webhookId": "45f353b0-0bbc-47b3-8f29-58d80ac7550e"
+    },
+    {
+      "id": "890613cc-f9be-46dd-9089-3fe423445eca",
+      "name": "Get sender",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        330,
+        480
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Config').first().json.supabaseUrl }}/rest/v1/rpc/notification_sender",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({}) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "credentials": {
+        "supabaseApi": {
+          "id": "nhNQM44yDbiWIFG5",
+          "name": "Archemedies"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
     }
   ],
   "connections": {
@@ -226,6 +257,17 @@
       ]
     },
     "Config": {
+      "main": [
+        [
+          {
+            "node": "Get sender",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get sender": {
       "main": [
         [
           {

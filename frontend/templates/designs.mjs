@@ -19,7 +19,8 @@ function head({ font, textColor = '#26303a', pageColor = '#eef1f4' }) {
       @media (prefers-color-scheme: dark) {
         .page-bg, .page-bg > table { background-color: #14181d !important; }
         .card, .card > table, .card td { background-color: #1f252c !important; }
-        .card div, .card p, .card span { color: #e8ecf0 !important; }
+        /* Only the default ink turns light, so brand-coloured labels keep their colour. */
+        .card div[style*="color:#26303a"], .card div[style*="color:#2a2522"] { color: #e8ecf0 !important; }
       }
     </mj-style>
     <mj-raw><!-- page color ${pageColor} --></mj-raw>

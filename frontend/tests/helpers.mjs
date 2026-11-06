@@ -29,6 +29,9 @@ export async function createDb() {
   await db.exec(read('supabase/migrations/0002_engine.sql'));
   await db.exec(read('supabase/migrations/0003_review_config.sql'));
   await db.exec(read('supabase/migrations/0004_test_mode.sql'));
+  await db.exec(read('supabase/migrations/0005_delivery_and_settings.sql'));
+  await db.exec(read('supabase/migrations/0006_realistic_test_data.sql'));
+  await db.exec(read('supabase/migrations/0007_reset_safeupdate.sql'));
   await db.exec(read('supabase/seed/reference.sql'));
   await db.exec(read('supabase/seed/templates.sql'));
   return db;

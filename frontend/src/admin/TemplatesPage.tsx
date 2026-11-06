@@ -6,20 +6,9 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '../api';
 import { EmailPreview } from '../components/EmailPreview';
 import { renderNewsletter } from '../lib/render.js';
+import { SAMPLE_ISSUES } from '../lib/sampleContent';
+import type { Division } from '../api/types';
 
-const SAMPLE = {
-  brand: {
-    newsletter_name: 'Sample Newsletter', primary_color: '#14344f', secondary_color: '#d9822b', legal_business_name: 'Sample Business LLC',
-    postal_address: '100 Example Street, Denver, CO 80202', phone: '(555) 010-0100', website: 'https://example.com', booking_url: 'https://example.com/book',
-    local_note: 'Sample local note. The tenant adds a current local update here.',
-  },
-  hero: { headline: 'Sample hero story headline', teaser: 'Sample teaser', body: 'Sample article text for layout review. Practical, useful information comes first.\n\nA second paragraph shows spacing.', cta_label: 'Book an appointment' },
-  secondary: [
-    { headline: 'Sample secondary story', teaser: 'A short teaser for the second story in this issue.' },
-    { headline: 'Another useful story', teaser: 'A short teaser for the third story in this issue.' },
-  ],
-  offer: { headline: 'Sample promotional module', body: 'Only verified, current offers appear here.', cta_label: 'Learn more', url: 'https://example.com/offer' },
-};
 
 export function TemplatesPage() {
   const templates = useQuery({ queryKey: ['templates'], queryFn: api.listTemplates });
@@ -29,8 +18,9 @@ export function TemplatesPage() {
 
   const list = templates.data ?? [];
   const template = list.find((t) => t.key === selected) ?? list[0];
+  const issue = SAMPLE_ISSUES[(division ?? 'hsg') as Division];
   const rendered = template
-    ? renderNewsletter({ template_html: template.html, labels: template.labels, division, edition: { subject: 'Sample edition subject' }, tenant: { division }, ...SAMPLE })
+    ? renderNewsletter({ template_html: template.html, labels: template.labels, division, edition: { subject: issue.subject, preview_text: issue.preview_text }, tenant: { division }, brand: issue.brand, hero: issue.hero, secondary: issue.secondary, offer: issue.offer })
     : null;
 
   return (
@@ -73,7 +63,7 @@ export function TemplatesPage() {
           <Select label="Design" allowDeselect={false} value={template?.key ?? null} onChange={setSelected} data={list.map((t) => ({ value: t.key, label: t.name }))} />
           <Select label="Labels" allowDeselect={false} value={division} onChange={setDivision} data={[{ value: 'hsg', label: 'Home ServiceGenius' }, { value: 'hospitality', label: 'Hospitality' }]} />
         </SimpleGrid>
-        <Group mb="xs"><Badge variant="light" color="gray">Immutable version · sample content</Badge></Group>
+        <Group mb="xs"><Badge variant="light" color="gray">Immutable version · example content, fictional business</Badge></Group>
         <EmailPreview html={rendered?.html} />
       </Paper>
     </Stack>

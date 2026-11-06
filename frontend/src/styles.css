@@ -194,18 +194,83 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+.stat-tile {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  transition: border-color 120ms ease, box-shadow 120ms ease, transform 120ms ease;
+}
+
+.stat-tile:hover {
+  border-color: var(--mantine-color-brand-4);
+  transform: translateY(-1px);
+}
+
+.stat-tile:focus-visible {
+  outline: 2px solid var(--mantine-color-brand-5);
+  outline-offset: 2px;
+}
+
+.stat-tile[data-active='true'] {
+  border-color: var(--mantine-color-brand-6);
+  box-shadow: 0 0 0 1px var(--mantine-color-brand-6), var(--app-card-shadow);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stat-tile {
+    transition: none;
+  }
+
+  .stat-tile:hover {
+    transform: none;
+  }
+}
+
+/* A fixed grid whose 1px gaps draw the dividers, so lines stay aligned at every width. */
 .stat-strip {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  overflow: hidden;
+  background: var(--mantine-color-default-border);
 }
 
-.stat-strip > div {
+@media (max-width: 900px) {
+  .stat-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Strip items are buttons: reset the browser look, keep the strip's layout */
+.strip-item {
+  display: block;
   padding: 14px 18px;
-  border-right: 1px solid var(--mantine-color-default-border);
+  background: var(--mantine-color-body);
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  border: 0;
+  cursor: pointer;
+  transition: background 120ms ease;
 }
 
-.stat-strip > div:last-child {
-  border-right: 0;
+.strip-item:hover,
+.strip-item[data-active='true'] {
+  background: var(--mantine-color-brand-0);
+}
+
+[data-mantine-color-scheme='dark'] .strip-item:hover,
+[data-mantine-color-scheme='dark'] .strip-item[data-active='true'] {
+  background: var(--mantine-color-dark-6);
+}
+
+.strip-item:focus-visible {
+  outline: 2px solid var(--mantine-color-brand-5);
+  outline-offset: -2px;
 }
 
 /* Status bar: 2px surface gap between segments, rounded outer ends */
@@ -260,17 +325,6 @@ body {
   font-size: 12.5px;
   font-weight: 500;
   white-space: nowrap;
-}
-
-@media (max-width: 600px) {
-  .stat-strip > div {
-    border-right: 0;
-    border-bottom: 1px solid var(--mantine-color-default-border);
-  }
-
-  .stat-strip > div:last-child {
-    border-bottom: 0;
-  }
 }
 
 /* Test tools */
@@ -437,4 +491,14 @@ body {
 .brand-spiral {
   width: 70%;
   height: 70%;
+}
+
+/* Read-only fields (locked content) stay fully readable, but look settled rather than editable. */
+.mantine-Input-input[readonly] {
+  background: var(--mantine-color-gray-0);
+  cursor: default;
+}
+
+[data-mantine-color-scheme='dark'] .mantine-Input-input[readonly] {
+  background: var(--mantine-color-dark-6);
 }

@@ -201,7 +201,8 @@ export function TenantDetailPage() {
   );
 }
 
-const EMPTY_TENANT: Partial<Tenant> = { name: '', ghl_location_id: '', division: 'hsg', industry: 'roofing', plan_key: 'hsg_essentials', timezone: 'America/Denver', locale: 'en-US', service_areas: [], status: 'active', opted_in: false, entitlement_status: 'active' };
+// Industry and plan are filled from the database once loaded; timezone and locale start as the user's own.
+const EMPTY_TENANT: Partial<Tenant> = { name: '', ghl_location_id: '', division: 'hsg', timezone: Intl.DateTimeFormat().resolvedOptions().timeZone, locale: navigator.language || 'en-US', service_areas: [], status: 'active', opted_in: false, entitlement_status: 'active' };
 const EMPTY_BRAND: Partial<BrandProfile> = { newsletter_name: '', primary_color: '#1f3a5f', secondary_color: '#c8553d', sender_verified: false, domain_authenticated: false, offer_approved: false, social_links: {} };
 const EMPTY_PREFS: Partial<NewsletterPrefs> = { cadence: 'biweekly', preferred_weekday: 4, preferred_local_time: '09:00', review_mode: 'auto', approval_deadline_hours: 24, allowed_segments: [], test_contact_ids: [] };
 
@@ -230,6 +231,17 @@ export function TenantFormPage() {
   }, [detail.data]);
 
   const plan = useMemo(() => plans.data?.find((p) => p.plan_key === tenant.plan_key), [plans.data, tenant.plan_key]);
+
+  useEffect(() => {
+    if (id || !industries.data || !plans.data) return;
+    const firstIndustry = industries.data;
+    const firstPlan = plans.data;
+    setTenant((current) => ({
+      ...current,
+      industry: current.industry ?? firstIndustry.find((i) => i.division === current.division)?.key,
+      plan_key: current.plan_key ?? firstPlan.find((p) => p.division === current.division)?.plan_key,
+    }));
+  }, [id, industries.data, plans.data]);
   const allowedTemplates = (templates.data ?? []).filter((t) => plan?.template_keys.includes(t.key));
 
   // Keep the form valid when the division or plan changes.

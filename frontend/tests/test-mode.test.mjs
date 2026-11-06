@@ -123,3 +123,38 @@ describe('test mode', () => {
     assert.equal((await campaign(db, c.id)).status, 'APPROVED_FOR_SEND');
   });
 });
+describe('test data content', () => {
+  test('loaded editions read like real newsletters, with no placeholder text', async () => {
+    const db2 = await createDb();
+    const user = (await one(db2, `insert into auth.users (email) values ('admin@example.com') returning id`)).id;
+    await db2.query(`insert into staff_roles values ($1, 'admin')`, [user]);
+    await as(db2, 'authenticated', user, () => db2.query('select seed_test_data()'));
+    const placeholders = await rows(db2, `select headline from content_items where headline ilike '%sample%' or teaser ilike '%sample%' or body ilike '%sample%'
+      union all select subject from editions where subject ilike '%sample%' or subject ilike 'test:%'`);
+    assert.deepEqual(placeholders, []);
+    assert.equal((await one(db2, 'select count(*)::int n from content_items')).n, 10);
+    const notes = await rows(db2, 'select b.local_note, b.offer_headline from brand_profiles b');
+    assert.equal(new Set(notes.map((n) => n.local_note)).size, 4, 'each tenant has its own local note');
+    assert.ok(notes.every((n) => n.offer_headline));
+    for (const edition of await rows(db2, 'select id from editions')) await publish(db2, edition);
+    const statuses = (await rows(db2, 'select status from campaign_instances')).map((r) => r.status).sort();
+    assert.deepEqual(statuses, ['APPROVED_FOR_SEND', 'APPROVED_FOR_SEND', 'APPROVED_FOR_SEND', 'CLIENT_REVIEW_PENDING']);
+  });
+});
+
+describe('Supabase safe-update rule', () => {
+  test('no database function deletes or updates without a WHERE clause', async () => {
+    // Supabase's pg_safeupdate rejects these on API calls, and the local test database does not.
+    const db3 = await createDb();
+    const fns = await rows(db3, `select p.proname, p.prosrc from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public'`);
+    const offenders = [];
+    for (const f of fns) {
+      for (const stmt of f.prosrc.replace(/--[^\n]*/g, '').split(';')) {
+        // FOR UPDATE row locks are not update statements.
+        const m = stmt.match(/(?<!\bfor\s+)\b(delete\s+from|update)\s+(?!of\b|skip\b|nowait\b)[a-z_]+\b[\s\S]*/i);
+        if (m && !/\bon\s+conflict\b/i.test(stmt) && !/\bwhere\b/i.test(m[0])) offenders.push(`${f.proname}: ${m[0].trim().slice(0, 60)}`);
+      }
+    }
+    assert.deepEqual(offenders, []);
+  });
+});

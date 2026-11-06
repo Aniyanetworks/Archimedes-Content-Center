@@ -121,24 +121,24 @@ export function ContentEditorPage() {
         <Stack>
           <SimpleGrid cols={{ base: 1, sm: 3 }}>
             <Select
-              label="Division" allowDeselect={false} disabled={!editable} value={item.division}
+              label="Division" allowDeselect={false} readOnly={!editable} value={item.division}
               data={[{ value: 'hsg', label: 'Home ServiceGenius' }, { value: 'hospitality', label: 'Hospitality' }]}
               onChange={(value) => setItem((c) => ({ ...c, division: value as Division, industry: industries.data?.find((i) => i.division === value)?.key }))}
             />
-            <Select label="Industry" allowDeselect={false} disabled={!editable} value={item.industry ?? null} data={(industries.data ?? []).filter((i) => i.division === item.division).map((i) => ({ value: i.key, label: i.label }))} onChange={(value) => setItem((c) => ({ ...c, industry: value ?? undefined }))} />
-            <TextInput label="Season" disabled={!editable} value={item.season ?? ''} onChange={field('season')} />
+            <Select label="Industry" allowDeselect={false} readOnly={!editable} value={item.industry ?? null} data={(industries.data ?? []).filter((i) => i.division === item.division).map((i) => ({ value: i.key, label: i.label }))} onChange={(value) => setItem((c) => ({ ...c, industry: value ?? undefined }))} />
+            <TextInput label="Season" readOnly={!editable} value={item.season ?? ''} onChange={field('season')} />
           </SimpleGrid>
-          <TagsInput label="Regions" description="Leave empty for all markets. A story with regions only reaches tenants serving one of them." disabled={!editable} value={item.regions ?? []} onChange={(regions) => setItem((c) => ({ ...c, regions }))} />
-          <TextInput label="Headline" required disabled={!editable} value={item.headline ?? ''} onChange={field('headline')} />
-          <Textarea label="Teaser" disabled={!editable} autosize minRows={2} value={item.teaser ?? ''} onChange={field('teaser')} />
-          <Textarea label="Body" description="Separate paragraphs with a blank line. Avoid unverified statistics, guarantees, weather claims and promotional terms." disabled={!editable} autosize minRows={8} value={item.body ?? ''} onChange={field('body')} />
+          <TagsInput label="Regions" description="Leave empty for all markets. A story with regions only reaches tenants serving one of them." readOnly={!editable} value={item.regions ?? []} onChange={(regions) => setItem((c) => ({ ...c, regions }))} />
+          <TextInput label="Headline" required readOnly={!editable} value={item.headline ?? ''} onChange={field('headline')} />
+          <Textarea label="Teaser" readOnly={!editable} autosize minRows={2} value={item.teaser ?? ''} onChange={field('teaser')} />
+          <Textarea label="Body" description="Separate paragraphs with a blank line. Avoid unverified statistics, guarantees, weather claims and promotional terms." readOnly={!editable} autosize minRows={8} value={item.body ?? ''} onChange={field('body')} />
           <SimpleGrid cols={{ base: 1, sm: 2 }}>
-            <TextInput label="Image URL" type="url" disabled={!editable} value={item.image_url ?? ''} onChange={field('image_url')} />
-            <TextInput label="Image alt text" disabled={!editable} value={item.image_alt ?? ''} onChange={field('image_alt')} />
-            <TextInput label="Image license" disabled={!editable} value={item.image_license ?? ''} onChange={field('image_license')} />
-            <TextInput label="Expires on" type="date" disabled={!editable} value={item.expires_at?.slice(0, 10) ?? ''} onChange={field('expires_at')} />
-            <TextInput label="CTA class" description="For example assessment or booking" disabled={!editable} value={item.cta_class ?? ''} onChange={field('cta_class')} />
-            <TextInput label="CTA label" disabled={!editable} value={item.cta_label ?? ''} onChange={field('cta_label')} />
+            <TextInput label="Image URL" type="url" readOnly={!editable} value={item.image_url ?? ''} onChange={field('image_url')} />
+            <TextInput label="Image alt text" readOnly={!editable} value={item.image_alt ?? ''} onChange={field('image_alt')} />
+            <TextInput label="Image license" readOnly={!editable} value={item.image_license ?? ''} onChange={field('image_license')} />
+            <TextInput label="Expires on" type="date" readOnly={!editable} value={item.expires_at?.slice(0, 10) ?? ''} onChange={field('expires_at')} />
+            <TextInput label="CTA class" description="For example assessment or booking" readOnly={!editable} value={item.cta_class ?? ''} onChange={field('cta_class')} />
+            <TextInput label="CTA label" readOnly={!editable} value={item.cta_label ?? ''} onChange={field('cta_label')} />
           </SimpleGrid>
           {editable && <Group justify="flex-end"><Button loading={busy} disabled={!item.headline?.trim()} onClick={() => void save()}>Save draft</Button></Group>}
         </Stack>

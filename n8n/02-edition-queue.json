@@ -2,7 +2,7 @@
   "name": "Archimedes 02 Edition approved - queue tenant campaigns",
   "nodes": [
     {
-      "id": "ca6a1013-5eb1-4644-a698-61e764c9bc61",
+      "id": "b2f41f11-95f7-496b-83d1-dae583f1f48c",
       "name": "Every 5 min",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
@@ -22,7 +22,7 @@
       }
     },
     {
-      "id": "ca7d900c-120f-4dc6-8156-1467c2d484e1",
+      "id": "59ee4648-daed-4056-b8eb-5c16437e275d",
       "name": "Config",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
@@ -36,7 +36,7 @@
         "assignments": {
           "assignments": [
             {
-              "id": "b39dde39-5ab6-4afa-989b-82d1b5b2bf4d",
+              "id": "ab2bc59d-11f9-426b-8a5c-9c60668417e2",
               "name": "supabaseUrl",
               "value": "https://YOUR-PROJECT.supabase.co",
               "type": "string"
@@ -47,7 +47,7 @@
       }
     },
     {
-      "id": "56f7a6a0-70aa-4d80-adbb-d972d031e35d",
+      "id": "36034d5d-7e9f-4a55-ba59-c90b72dafaa2",
       "name": "Editions to queue",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -78,7 +78,7 @@
       "waitBetweenTries": 2000
     },
     {
-      "id": "e6f2d229-5bd4-4d50-93c8-bb76a45a3dc9",
+      "id": "82bd5d0b-56ab-46f9-aaeb-ffbed464ce9d",
       "name": "Loop",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
@@ -92,7 +92,7 @@
       }
     },
     {
-      "id": "8743c6f6-a02e-4f49-9652-80ce4ff4f7e3",
+      "id": "4fc5128c-865c-4a48-b116-6422a007501f",
       "name": "Queue campaigns",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,

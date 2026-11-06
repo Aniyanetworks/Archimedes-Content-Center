@@ -7,6 +7,7 @@ import { api } from '../api';
 import type { Division, Edition, EditionItem, EditionStatus } from '../api/types';
 import { EmailPreview } from '../components/EmailPreview';
 import { renderNewsletter } from '../lib/render.js';
+import { SAMPLE_ISSUES } from '../lib/sampleContent';
 import { canEdit, formatDate, humanize, showError, showSuccess } from '../lib/util';
 import { useAuth } from './AuthContext';
 
@@ -139,14 +140,14 @@ export function EditionDetailPage() {
     const template = templates.data?.[0];
     const heroStory = candidates.find((c) => c.id === hero);
     if (!template || !heroStory || !edition) return null;
-    // Sample branding only. Real tenant variants are rendered by n8n after approval.
+    // Example branding only. Each tenant's real version is rendered by n8n after approval.
     const result = renderNewsletter({
       template_html: template.html,
       labels: template.labels,
       division: edition.division,
       edition: { ...edition, ...form },
       tenant: { division: edition.division },
-      brand: { newsletter_name: 'Sample Newsletter', legal_business_name: 'Sample Business LLC', postal_address: '100 Example Street, Denver, CO 80202', phone: '(555) 010-0100', website: 'https://example.com', booking_url: 'https://example.com/book' },
+      brand: SAMPLE_ISSUES[edition.division].brand,
       hero: heroStory,
       secondary: secondary.map((sid) => candidates.find((c) => c.id === sid)).filter(Boolean),
     });
@@ -208,7 +209,7 @@ export function EditionDetailPage() {
       </Paper>
 
       <Paper withBorder p="md">
-        <Title order={4} mb="sm">Sample preview</Title>
+        <Title order={4} mb="sm">Preview with example branding</Title>
         <Text size="xs" c="dimmed" mb="xs">Uses placeholder branding to check the content. Each tenant's real version is rendered after approval.</Text>
         <EmailPreview html={previewHtml} height={520} />
       </Paper>

@@ -47,6 +47,7 @@ export interface CampaignRow {
   idempotency_key: string;
   dead_lettered_at: string | null;
   cancel_requested_at: string | null;
+  delivery_state?: 'unchecked' | 'delivered' | 'partial' | 'failed' | 'unverified';
 }
 
 export interface CampaignFilters {

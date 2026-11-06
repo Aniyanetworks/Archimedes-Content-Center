@@ -3,7 +3,8 @@
 // that hold the rules, renders HTML, and talks to GHL.
 //
 // Set values through the environment or edit the Config node after import:
-//   SUPABASE_URL  PORTAL_FROM_EMAIL  ERROR_WORKFLOW_ID
+//   SUPABASE_URL  ERROR_WORKFLOW_ID  N8N_SUPABASE_CREDENTIAL_ID  N8N_SMTP_CREDENTIAL_ID  GHL_BASE  N8N_OUT_DIR
+// The notification sender is not built in: workflows read it from Supabase (notification_sender).
 import fs from 'node:fs';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
@@ -14,13 +15,12 @@ const outDir = process.env.N8N_OUT_DIR ?? path.join(here, '..', '..', 'n8n');
 const render = fs.readFileSync(path.join(here, '..', 'src', 'lib', 'render.js'), 'utf8').replace(/^export /gm, '');
 
 const SUPABASE_URL = process.env.SUPABASE_URL ?? 'https://YOUR-PROJECT.supabase.co';
-const FROM_EMAIL = process.env.PORTAL_FROM_EMAIL ?? 'newsletters@YOUR-DOMAIN.example';
 const ERROR_WORKFLOW_ID = process.env.ERROR_WORKFLOW_ID ?? '';
 
 const GHL_BASE = process.env.GHL_BASE ?? 'https://services.leadconnectorhq.com';
 const GHL_VERSION = 'v3';
-const SUPABASE_CRED = { supabaseApi: { id: 'nhNQM44yDbiWIFG5', name: 'Archemedies' } };
-const SMTP_CRED = { smtp: { id: 'archimedes-smtp', name: 'Archimedes SMTP' } };
+const SUPABASE_CRED = { supabaseApi: { id: process.env.N8N_SUPABASE_CREDENTIAL_ID ?? 'nhNQM44yDbiWIFG5', name: process.env.N8N_SUPABASE_CREDENTIAL_NAME ?? 'Archemedies' } };
+const SMTP_CRED = { smtp: { id: process.env.N8N_SMTP_CREDENTIAL_ID ?? 'archimedes-smtp', name: process.env.N8N_SMTP_CREDENTIAL_NAME ?? 'Archimedes SMTP' } };
 
 class Flow {
   constructor(name, { sensitive = false } = {}) {
@@ -83,7 +83,7 @@ class Flow {
   }
 
   // GHL calls never use retryOnFail: an unknown outcome must be reconciled, never blindly retried.
-  ghl(name, method, urlExpression, bodyExpression, x, y = 300, query) {
+  ghl(name, method, urlExpression, bodyExpression, x, y = 300, query, version = GHL_VERSION) {
     const parameters = {
       method,
       url: urlExpression,
@@ -91,7 +91,7 @@ class Flow {
       headerParameters: {
         parameters: [
           { name: 'Authorization', value: "=Bearer {{ $('Get GHL Token').first().json.token }}" },
-          { name: 'Version', value: GHL_VERSION },
+          { name: 'Version', value: version },
           { name: 'Accept', value: 'application/json' },
         ],
       },
@@ -127,7 +127,7 @@ class Flow {
 
   email(name, to, subject, html, x, y = 300) {
     return this.add(name, 'n8n-nodes-base.emailSend', 2.1, {
-      fromEmail: FROM_EMAIL,
+      fromEmail: "={{ $('Get sender').first().json.from }}",
       toEmail: to,
       subject,
       emailFormat: 'html',
@@ -281,7 +281,8 @@ return [{ json: { to: link.to, subject: 'Review needed: ' + c.newsletter_name, h
   f.email('Send invite', '={{ $json.to }}', '={{ $json.subject }}', '={{ $json.html }}', 1320);
   f.rpc('Mark invite sent', 'mark_review_invite_sent', `{ p_id: ${CURRENT}.campaign_id }`, 1540);
   f.pace(1760, 300, 1);
-  f.chain('Every 5 min', 'Config', 'Invites due', 'Loop');
+  f.rpc('Get sender', 'notification_sender', '{}', 330, 480);
+  f.chain('Every 5 min', 'Config', 'Get sender', 'Invites due', 'Loop');
   f.link('Loop', 'Issue signed link', 1);
   f.chain('Issue signed link', 'Build email', 'Send invite', 'Mark invite sent', 'Pace', 'Loop');
   return f;
@@ -300,7 +301,8 @@ return $input.all().map(({ json: c }) => ({ json: {
   html: '<p>The review deadline for <strong>' + esc(c.newsletter_name) + '</strong> passed without a decision, so this issue has been held and will not be sent.</p><p>Contact Archimedes support if you would still like it to go out.</p>',
 } }));`, 660);
   f.email('Notify reviewer', '={{ $json.to }}', '={{ $json.subject }}', '={{ $json.html }}', 880);
-  f.chain('Every 15 min', 'Config', 'Hold expired reviews', 'Build notice', 'Notify reviewer');
+  f.rpc('Get sender', 'notification_sender', '{}', 330, 480);
+  f.chain('Every 15 min', 'Config', 'Get sender', 'Hold expired reviews', 'Build notice', 'Notify reviewer');
   return f;
 }
 
@@ -360,6 +362,7 @@ function reconcile() {
   const base = `=${GHL_BASE}/emails/locations/{{ $('Loop').first().json.ghl_location_id }}/campaigns/emails`;
   f.ghl('Get by id', 'GET', `${base}/{{ $('Loop').first().json.ghl_campaign_id }}`, null, 1320, 200);
   // Campaign names embed the idempotency key, which is how an interrupted create is found again.
+  // GHL keeps cancelled campaigns in the list, so those never count as a match.
   f.ghl('Search by idempotency key', 'GET', base, null, 1320, 400, [
     { name: 'search', value: "={{ $('Loop').first().json.idempotency_key }}" },
     { name: 'limit', value: '20' },
@@ -374,7 +377,7 @@ if (!(status >= 200 && status < 300)) {
   return [{ json: { reachable: false, found: null, ghl_id: null, ghl_status: null, http_status: status ?? null } }];
 }
 const match = Array.isArray(body.campaigns)
-  ? body.campaigns.find((row) => !row.deleted && String(row.name || '').includes(c.idempotency_key))
+  ? body.campaigns.find((row) => !row.deleted && row.status !== 'cancelled' && String(row.name || '').includes(c.idempotency_key))
   : body;
 return [{ json: { reachable: true, found: !!match && !match.deleted, ghl_id: match?.id ?? null, ghl_status: match?.status ?? null, http_status: status } }];`, 1540);
   f.rpc('Record reconcile', 'record_reconcile', `{ p_id: ${CURRENT}.campaign_id, p_reachable: $json.reachable, p_found: $json.found, p_ghl_id: $json.ghl_id, p_ghl_status: $json.ghl_status, p_http_status: $json.http_status }`, 1760);
@@ -421,7 +424,38 @@ if (!alerts.length || !alerts[0].id) return [];
 const rows = alerts.map((a) => '<li><strong>' + esc(a.severity) + '</strong> ' + esc(a.kind) + ': ' + esc(a.message) + '</li>').join('');
 return [{ json: { to: alerts[0].notify_email, subject: 'Archimedes engine: ' + alerts.length + ' alert(s)', html: '<ul>' + rows + '</ul>' } }];`, 660);
   f.email('Email operations', '={{ $json.to }}', '={{ $json.subject }}', '={{ $json.html }}', 880);
-  f.chain('Every 15 min', 'Config', 'Claim alerts', 'Build digest', 'Email operations');
+  f.rpc('Get sender', 'notification_sender', '{}', 330, 480);
+  f.chain('Every 15 min', 'Config', 'Get sender', 'Claim alerts', 'Build digest', 'Email operations');
+  return f;
+}
+
+// GHL marks a campaign "sent" even when every email was rejected, so delivery is checked separately.
+function deliveryCheck() {
+  const f = new Flow('11 Check delivery', { sensitive: true });
+  f.schedule(15, 0);
+  f.config();
+  f.rpc('Campaigns to check', 'list_campaigns_to_check_delivery', '{ p_limit: 100 }', 440);
+  f.loop(660);
+  f.rpc('Get GHL Token', 'get_ghl_token', `{ p_location: ${CURRENT}.ghl_location_id }`, 880);
+  // The name filter is a regular expression; idempotency keys hold only letters, digits, dashes and colons.
+  f.ghl('Campaign stats', 'GET', `=${GHL_BASE}/emails/schedule`, null, 1100, 300, [
+    { name: 'locationId', value: "={{ $('Loop').first().json.ghl_location_id }}" },
+    { name: 'name', value: "={{ $('Loop').first().json.idempotency_key }}" },
+    { name: 'showStats', value: 'true' },
+    { name: 'campaignsOnly', value: 'true' },
+    { name: 'limit', value: '20' },
+  ], '2021-07-28');
+  f.code('Normalize stats', `const c = $('Loop').first().json;
+const r = $input.first().json;
+if (!(r.statusCode >= 200 && r.statusCode < 300)) return [{ json: { reachable: false } }];
+const row = (r.body?.schedules ?? []).find((s) => s.id === c.ghl_campaign_id);
+if (!row) return [{ json: { reachable: true, found: false } }];
+return [{ json: { reachable: true, found: true, total: row.totalCount ?? 0, delivered: Math.max(row.delivered ?? 0, row.successCount ?? 0), queued: row.queuedCount ?? 0 } }];`, 1320);
+  f.rpc('Record delivery', 'record_delivery_check', `{ p_id: ${CURRENT}.campaign_id, p_reachable: $json.reachable, p_found: $json.found ?? null, p_total: $json.total ?? null, p_delivered: $json.delivered ?? null, p_queued: $json.queued ?? null }`, 1540);
+  f.pace(1760, 300, 1);
+  f.chain('Every 15 min', 'Config', 'Campaigns to check', 'Loop');
+  f.link('Loop', 'Get GHL Token', 1);
+  f.chain('Get GHL Token', 'Campaign stats', 'Normalize stats', 'Record delivery', 'Pace', 'Loop');
   return f;
 }
 
@@ -446,6 +480,7 @@ const flows = [
   ['08-emergency-cancel.json', emergencyCancel()],
   ['09-ops-alerts.json', opsAlerts()],
   ['10-error-handler.json', errorHandler()],
+  ['11-delivery-check.json', deliveryCheck()],
 ];
 
 fs.mkdirSync(outDir, { recursive: true });

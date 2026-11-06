@@ -2,7 +2,7 @@
   "name": "Archimedes 07 Reconcile campaign state",
   "nodes": [
     {
-      "id": "ba1b97b1-3686-427e-8a00-37f96c5e9915",
+      "id": "dbf3e8d0-4450-42e5-aab8-7f49154a510a",
       "name": "Every 15 min",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
@@ -22,7 +22,7 @@
       }
     },
     {
-      "id": "1c7ebc0c-4b9b-400b-baab-c5339c9c8589",
+      "id": "9ce3ed11-5fa7-4757-a7ca-4e13413a3691",
       "name": "Config",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
@@ -36,7 +36,7 @@
         "assignments": {
           "assignments": [
             {
-              "id": "1c4cbe99-503b-4a54-8ed5-deb6d52a1b5d",
+              "id": "63f9a74f-368f-4c29-9200-86b5e5ebf7f8",
               "name": "supabaseUrl",
               "value": "https://YOUR-PROJECT.supabase.co",
               "type": "string"
@@ -47,7 +47,7 @@
       }
     },
     {
-      "id": "fe858db7-49ea-4944-927f-b3f23bafe3cf",
+      "id": "76f1f142-2bb0-4317-8ce0-76ad932c53fb",
       "name": "Campaigns to reconcile",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -78,7 +78,7 @@
       "waitBetweenTries": 2000
     },
     {
-      "id": "c438b040-08f5-4988-afa5-9b1fb932ae23",
+      "id": "749be667-f877-4bf0-9015-b7ce2223e89e",
       "name": "Loop",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
@@ -92,7 +92,7 @@
       }
     },
     {
-      "id": "552bfbe6-7a2c-4a1b-b431-1151b4cbf8cf",
+      "id": "8d2aeb89-8b19-4e30-b418-21781e9b995b",
       "name": "Get GHL Token",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -123,7 +123,7 @@
       "waitBetweenTries": 2000
     },
     {
-      "id": "85416733-167e-4571-8fbf-ee1879898e40",
+      "id": "13801ae8-22d2-4671-aff4-6a18d086956e",
       "name": "GHL id known?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
@@ -141,7 +141,7 @@
           },
           "conditions": [
             {
-              "id": "deaee139-e34d-463d-8e81-0763816c1148",
+              "id": "e7cc961a-9e13-4231-94bb-fe36b109d340",
               "leftValue": "={{ !!$('Loop').first().json.ghl_campaign_id }}",
               "rightValue": "",
               "operator": {
@@ -157,7 +157,7 @@
       }
     },
     {
-      "id": "4cb7fb13-7033-47d0-b31f-09a6e2c92890",
+      "id": "b164652e-0abe-43d2-8365-17d0c1d18041",
       "name": "Get by id",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -199,7 +199,7 @@
       "onError": "continueRegularOutput"
     },
     {
-      "id": "d11ff386-5706-4548-ba65-f463302082b7",
+      "id": "709c2c4f-19be-4057-8431-839275debe6a",
       "name": "Search by idempotency key",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -258,7 +258,7 @@
       "onError": "continueRegularOutput"
     },
     {
-      "id": "54109c2b-76b3-499e-b673-a7c70a72bccb",
+      "id": "51f2971e-d99e-4176-a997-8788a2a7136c",
       "name": "Normalize",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -269,11 +269,11 @@
       "parameters": {
         "mode": "runOnceForAllItems",
         "language": "javaScript",
-        "jsCode": "const c = $('Loop').first().json;\nconst r = $input.first().json;\nconst status = r.statusCode;\nconst body = r.body && typeof r.body === 'object' ? r.body : {};\nif (!(status >= 200 && status < 300)) {\n  // Still unknown. Stay in reconciliation and try again later.\n  return [{ json: { reachable: false, found: null, ghl_id: null, ghl_status: null, http_status: status ?? null } }];\n}\nconst match = Array.isArray(body.campaigns)\n  ? body.campaigns.find((row) => !row.deleted && String(row.name || '').includes(c.idempotency_key))\n  : body;\nreturn [{ json: { reachable: true, found: !!match && !match.deleted, ghl_id: match?.id ?? null, ghl_status: match?.status ?? null, http_status: status } }];"
+        "jsCode": "const c = $('Loop').first().json;\nconst r = $input.first().json;\nconst status = r.statusCode;\nconst body = r.body && typeof r.body === 'object' ? r.body : {};\nif (!(status >= 200 && status < 300)) {\n  // Still unknown. Stay in reconciliation and try again later.\n  return [{ json: { reachable: false, found: null, ghl_id: null, ghl_status: null, http_status: status ?? null } }];\n}\nconst match = Array.isArray(body.campaigns)\n  ? body.campaigns.find((row) => !row.deleted && row.status !== 'cancelled' && String(row.name || '').includes(c.idempotency_key))\n  : body;\nreturn [{ json: { reachable: true, found: !!match && !match.deleted, ghl_id: match?.id ?? null, ghl_status: match?.status ?? null, http_status: status } }];"
       }
     },
     {
-      "id": "bf8ad25c-1785-402a-af1c-3246aa42a848",
+      "id": "71439f07-3f1c-4748-916e-95ba4d7cb43f",
       "name": "Record reconcile",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -304,7 +304,7 @@
       "waitBetweenTries": 2000
     },
     {
-      "id": "68199f54-4141-4c83-8e86-15a5fd4c8b79",
+      "id": "6ade2e78-1fcf-43e7-8d43-466fa9d66efc",
       "name": "Pace",
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
@@ -316,7 +316,7 @@
         "amount": 1,
         "unit": "seconds"
       },
-      "webhookId": "539ed97d-9c06-4203-9197-d7f8c1b1109b"
+      "webhookId": "1e7ca426-2216-4d06-b2f5-613c93cfb320"
     }
   ],
   "connections": {

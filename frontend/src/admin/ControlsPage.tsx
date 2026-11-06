@@ -108,6 +108,14 @@ export function ControlsPage() {
               <NumberInput disabled={!admin} label="Daily send cap" description="Campaigns per UTC day. Empty means dispatch is blocked." min={0} defaultValue={(settings.data.daily_send_cap as number) ?? ''} onBlur={(e) => void saveSetting('daily_send_cap', e.currentTarget.value === '' ? null : Number(e.currentTarget.value))} />
               <NumberInput disabled={!admin} label="Cost per 1,000 emails (USD)" description="Used for the cost estimate card" min={0} decimalScale={4} defaultValue={(settings.data.cost_per_1000_emails_usd as number) ?? ''} onBlur={(e) => void saveSetting('cost_per_1000_emails_usd', e.currentTarget.value === '' ? null : Number(e.currentTarget.value))} />
             </Group>
+            <Group grow align="flex-start">
+              <TextInput disabled={!admin} label="Notification sender email" description="From address for review invites and alerts. Email workflows stop until it is set." type="email" defaultValue={(settings.data.notification_from_email as string) ?? ''} onBlur={(e) => void saveSetting('notification_from_email', e.currentTarget.value.trim() || null)} />
+              <TextInput disabled={!admin} label="Notification sender name" defaultValue={(settings.data.notification_from_name as string) ?? ''} onBlur={(e) => void saveSetting('notification_from_name', e.currentTarget.value.trim() || 'Archimedes')} />
+            </Group>
+            <Group grow align="flex-start">
+              <NumberInput disabled={!admin} label="Check delivery after (minutes)" description="How long after sending before delivery is judged" min={5} defaultValue={(settings.data.delivery_check_after_minutes as number) ?? 30} onBlur={(e) => void saveSetting('delivery_check_after_minutes', Number(e.currentTarget.value) || 30)} />
+              <NumberInput disabled={!admin} label="Keep re-checking for (hours)" description="Queued or partial deliveries are re-checked this long" min={1} defaultValue={(settings.data.delivery_recheck_hours as number) ?? 24} onBlur={(e) => void saveSetting('delivery_recheck_hours', Number(e.currentTarget.value) || 24)} />
+            </Group>
           </Stack>
         )}
       </Paper>

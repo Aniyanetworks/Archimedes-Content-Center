@@ -2,7 +2,7 @@
   "name": "Archimedes 10 Workflow error handler",
   "nodes": [
     {
-      "id": "ae3c00a2-c54d-4c1e-9a7c-f1f9a4a86a7a",
+      "id": "1c6ae9a1-8a1b-40a6-a3a3-f151d5d26f7a",
       "name": "On workflow error",
       "type": "n8n-nodes-base.errorTrigger",
       "typeVersion": 1,
@@ -13,7 +13,7 @@
       "parameters": {}
     },
     {
-      "id": "a769d4ec-b5f2-4c3f-a65c-c807c868018c",
+      "id": "ea9ef4e5-1726-4ab0-8890-9df37820b90c",
       "name": "Config",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
@@ -27,7 +27,7 @@
         "assignments": {
           "assignments": [
             {
-              "id": "27fd7df7-ef73-477e-add8-a91723647fed",
+              "id": "e853a987-95bb-491f-9563-c05611b1718e",
               "name": "supabaseUrl",
               "value": "https://YOUR-PROJECT.supabase.co",
               "type": "string"
@@ -38,7 +38,7 @@
       }
     },
     {
-      "id": "e50e2da5-c0da-4922-b4fa-366d2ee717d1",
+      "id": "16bf8dbe-23e5-45fc-932d-60430906c6f1",
       "name": "Record workflow error",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
