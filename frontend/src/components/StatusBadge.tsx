@@ -1,5 +1,6 @@
+import { Tooltip } from '@mantine/core';
 import type { CampaignStatus } from '../api/types';
-import { humanize } from '../lib/util';
+import { CAMPAIGN_STATUS_TEXT } from '../lib/statusText';
 
 const DOT: Record<CampaignStatus, string> = {
   NOT_ELIGIBLE: 'var(--mantine-color-gray-5)',
@@ -20,10 +21,13 @@ const DOT: Record<CampaignStatus, string> = {
 };
 
 export function StatusBadge({ status }: { status: CampaignStatus }) {
+  const text = CAMPAIGN_STATUS_TEXT[status];
   return (
-    <span className="status-pill">
-      <span className="status-dot" style={{ background: DOT[status] }} />
-      {humanize(status)}
-    </span>
+    <Tooltip label={text.hint} multiline w={280} withArrow events={{ hover: true, focus: true, touch: true }}>
+      <span className="status-pill" tabIndex={0}>
+        <span className="status-dot" style={{ background: DOT[status] }} />
+        {text.label}
+      </span>
+    </Tooltip>
   );
 }

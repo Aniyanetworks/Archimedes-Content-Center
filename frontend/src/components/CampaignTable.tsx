@@ -4,10 +4,14 @@ import { IconDotsVertical, IconEye } from '@tabler/icons-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { api } from '../api';
-import type { CampaignAction, CampaignRow, StaffRole } from '../api/types';
+import type { CampaignAction, CampaignRow, CampaignStatus, StaffRole } from '../api/types';
 import { canOperate, formatDate, formatDateTime, humanize, showError, showSuccess } from '../lib/util';
 import { EmailPreview } from './EmailPreview';
 import { StatusBadge } from './StatusBadge';
+import { reasonText } from '../lib/statusText';
+import { hintLabel } from './HintLabel';
+
+const NEEDS_ATTENTION: CampaignStatus[] = ['NOT_ELIGIBLE', 'HELD', 'FAILED', 'REVISION_REQUESTED', 'REJECTED', 'CANCELED'];
 
 const ACTION_LABELS: Record<CampaignAction, string> = {
   hold: 'Hold',
@@ -67,10 +71,10 @@ export function CampaignTable({ rows, role, showTenant = true }: { rows: Campaig
             <Table.Tr>
               {showTenant && <Table.Th miw={210}>Tenant</Table.Th>}
               <Table.Th miw={230}>Edition</Table.Th>
-              <Table.Th>Status</Table.Th>
-              <Table.Th>Mode</Table.Th>
-              <Table.Th>Send time</Table.Th>
-              <Table.Th>Deadline</Table.Th>
+              <Table.Th>{hintLabel("Status", "Where this newsletter is right now. Hover over a status to see what it means.")}</Table.Th>
+              <Table.Th>{hintLabel("Approval", "Owner approves: the sub-account owner must approve before it is sent. Automatic: it is sent without asking.")}</Table.Th>
+              <Table.Th>{hintLabel('Goes out', "When the newsletter is sent, or was sent, shown in the sub-account's own timezone.")}</Table.Th>
+              <Table.Th>{hintLabel('Approve by', 'The last moment the sub-account owner can approve. Only for sub-accounts that review their newsletter first. If they miss it, the newsletter is held.')}</Table.Th>
               <Table.Th aria-label="Actions" />
             </Table.Tr>
           </Table.Thead>
@@ -93,15 +97,16 @@ export function CampaignTable({ rows, role, showTenant = true }: { rows: Campaig
                   </Table.Td>
                   <Table.Td>
                     <StatusBadge status={row.status} />
-                    {(row.status_reason || row.last_error) && (
-                      <Tooltip label={row.last_error ?? humanize(row.status_reason)} multiline w={300}>
-                        <Text size="xs" c="dimmed" lineClamp={1} maw={200}>{row.last_error ?? humanize(row.status_reason)}</Text>
+                    {/* A second line only when something needs attention; the Mode column already says "Automatic". */}
+                    {NEEDS_ATTENTION.includes(row.status) && (row.status_reason || row.last_error) && (
+                      <Tooltip label={row.last_error ?? reasonText(row.status_reason)} multiline w={300}>
+                        <Text size="xs" c="dimmed" lineClamp={1} maw={200}>{row.last_error ?? reasonText(row.status_reason)}</Text>
                       </Tooltip>
                     )}
                   </Table.Td>
-                  <Table.Td><Text size="sm" c="dimmed">{row.review_mode === 'review' ? 'Review' : 'Automatic'}</Text></Table.Td>
+                  <Table.Td><Text size="sm" c="dimmed" style={{ whiteSpace: 'nowrap' }}>{row.review_mode === 'review' ? 'Owner approves' : 'Automatic'}</Text></Table.Td>
                   <Table.Td><Text size="sm" style={{ whiteSpace: 'nowrap' }}>{formatDateTime(row.sent_at ?? row.scheduled_at, row.timezone)}</Text></Table.Td>
-                  <Table.Td><Text size="sm" style={{ whiteSpace: 'nowrap' }}>{formatDateTime(row.review_deadline, row.timezone)}</Text></Table.Td>
+                  <Table.Td>{row.review_mode === 'review' ? <Text size="sm" style={{ whiteSpace: 'nowrap' }}>{formatDateTime(row.review_deadline, row.timezone)}</Text> : <Text size="sm" c="dimmed">Not needed</Text>}</Table.Td>
                   <Table.Td>
                     <Group gap={4} wrap="nowrap" justify="flex-end">
                       <Tooltip label="Preview">

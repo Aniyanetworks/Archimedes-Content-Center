@@ -7,6 +7,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../api';
 import { CAMPAIGN_STATUSES, type CampaignFilters, type DashboardCards } from '../api/types';
 import { CampaignTable } from '../components/CampaignTable';
+import { CAMPAIGN_STATUS_TEXT } from '../lib/statusText';
 import { PageHeader } from '../components/PageHeader';
 import { formatDate, humanize } from '../lib/util';
 import { useAuth } from './AuthContext';
@@ -31,7 +32,7 @@ function StatTile({ label, value, icon: Icon, color, active = false, onClick }: 
 
 function CampaignFlow({ cards }: { cards: DashboardCards }) {
   const parts = [
-    { label: 'Awaiting client review', count: cards.pending_approvals, color: 'var(--status-review)' },
+    { label: 'Waiting for owner approval', count: cards.pending_approvals, color: 'var(--status-review)' },
     { label: 'Scheduled', count: cards.scheduled, color: 'var(--status-scheduled)' },
     { label: 'Sent', count: cards.sent, color: 'var(--status-sent)' },
     { label: 'Held', count: cards.held, color: 'var(--status-held)' },
@@ -184,7 +185,7 @@ export function DashboardPage() {
             <Select label="Edition" clearable searchable value={filters.edition_id ?? null} onChange={set('edition_id')} data={(editions.data ?? []).map((e) => ({ value: e.id, label: `${formatDate(e.publication_week)} · ${e.industry} · ${e.subject || 'Untitled'}` }))} />
             <TextInput label="Send date" type="date" value={filters.send_date ?? ''} onChange={(event) => set('send_date')(event.currentTarget.value)} />
             <Select label="Approval mode" clearable value={filters.review_mode ?? null} onChange={set('review_mode')} data={[{ value: 'auto', label: 'Automatic' }, { value: 'review', label: 'Review' }]} />
-            <Select label="Status" clearable searchable value={filters.status ?? null} onChange={set('status')} data={CAMPAIGN_STATUSES.map((s) => ({ value: s, label: humanize(s) }))} />
+            <Select label="Status" clearable searchable value={filters.status ?? null} onChange={set('status')} data={CAMPAIGN_STATUSES.map((s) => ({ value: s, label: CAMPAIGN_STATUS_TEXT[s].label }))} />
           </SimpleGrid>
         </Collapse>
 
