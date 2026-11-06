@@ -1,6 +1,7 @@
 import { PageHeader } from '../components/PageHeader';
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Anchor, Badge, Button, Checkbox, Group, Modal, MultiSelect, Paper, Radio, ScrollArea, Select, SimpleGrid, Stack, Table, Text, Textarea, TextInput, Title } from '@mantine/core';
+import { ActionIcon, Alert, Anchor, Badge, Button, Checkbox, Group, Modal, MultiSelect, Paper, Radio, ScrollArea, Select, SimpleGrid, Stack, Table, Text, Textarea, TextInput, Title } from '@mantine/core';
+import { IconTrash } from '@tabler/icons-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api';
@@ -12,6 +13,41 @@ import { canEdit, formatDate, humanize, showError, showSuccess } from '../lib/ut
 import { useAuth } from './AuthContext';
 
 const EDITION_COLORS: Record<EditionStatus, string> = { draft: 'gray', pending_approval: 'yellow', approved: 'green', rejected: 'red' };
+
+// Matches edition_delete in the database: only editions that were never approved and have no campaigns.
+const canDelete = (edition: Edition) => edition.status !== 'approved' && !edition.central_approved_at;
+
+function DeleteEditionModal({ edition, onClose, onDeleted }: { edition: Edition | null; onClose: () => void; onDeleted: () => void }) {
+  const client = useQueryClient();
+  const [busy, setBusy] = useState(false);
+  async function remove() {
+    if (!edition) return;
+    setBusy(true);
+    try {
+      await api.deleteEdition(edition.id);
+      showSuccess('Edition deleted');
+      await client.invalidateQueries({ queryKey: ['editions'] });
+      onDeleted();
+    } catch (error) {
+      showError(error);
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <Modal opened={!!edition} onClose={onClose} title="Delete this edition?">
+      <Stack>
+        <Text size="sm">
+          “{edition?.subject || 'Untitled'}” ({edition ? `${humanize(edition.industry)}, week of ${formatDate(edition.publication_week)}` : ''}) will be deleted. Its stories stay in the content library. This cannot be undone.
+        </Text>
+        <Group justify="flex-end">
+          <Button variant="default" onClick={onClose} disabled={busy}>Cancel</Button>
+          <Button color="red" loading={busy} onClick={() => void remove()}>Delete edition</Button>
+        </Group>
+      </Stack>
+    </Modal>
+  );
+}
 
 function nextMonday(): string {
   const date = new Date();
@@ -36,6 +72,8 @@ export function EditionListPage() {
   const [industry, setIndustry] = useState<string | null>('roofing');
   const [week, setWeek] = useState(nextMonday());
   const [subject, setSubject] = useState('');
+  const [deleting, setDeleting] = useState<Edition | null>(null);
+  const editor = canEdit(session?.role);
 
   async function create() {
     try {
@@ -68,7 +106,7 @@ export function EditionListPage() {
       <Paper withBorder p="sm">
         <ScrollArea>
           <Table highlightOnHover miw={680}>
-            <Table.Thead><Table.Tr><Table.Th>Week of</Table.Th><Table.Th>Industry</Table.Th><Table.Th>Subject</Table.Th><Table.Th>Version</Table.Th><Table.Th>Status</Table.Th></Table.Tr></Table.Thead>
+            <Table.Thead><Table.Tr><Table.Th>Week of</Table.Th><Table.Th>Industry</Table.Th><Table.Th>Subject</Table.Th><Table.Th>Version</Table.Th><Table.Th>Status</Table.Th>{editor && <Table.Th aria-label="Actions" w={56} />}</Table.Tr></Table.Thead>
             <Table.Tbody>
               {(editions.data ?? []).map((edition) => (
                 <Table.Tr key={edition.id}>
@@ -77,14 +115,24 @@ export function EditionListPage() {
                   <Table.Td>{edition.subject || 'Untitled'}</Table.Td>
                   <Table.Td>v{edition.version}</Table.Td>
                   <Table.Td><Badge variant="light" color={EDITION_COLORS[edition.status]}>{humanize(edition.status)}</Badge></Table.Td>
+                  {editor && (
+                    <Table.Td>
+                      {canDelete(edition) && (
+                        <ActionIcon variant="subtle" color="red" aria-label={`Delete ${edition.subject || 'edition'}`} title="Delete edition" onClick={() => setDeleting(edition)}>
+                          <IconTrash size={16} />
+                        </ActionIcon>
+                      )}
+                    </Table.Td>
+                  )}
                 </Table.Tr>
               ))}
-              {!editions.isLoading && !editions.data?.length && <Table.Tr><Table.Td colSpan={5}><Text c="dimmed" ta="center" py="lg">No editions yet.</Text></Table.Td></Table.Tr>}
+              {!editions.isLoading && !editions.data?.length && <Table.Tr><Table.Td colSpan={editor ? 6 : 5}><Text c="dimmed" ta="center" py="lg">No editions yet.</Text></Table.Td></Table.Tr>}
             </Table.Tbody>
           </Table>
         </ScrollArea>
       </Paper>
 
+      <DeleteEditionModal edition={deleting} onClose={() => setDeleting(null)} onDeleted={() => setDeleting(null)} />
       <Modal opened={creating} onClose={() => setCreating(false)} title="New edition">
         <Stack>
           <Select label="Industry" placeholder="Choose an industry" allowDeselect={false} value={industry} onChange={changeIndustry} data={(industries.data ?? []).map((i) => ({ value: i.key, label: i.label }))} />
@@ -106,6 +154,8 @@ export function EditionDetailPage() {
   const { id = '' } = useParams();
   const { session } = useAuth();
   const client = useQueryClient();
+  const navigate = useNavigate();
+  const [deleting, setDeleting] = useState(false);
   const detail = useQuery({ queryKey: ['edition', id], queryFn: () => api.getEdition(id) });
   const content = useQuery({ queryKey: ['content'], queryFn: api.listContent });
   const plans = useQuery({ queryKey: ['plans'], queryFn: api.listPlans });
@@ -242,6 +292,9 @@ export function EditionDetailPage() {
 
       {editor && (
         <Group justify="flex-end">
+          {canDelete(edition) && (
+            <Button variant="subtle" color="red" leftSection={<IconTrash size={16} />} disabled={busy} onClick={() => setDeleting(true)} mr="auto">Delete edition</Button>
+          )}
           <Button variant="default" loading={busy} onClick={() => void run(saveAll, 'Edition saved')}>Save</Button>
           {(edition.status === 'draft' || edition.status === 'rejected') && (
             <Button loading={busy} disabled={!hero} onClick={() => void run(async () => { await saveAll(); await api.submitEdition(id); }, 'Submitted for approval')}>Submit for approval</Button>
@@ -255,6 +308,7 @@ export function EditionDetailPage() {
         </Group>
       )}
 
+      <DeleteEditionModal edition={deleting ? edition : null} onClose={() => setDeleting(false)} onDeleted={() => navigate('/admin/editions', { replace: true })} />
       <Modal opened={rejectOpen} onClose={() => setRejectOpen(false)} title="Reject edition">
         <Stack>
           <Textarea label="Notes for the editor" placeholder="What needs to change before this can be approved" required autosize minRows={3} value={rejectNotes} onChange={(e) => setRejectNotes(e.currentTarget.value)} />

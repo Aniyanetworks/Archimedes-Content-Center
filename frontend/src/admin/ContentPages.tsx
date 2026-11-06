@@ -1,7 +1,9 @@
 import { PageHeader } from '../components/PageHeader';
 import { useEffect, useState } from 'react';
-import { Alert, Anchor, Badge, Button, Group, Paper, ScrollArea, Select, SimpleGrid, Stack, Table, TagsInput, Text, Textarea, TextInput, Title } from '@mantine/core';
+import { ActionIcon, Alert, Anchor, Badge, Button, Group, Paper, ScrollArea, Select, SimpleGrid, Stack, Table, TagsInput, Text, Textarea, TextInput, Title } from '@mantine/core';
+import { IconTrash } from '@tabler/icons-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { ConfirmDelete } from '../components/ConfirmDelete';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api';
 import type { ContentItem, ContentStatus, Division } from '../api/types';
@@ -22,10 +24,16 @@ const NEXT_STEPS: Record<ContentStatus, Array<{ to: ContentStatus; label: string
   retired: [],
 };
 
+// Matches content_delete in the database. A story used in an edition is refused there with a clear message.
+const canDeleteStory = (item: Partial<ContentItem>) => !!item.id && item.status !== 'approved' && item.status !== 'retired';
+
 export function ContentListPage() {
   const { session } = useAuth();
+  const client = useQueryClient();
   const content = useQuery({ queryKey: ['content'], queryFn: api.listContent });
   const [status, setStatus] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<ContentItem | null>(null);
+  const editor = canEdit(session?.role);
   const rows = (content.data ?? []).filter((item) => !status || item.status === status);
 
   return (
@@ -36,7 +44,7 @@ export function ContentListPage() {
       <Paper withBorder p="sm">
         <ScrollArea>
           <Table highlightOnHover miw={760}>
-            <Table.Thead><Table.Tr><Table.Th>Headline</Table.Th><Table.Th>Industry</Table.Th><Table.Th>Regions</Table.Th><Table.Th>Version</Table.Th><Table.Th>Status</Table.Th><Table.Th>Updated</Table.Th></Table.Tr></Table.Thead>
+            <Table.Thead><Table.Tr><Table.Th>Headline</Table.Th><Table.Th>Industry</Table.Th><Table.Th>Regions</Table.Th><Table.Th>Version</Table.Th><Table.Th>Status</Table.Th><Table.Th>Updated</Table.Th>{editor && <Table.Th aria-label="Actions" w={56} />}</Table.Tr></Table.Thead>
             <Table.Tbody>
               {rows.map((item) => (
                 <Table.Tr key={item.id}>
@@ -46,13 +54,30 @@ export function ContentListPage() {
                   <Table.Td>v{item.version}</Table.Td>
                   <Table.Td><Badge variant="light" color={CONTENT_COLORS[item.status]}>{humanize(item.status)}</Badge></Table.Td>
                   <Table.Td style={{ whiteSpace: 'nowrap' }}>{formatDateTime(item.updated_at)}</Table.Td>
+                  {editor && (
+                    <Table.Td>
+                      {canDeleteStory(item) && (
+                        <ActionIcon variant="subtle" color="red" aria-label={`Delete ${item.headline || 'story'}`} title="Delete story" onClick={() => setDeleting(item)}><IconTrash size={16} /></ActionIcon>
+                      )}
+                    </Table.Td>
+                  )}
                 </Table.Tr>
               ))}
-              {!content.isLoading && rows.length === 0 && <Table.Tr><Table.Td colSpan={6}><Text c="dimmed" ta="center" py="lg">No stories found.</Text></Table.Td></Table.Tr>}
+              {!content.isLoading && rows.length === 0 && <Table.Tr><Table.Td colSpan={editor ? 7 : 6}><Text c="dimmed" ta="center" py="lg">No stories found.</Text></Table.Td></Table.Tr>}
             </Table.Tbody>
           </Table>
         </ScrollArea>
       </Paper>
+      <ConfirmDelete
+        opened={!!deleting}
+        title="Delete this story?"
+        message={`“${deleting?.headline || 'Untitled'}” (v${deleting?.version ?? 1}) will be deleted. This cannot be undone.`}
+        confirmLabel="Delete story"
+        success="Story deleted"
+        onClose={() => setDeleting(null)}
+        onConfirm={() => api.deleteContent(deleting!.id)}
+        onDone={() => { setDeleting(null); void client.invalidateQueries({ queryKey: ['content'] }); }}
+      />
     </Stack>
   );
 }
@@ -69,6 +94,7 @@ export function ContentEditorPage() {
   const [item, setItem] = useState<Partial<ContentItem>>(EMPTY);
   const [notes, setNotes] = useState('');
   const [busy, setBusy] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     setItem(existing.data ?? EMPTY);
@@ -155,9 +181,20 @@ export function ContentEditorPage() {
               </Button>
             ))}
             {(status === 'approved' || status === 'retired') && <Button variant="default" loading={busy} onClick={() => void newVersion()}>Create new version</Button>}
+            {canDeleteStory(item) && <Button variant="subtle" color="red" leftSection={<IconTrash size={16} />} ml="auto" disabled={busy} onClick={() => setDeleting(true)}>Delete story</Button>}
           </Group>
         </Paper>
       )}
+      <ConfirmDelete
+        opened={deleting}
+        title="Delete this story?"
+        message={`“${item.headline || 'Untitled'}” (v${item.version ?? 1}) will be deleted. This cannot be undone.`}
+        confirmLabel="Delete story"
+        success="Story deleted"
+        onClose={() => setDeleting(false)}
+        onConfirm={() => api.deleteContent(id!)}
+        onDone={() => { void client.invalidateQueries({ queryKey: ['content'] }); navigate('/admin/content', { replace: true }); }}
+      />
     </Stack>
   );
 }

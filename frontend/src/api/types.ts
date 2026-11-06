@@ -308,6 +308,7 @@ export interface Api {
   subscribeCampaigns(callback: () => void): () => void;
 
   listTenants(): Promise<TenantListRow[]>;
+  deleteTenant(id: string): Promise<void>;
   getTenant(id: string): Promise<TenantDetail>;
   saveTenant(tenant: Partial<Tenant>, brand: Partial<BrandProfile>, prefs: Partial<NewsletterPrefs>): Promise<string>;
   changeCadence(tenantId: string, cadence: Cadence): Promise<void>;
@@ -323,6 +324,7 @@ export interface Api {
   saveContent(item: Partial<ContentItem>): Promise<string>;
   advanceContent(id: string, to: ContentStatus, notes?: string): Promise<void>;
   newContentVersion(id: string): Promise<string>;
+  deleteContent(id: string): Promise<void>;
 
   listEditions(): Promise<Edition[]>;
   getEdition(id: string): Promise<{ edition: Edition; items: EditionItem[] }>;
@@ -331,6 +333,7 @@ export interface Api {
   submitEdition(id: string): Promise<void>;
   approveEdition(id: string): Promise<void>;
   rejectEdition(id: string, notes: string): Promise<void>;
+  deleteEdition(id: string): Promise<void>;
 
   listPauses(): Promise<PauseSwitch[]>;
   setPause(scope: PauseScope, value: string, active: boolean, reason: string): Promise<void>;

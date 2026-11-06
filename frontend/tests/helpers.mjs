@@ -34,6 +34,8 @@ export async function createDb() {
   await db.exec(read('supabase/migrations/0007_reset_safeupdate.sql'));
   await db.exec(read('supabase/migrations/0008_staff_management.sql'));
   await db.exec(read('supabase/migrations/0009_template_examples.sql'));
+  await db.exec(read('supabase/migrations/0010_delete_edition.sql'));
+  await db.exec(read('supabase/migrations/0011_delete_content_and_tenant.sql'));
   await db.exec(read('supabase/seed/reference.sql'));
   await db.exec(read('supabase/seed/templates.sql'));
   return db;

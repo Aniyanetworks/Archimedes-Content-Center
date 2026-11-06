@@ -447,6 +447,24 @@ export function createDemoApi(): Api {
       item.review_notes = notes ?? item.review_notes;
       item.updated_at = now();
     },
+    async deleteContent(id) {
+      if (session?.role !== 'admin' && session?.role !== 'editor') throw new Error('Your role does not allow this action');
+      const item = byId(contentItems, id);
+      if (item.status === 'approved' || item.status === 'retired') throw new Error('An approved story cannot be deleted. Retire it instead.');
+      if ([...editionItems.values()].some((list) => list.some((i) => i.content_item_id === id))) throw new Error('This story is used in an edition. Remove it from the edition first.');
+      contentItems.splice(contentItems.indexOf(item), 1);
+      log('content.deleted', { headline: item.headline, version: item.version });
+    },
+    async deleteTenant(id) {
+      if (session?.role !== 'admin' && session?.role !== 'operator') throw new Error('Your role does not allow this action');
+      const index = tenants.findIndex((t) => t.tenant.id === id);
+      if (index < 0) throw new Error('This sub-account no longer exists.');
+      const t = tenants[index].tenant;
+      if (t.live_send_enabled) throw new Error('Turn off live sending before deleting this sub-account.');
+      if (campaigns.some((c) => c.tenant_id === id)) throw new Error('This sub-account already has newsletters, so it cannot be deleted. Pause it instead.');
+      tenants.splice(index, 1);
+      log('tenant.deleted', { name: t.name }, { tenant_id: id });
+    },
     async newContentVersion(id) {
       const source = byId(contentItems, id);
       const newId = uid();
@@ -517,6 +535,16 @@ export function createDemoApi(): Api {
       edition.status = 'rejected';
       edition.notes = notes;
       log('edition.rejected', { notes }, { edition_id: id });
+    },
+    async deleteEdition(id) {
+      if (session?.role !== 'admin' && session?.role !== 'editor') throw new Error('Your role does not allow this action');
+      const edition = editionById(id);
+      if (edition.status === 'approved' || edition.central_approved_at || campaigns.some((c) => c.edition_id === id)) {
+        throw new Error('An approved edition cannot be deleted. Cancel its campaigns on the dashboard instead.');
+      }
+      editions.splice(editions.indexOf(edition), 1);
+      editionItems.delete(id);
+      log('edition.deleted', { industry: edition.industry, week: edition.publication_week, subject: edition.subject }, { edition_id: id });
     },
 
     listPauses: async () => [...pauses],

@@ -198,6 +198,12 @@ export function createSupabaseApi(url: string, anonKey: string): Api {
       await rpc('content_advance', { p_id: id, p_to: to, p_notes: notes ?? null });
     },
     newContentVersion: (id) => rpc<string>('content_new_version', { p_id: id }),
+    deleteContent: async (id) => {
+      await rpc('content_delete', { p_id: id });
+    },
+    deleteTenant: async (id) => {
+      await rpc('tenant_delete', { p_id: id });
+    },
 
     async listEditions() {
       return must(await db.from('editions').select('*').order('publication_week', { ascending: false }).limit(200)) as Edition[];
@@ -221,6 +227,9 @@ export function createSupabaseApi(url: string, anonKey: string): Api {
     },
     rejectEdition: async (id, notes) => {
       await rpc('edition_reject', { p_id: id, p_notes: notes });
+    },
+    deleteEdition: async (id) => {
+      await rpc('edition_delete', { p_id: id });
     },
 
     async listPauses() {

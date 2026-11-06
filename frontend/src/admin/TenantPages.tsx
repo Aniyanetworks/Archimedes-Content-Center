@@ -3,7 +3,8 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   Alert, Anchor, Badge, Button, Checkbox, ColorInput, Divider, Group, List, NumberInput, Paper, ScrollArea, Select, SimpleGrid, Stack, Switch, Table, TagsInput, Text, Textarea, TextInput, ThemeIcon, Title,
 } from '@mantine/core';
-import { IconCheck, IconX } from '@tabler/icons-react';
+import { IconCheck, IconTrash, IconX } from '@tabler/icons-react';
+import { ConfirmDelete } from '../components/ConfirmDelete';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api';
@@ -68,6 +69,8 @@ export function TenantDetailPage() {
   const detail = useQuery({ queryKey: ['tenant', id], queryFn: () => api.getTenant(id) });
   const templates = useQuery({ queryKey: ['templates'], queryFn: api.listTemplates });
   const operate = canOperate(session?.role);
+  const navigate = useNavigate();
+  const [deleting, setDeleting] = useState(false);
 
   const act = async (work: () => Promise<void>, message: string) => {
     try {
@@ -94,8 +97,25 @@ export function TenantDetailPage() {
           <Title order={2}>{tenant.name}</Title>
           <Text c="dimmed" size="sm">{humanize(tenant.industry)} · {plan.label} · {tenant.timezone}</Text>
         </div>
-        {operate && <Button variant="default" component={Link} to={`/admin/tenants/${id}/edit`}>Edit profile</Button>}
+        {operate && (
+          <Group gap="xs">
+            {campaigns.length === 0 && !tenant.live_send_enabled && (
+              <Button variant="subtle" color="red" leftSection={<IconTrash size={16} />} onClick={() => setDeleting(true)}>Delete</Button>
+            )}
+            <Button variant="default" component={Link} to={`/admin/tenants/${id}/edit`}>Edit profile</Button>
+          </Group>
+        )}
       </Group>
+      <ConfirmDelete
+        opened={deleting}
+        title="Delete this sub-account?"
+        message={`${tenant.name} and its brand and newsletter settings will be deleted from Archimedes. Nothing changes in GoHighLevel. This cannot be undone.`}
+        confirmLabel="Delete sub-account"
+        success={`${tenant.name} deleted`}
+        onClose={() => setDeleting(false)}
+        onConfirm={() => api.deleteTenant(id)}
+        onDone={() => { void client.invalidateQueries({ queryKey: ['tenants'] }); navigate('/admin/tenants', { replace: true }); }}
+      />
 
       {plan.signoff_pending && (
         <Alert color="yellow" title="Plan terms are pending Archimedes signoff">This tenant can run test sends only until the plan's tiers, templates and cadence are confirmed.</Alert>
