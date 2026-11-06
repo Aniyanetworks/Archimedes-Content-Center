@@ -502,3 +502,80 @@ body {
 [data-mantine-color-scheme='dark'] .mantine-Input-input[readonly] {
   background: var(--mantine-color-dark-6);
 }
+
+/* Fields in a row keep their input boxes level, even when one description wraps to two lines. */
+.field-grid > * {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+/* Label with an info icon; the details are in a tooltip. */
+.hint-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.hint-icon {
+  display: inline-flex;
+  color: var(--mantine-color-dimmed);
+  cursor: help;
+  border-radius: 50%;
+}
+.hint-icon:hover,
+.hint-icon:focus-visible {
+  color: var(--mantine-color-blue-6);
+  outline: none;
+}
+
+/* List toolbar: status tabs, then search and compact filters, inside the table card. */
+.filter-bar {
+  padding: 4px 4px 12px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--mantine-color-default-border);
+}
+.filter-tab {
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: var(--mantine-font-size-sm);
+  font-weight: 500;
+  color: var(--mantine-color-dimmed);
+  white-space: nowrap;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+.filter-tab:hover {
+  background: var(--mantine-color-default-hover);
+  color: var(--mantine-color-text);
+}
+.filter-tab[data-active='true'] {
+  background: var(--mantine-primary-color-light);
+  color: var(--mantine-primary-color-light-color);
+}
+.filter-tab:focus-visible {
+  outline: 2px solid var(--mantine-primary-color-filled);
+  outline-offset: 1px;
+}
+.filter-count {
+  margin-left: 4px;
+  font-size: var(--mantine-font-size-xs);
+  font-weight: 600;
+  opacity: 0.7;
+}
+.filter-search {
+  flex: 1 1 240px;
+  max-width: 340px;
+}
+.filter-select {
+  flex: 0 1 180px;
+  min-width: 140px;
+}
+.filter-bar .mantine-Input-input {
+  background: var(--mantine-color-body);
+}
+@media (max-width: 600px) {
+  .filter-search,
+  .filter-select {
+    flex: 1 1 100%;
+    max-width: none;
+  }
+}

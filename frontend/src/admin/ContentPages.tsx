@@ -2,6 +2,7 @@ import { PageHeader } from '../components/PageHeader';
 import { useEffect, useState } from 'react';
 import { ActionIcon, Alert, Anchor, Badge, Button, Group, Paper, ScrollArea, Select, SimpleGrid, Stack, Table, TagsInput, Text, Textarea, TextInput, Title } from '@mantine/core';
 import { IconTrash } from '@tabler/icons-react';
+import { FilterBar } from '../components/FilterBar';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ConfirmDelete } from '../components/ConfirmDelete';
 import { Link, useNavigate, useParams } from 'react-router-dom';
@@ -31,17 +32,54 @@ export function ContentListPage() {
   const { session } = useAuth();
   const client = useQueryClient();
   const content = useQuery({ queryKey: ['content'], queryFn: api.listContent });
+  const industries = useQuery({ queryKey: ['industries'], queryFn: api.listIndustries });
+  const [search, setSearch] = useState('');
+  const [industry, setIndustry] = useState<string | null>(null);
+  const [region, setRegion] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<ContentItem | null>(null);
   const editor = canEdit(session?.role);
-  const rows = (content.data ?? []).filter((item) => !status || item.status === status);
+
+  const all = content.data ?? [];
+  // Only offer filter choices that some story actually has.
+  const industryOptions = [...new Set(all.map((item) => item.industry))]
+    .map((key) => ({ value: key, label: industries.data?.find((i) => i.key === key)?.label ?? humanize(key) }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+  const regionOptions = [{ value: '__all__', label: 'Not region-specific' },
+    ...[...new Set(all.flatMap((item) => item.regions))].sort().map((r) => ({ value: r, label: r }))];
+  const statusTabs = (Object.keys(CONTENT_COLORS) as ContentStatus[])
+    .map((value) => ({ value, label: value === 'fact_rights_review' ? 'Fact and rights review' : humanize(value), count: all.filter((item) => item.status === value).length }));
+
+  const words = search.trim().toLowerCase();
+  const rows = all.filter((item) =>
+    (!words || [item.headline, item.teaser, item.body].some((text) => (text ?? '').toLowerCase().includes(words)))
+    && (!industry || item.industry === industry)
+    && (!region || (region === '__all__' ? item.regions.length === 0 : item.regions.includes(region)))
+    && (!status || item.status === status));
+  const filtering = !!(words || industry || region || status);
+  const clearFilters = () => { setSearch(''); setIndustry(null); setRegion(null); setStatus(null); };
 
   return (
     <Stack>
       <PageHeader title="Content library" description="Reusable stories, from draft through fact and rights review." actions={<>{canEdit(session?.role) && <Button component={Link} to="/admin/content/new">New story</Button>}</>} />
-      <Select placeholder="All statuses" aria-label="Filter by status" clearable maw={260} value={status} onChange={setStatus} data={Object.keys(CONTENT_COLORS).map((value) => ({ value, label: humanize(value) }))} />
       {content.error && <Alert color="red">{(content.error as Error).message}</Alert>}
       <Paper withBorder p="sm">
+        <FilterBar
+          search={search}
+          onSearch={setSearch}
+          searchPlaceholder="Search stories"
+          tabs={statusTabs}
+          tab={status}
+          onTab={setStatus}
+          selects={[
+            { key: 'industry', placeholder: 'All industries', value: industry, onChange: setIndustry, data: industryOptions },
+            { key: 'region', placeholder: 'Any region', value: region, onChange: setRegion, data: regionOptions },
+          ]}
+          total={all.length}
+          shown={rows.length}
+          noun={['story', 'stories']}
+          onClear={clearFilters}
+        />
         <ScrollArea>
           <Table highlightOnHover miw={760}>
             <Table.Thead><Table.Tr><Table.Th>Headline</Table.Th><Table.Th>Industry</Table.Th><Table.Th>Regions</Table.Th><Table.Th>Version</Table.Th><Table.Th>Status</Table.Th><Table.Th>Updated</Table.Th>{editor && <Table.Th aria-label="Actions" w={56} />}</Table.Tr></Table.Thead>
@@ -63,7 +101,7 @@ export function ContentListPage() {
                   )}
                 </Table.Tr>
               ))}
-              {!content.isLoading && rows.length === 0 && <Table.Tr><Table.Td colSpan={editor ? 7 : 6}><Text c="dimmed" ta="center" py="lg">No stories found.</Text></Table.Td></Table.Tr>}
+              {!content.isLoading && rows.length === 0 && <Table.Tr><Table.Td colSpan={editor ? 7 : 6}><Text c="dimmed" ta="center" py="lg">{filtering ? 'No stories match these filters.' : 'No stories yet.'}</Text></Table.Td></Table.Tr>}
             </Table.Tbody>
           </Table>
         </ScrollArea>

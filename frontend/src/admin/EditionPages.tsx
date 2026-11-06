@@ -2,6 +2,7 @@ import { PageHeader } from '../components/PageHeader';
 import { useEffect, useMemo, useState } from 'react';
 import { ActionIcon, Alert, Anchor, Badge, Button, Checkbox, Group, Modal, MultiSelect, Paper, Radio, ScrollArea, Select, SimpleGrid, Stack, Table, Text, Textarea, TextInput, Title } from '@mantine/core';
 import { IconTrash } from '@tabler/icons-react';
+import { FilterBar } from '../components/FilterBar';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api';
@@ -74,6 +75,32 @@ export function EditionListPage() {
   const [subject, setSubject] = useState('');
   const [deleting, setDeleting] = useState<Edition | null>(null);
   const editor = canEdit(session?.role);
+  const [search, setSearch] = useState('');
+  const [filterIndustry, setFilterIndustry] = useState<string | null>(null);
+  const [filterStatus, setFilterStatus] = useState<string | null>(null);
+  const [filterWhen, setFilterWhen] = useState<string | null>(null);
+
+  const all = editions.data ?? [];
+  // Only offer choices that some edition actually has, with a count for each status.
+  const industryOptions = [...new Set(all.map((e) => e.industry))]
+    .map((key) => ({ value: key, label: industries.data?.find((i) => i.key === key)?.label ?? humanize(key) }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+  const statusTabs = (Object.keys(EDITION_COLORS) as EditionStatus[])
+    .map((value) => ({ value, label: humanize(value), count: all.filter((e) => e.status === value).length }));
+  const thisMonday = (() => {
+    const d = new Date();
+    d.setUTCHours(0, 0, 0, 0);
+    d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7));
+    return d.toISOString().slice(0, 10);
+  })();
+  const words = search.trim().toLowerCase();
+  const rows = all.filter((e) =>
+    (!words || `${e.subject} ${e.preview_text}`.toLowerCase().includes(words))
+    && (!filterIndustry || e.industry === filterIndustry)
+    && (!filterStatus || e.status === filterStatus)
+    && (!filterWhen || (filterWhen === 'upcoming' ? e.publication_week.slice(0, 10) >= thisMonday : e.publication_week.slice(0, 10) < thisMonday)));
+  const filtering = !!(words || filterIndustry || filterStatus || filterWhen);
+  const clearFilters = () => { setSearch(''); setFilterIndustry(null); setFilterStatus(null); setFilterWhen(null); };
 
   async function create() {
     try {
@@ -104,11 +131,27 @@ export function EditionListPage() {
       <PageHeader title="Editions" description="Weekly industry editions. Approve one and every eligible tenant gets a branded version." actions={<>{canEdit(session?.role) && <Button onClick={openNew}>New edition</Button>}</>} />
       {editions.error && <Alert color="red">{(editions.error as Error).message}</Alert>}
       <Paper withBorder p="sm">
+        <FilterBar
+          search={search}
+          onSearch={setSearch}
+          searchPlaceholder="Search editions"
+          tabs={statusTabs}
+          tab={filterStatus}
+          onTab={setFilterStatus}
+          selects={[
+            { key: 'industry', placeholder: 'All industries', value: filterIndustry, onChange: setFilterIndustry, data: industryOptions },
+            { key: 'when', placeholder: 'Any week', value: filterWhen, onChange: setFilterWhen, data: [{ value: 'upcoming', label: 'This week and later' }, { value: 'past', label: 'Past weeks' }] },
+          ]}
+          total={all.length}
+          shown={rows.length}
+          noun={['edition', 'editions']}
+          onClear={clearFilters}
+        />
         <ScrollArea>
           <Table highlightOnHover miw={680}>
             <Table.Thead><Table.Tr><Table.Th>Week of</Table.Th><Table.Th>Industry</Table.Th><Table.Th>Subject</Table.Th><Table.Th>Version</Table.Th><Table.Th>Status</Table.Th>{editor && <Table.Th aria-label="Actions" w={56} />}</Table.Tr></Table.Thead>
             <Table.Tbody>
-              {(editions.data ?? []).map((edition) => (
+              {rows.map((edition) => (
                 <Table.Tr key={edition.id}>
                   <Table.Td style={{ whiteSpace: 'nowrap' }}><Anchor component={Link} to={`/admin/editions/${edition.id}`} size="sm" fw={600}>{formatDate(edition.publication_week)}</Anchor></Table.Td>
                   <Table.Td>{humanize(edition.industry)}</Table.Td>
@@ -126,7 +169,7 @@ export function EditionListPage() {
                   )}
                 </Table.Tr>
               ))}
-              {!editions.isLoading && !editions.data?.length && <Table.Tr><Table.Td colSpan={editor ? 6 : 5}><Text c="dimmed" ta="center" py="lg">No editions yet.</Text></Table.Td></Table.Tr>}
+              {!editions.isLoading && rows.length === 0 && <Table.Tr><Table.Td colSpan={editor ? 6 : 5}><Text c="dimmed" ta="center" py="lg">{filtering ? 'No editions match these filters.' : 'No editions yet.'}</Text></Table.Td></Table.Tr>}
             </Table.Tbody>
           </Table>
         </ScrollArea>

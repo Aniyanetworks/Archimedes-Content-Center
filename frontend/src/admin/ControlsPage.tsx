@@ -1,11 +1,12 @@
 import { PageHeader } from '../components/PageHeader';
 import { useState } from 'react';
-import { Alert, Button, Group, NumberInput, Paper, ScrollArea, Select, SimpleGrid, Stack, Switch, Table, TagsInput, Text, TextInput, Title } from '@mantine/core';
+import { Alert, Button, NumberInput, Paper, ScrollArea, Select, SimpleGrid, Stack, Switch, Table, TagsInput, Text, TextInput, Title } from '@mantine/core';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../api';
 import type { PauseScope } from '../api/types';
 import { canOperate, formatDate, formatDateTime, humanize, showError, showSuccess } from '../lib/util';
 import { useAuth } from './AuthContext';
+import { hintLabel } from '../components/HintLabel';
 import { TestModePanel } from './TestModePanel';
 
 export function ControlsPage() {
@@ -99,23 +100,39 @@ export function ControlsPage() {
         <Title order={4} mb="xs">Safety settings</Title>
         {!admin && <Text size="sm" c="dimmed" mb="sm">Only administrators can change these.</Text>}
         {settings.data && (
-          <Stack>
-            <Switch disabled={!admin} label="GHL dry run" description="n8n logs what it would do and makes no GHL calls" checked={settings.data.ghl_dry_run === true} onChange={(e) => void saveSetting('ghl_dry_run', e.currentTarget.checked)} />
-            <Switch disabled={!admin} label="Safe test mode" description="Every send goes only to each tenant's test contacts" checked={settings.data.safe_test_mode === true} onChange={(e) => void saveSetting('safe_test_mode', e.currentTarget.checked)} />
-            <TagsInput disabled={!admin} label="Internal preview addresses" placeholder="Type an email address, then press Enter" description="Review invites for tenants in test mode go here instead of to the client" value={(settings.data.internal_preview_addresses as string[]) ?? []} onChange={(next) => void saveSetting('internal_preview_addresses', next)} />
-            <Group grow align="flex-start">
-              <TextInput disabled={!admin} label="Operations alert email" placeholder="ops@yourcompany.com" defaultValue={(settings.data.ops_alert_email as string) ?? ''} onBlur={(e) => void saveSetting('ops_alert_email', e.currentTarget.value || null)} />
-              <NumberInput disabled={!admin} label="Daily send cap" placeholder="e.g. 500" description="Campaigns per UTC day. Empty means dispatch is blocked." min={0} defaultValue={(settings.data.daily_send_cap as number) ?? ''} onBlur={(e) => void saveSetting('daily_send_cap', e.currentTarget.value === '' ? null : Number(e.currentTarget.value))} />
-              <NumberInput disabled={!admin} label="Cost per 1,000 emails (USD)" placeholder="e.g. 0.675" description="Used for the cost estimate card" min={0} decimalScale={4} defaultValue={(settings.data.cost_per_1000_emails_usd as number) ?? ''} onBlur={(e) => void saveSetting('cost_per_1000_emails_usd', e.currentTarget.value === '' ? null : Number(e.currentTarget.value))} />
-            </Group>
-            <Group grow align="flex-start">
-              <TextInput disabled={!admin} label="Notification sender email" placeholder="notifications@yourdomain.com" description="From address for review invites and alerts. Email workflows stop until it is set." type="email" defaultValue={(settings.data.notification_from_email as string) ?? ''} onBlur={(e) => void saveSetting('notification_from_email', e.currentTarget.value.trim() || null)} />
-              <TextInput disabled={!admin} label="Notification sender name" placeholder="Archimedes" defaultValue={(settings.data.notification_from_name as string) ?? ''} onBlur={(e) => void saveSetting('notification_from_name', e.currentTarget.value.trim() || 'Archimedes')} />
-            </Group>
-            <Group grow align="flex-start">
-              <NumberInput disabled={!admin} label="Check delivery after (minutes)" placeholder="30" description="How long after sending before delivery is judged" min={5} defaultValue={(settings.data.delivery_check_after_minutes as number) ?? 30} onBlur={(e) => void saveSetting('delivery_check_after_minutes', Number(e.currentTarget.value) || 30)} />
-              <NumberInput disabled={!admin} label="Keep re-checking for (hours)" placeholder="24" description="Queued or partial deliveries are re-checked this long" min={1} defaultValue={(settings.data.delivery_recheck_hours as number) ?? 24} onBlur={(e) => void saveSetting('delivery_recheck_hours', Number(e.currentTarget.value) || 24)} />
-            </Group>
+          <Stack gap="lg">
+            <SimpleGrid cols={{ base: 1, md: 2 }} spacing="lg">
+              <Switch disabled={!admin} label={hintLabel('GHL dry run', 'Practice mode. The system goes through every step but sends nothing to GoHighLevel. Keep it on until you are ready to send real emails.')} checked={settings.data.ghl_dry_run === true} onChange={(e) => void saveSetting('ghl_dry_run', e.currentTarget.checked)} />
+              <Switch disabled={!admin} label={hintLabel('Safe test mode', "Every newsletter goes only to each sub-account's test contacts, never to real customers.")} checked={settings.data.safe_test_mode === true} onChange={(e) => void saveSetting('safe_test_mode', e.currentTarget.checked)} />
+            </SimpleGrid>
+
+            <div>
+              <Text fw={600} size="sm" mb="xs">Sending limits</Text>
+              <SimpleGrid cols={{ base: 1, sm: 2 }} className="field-grid">
+                <NumberInput disabled={!admin} label={hintLabel('Daily send cap', 'The most newsletters sent to GoHighLevel in one day (resets at midnight UTC). Extra ones wait for the next day. While this is empty, no real newsletter is sent.')} placeholder="e.g. 500" min={0} defaultValue={(settings.data.daily_send_cap as number) ?? ''} onBlur={(e) => void saveSetting('daily_send_cap', e.currentTarget.value === '' ? null : Number(e.currentTarget.value))} />
+                <NumberInput disabled={!admin} label={hintLabel('Cost per 1,000 emails (USD)', 'What GoHighLevel charges per 1,000 emails. Only used for the cost estimate on the dashboard. It does not limit sending.')} placeholder="e.g. 0.675" min={0} decimalScale={4} defaultValue={(settings.data.cost_per_1000_emails_usd as number) ?? ''} onBlur={(e) => void saveSetting('cost_per_1000_emails_usd', e.currentTarget.value === '' ? null : Number(e.currentTarget.value))} />
+              </SimpleGrid>
+            </div>
+
+            <div>
+              <Text fw={600} size="sm" mb="xs">Notification emails</Text>
+              <Stack gap="md">
+                <SimpleGrid cols={{ base: 1, sm: 3 }} className="field-grid">
+                  <TextInput disabled={!admin} label={hintLabel('Sender email', 'The From address for review invites and alerts. These emails are not sent until it is set.')} placeholder="notifications@yourdomain.com" type="email" defaultValue={(settings.data.notification_from_email as string) ?? ''} onBlur={(e) => void saveSetting('notification_from_email', e.currentTarget.value.trim() || null)} />
+                  <TextInput disabled={!admin} label={hintLabel('Sender name', 'The name people see as the sender in their inbox.')} placeholder="Archimedes" defaultValue={(settings.data.notification_from_name as string) ?? ''} onBlur={(e) => void saveSetting('notification_from_name', e.currentTarget.value.trim() || 'Archimedes')} />
+                  <TextInput disabled={!admin} label={hintLabel('Operations alert email', 'Where alerts go when something fails, is held, or the daily cap is reached.')} placeholder="ops@yourcompany.com" type="email" defaultValue={(settings.data.ops_alert_email as string) ?? ''} onBlur={(e) => void saveSetting('ops_alert_email', e.currentTarget.value.trim() || null)} />
+                </SimpleGrid>
+                <TagsInput disabled={!admin} label={hintLabel('Internal preview addresses', 'While testing, review invites go to the first address here instead of the sub-account owner. Type an address and press Enter to add it.')} placeholder="Type an email address, then press Enter" value={(settings.data.internal_preview_addresses as string[]) ?? []} onChange={(next) => void saveSetting('internal_preview_addresses', next)} />
+              </Stack>
+            </div>
+
+            <div>
+              <Text fw={600} size="sm" mb="xs">Delivery checks</Text>
+              <SimpleGrid cols={{ base: 1, sm: 2 }} className="field-grid">
+                <NumberInput disabled={!admin} label={hintLabel('Check delivery after (minutes)', 'How long after a newsletter is sent before the app checks whether it reached inboxes.')} placeholder="30" min={5} defaultValue={(settings.data.delivery_check_after_minutes as number) ?? 30} onBlur={(e) => void saveSetting('delivery_check_after_minutes', Number(e.currentTarget.value) || 30)} />
+                <NumberInput disabled={!admin} label={hintLabel('Keep re-checking for (hours)', 'If some emails are still on their way, the app keeps checking for this long before giving a final result.')} placeholder="24" min={1} defaultValue={(settings.data.delivery_recheck_hours as number) ?? 24} onBlur={(e) => void saveSetting('delivery_recheck_hours', Number(e.currentTarget.value) || 24)} />
+              </SimpleGrid>
+            </div>
           </Stack>
         )}
       </Paper>
