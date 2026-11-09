@@ -6,7 +6,7 @@ import templatesJson from '../generated/templates.json';
 import { AUDIT_CATEGORIES } from './types';
 import type {
   Api, AuditEntry, AuditFilters, BrandProfile, CampaignRow, CampaignStatus, ChecklistItem, ContentItem, ContentStatus, Edition, EditionItem,
-  Industry, NewsletterPrefs, PauseSwitch, Plan, ReviewAction, ReviewView, Session, Settings, StaffMember, StaffRole, TemplateInfo, Tenant,
+  Industry, NewsletterPrefs, PauseSwitch, Plan, ReviewAction, ReviewView, Session, Settings, SmtpConfig, StaffMember, StaffRole, TemplateInfo, Tenant,
 } from './types';
 
 const templates = templatesJson as unknown as TemplateInfo[];
@@ -99,6 +99,11 @@ export function createDemoApi(): Api {
   const requireAdmin = () => {
     if (session?.role !== 'admin') throw new Error('Your role does not allow this action');
   };
+  const demoEmailWorkflows = [
+    { id: 'wf-04', name: 'Archimedes 04 Send review invites', active: false },
+    { id: 'wf-05', name: 'Archimedes 05 Hold missed review deadlines', active: false },
+    { id: 'wf-09', name: 'Archimedes 09 Operations alerts', active: false },
+  ];
   const adminCount = () => staff.filter((s) => s.role === 'admin').length;
 
   const tenants: DemoTenant[] = [
@@ -605,6 +610,31 @@ export function createDemoApi(): Api {
       settings[`template_sample_${division}`] = value ?? null;
       log(value ? 'templates.example_changed' : 'templates.example_reset', { division });
     },
+    async smtpSettings(request) {
+      if (session?.role !== 'admin') throw new Error('Only admins can change the email server.');
+      const config = settings.smtp_config as SmtpConfig | null | undefined;
+      const workflows = () => demoEmailWorkflows.map((w) => ({ ...w }));
+      // Demo mode has no n8n: a server name containing "bad" fails the test, anything else passes.
+      const test = (host: string) => (host.includes('bad') ? { ok: false, message: 'Connection timed out. Check the server address and port.' } : { ok: true, message: 'Connection successful!' });
+      if (request.action === 'status') return { config: config ?? null, workflows: workflows() };
+      if (request.action === 'save') {
+        if (!request.host.trim()) throw new Error('Enter the server address, for example smtp.gmail.com.');
+        if (!request.password) throw new Error('Enter the password.');
+        const saved: SmtpConfig = { credential_id: 'demo-smtp', host: request.host.trim(), port: request.port, user: request.user.trim(), secure: request.secure, updated_at: now() };
+        settings.smtp_config = saved;
+        log('settings.smtp_saved', { host: saved.host, port: saved.port, user: saved.user });
+        return { config: saved, test: test(saved.host), workflows: workflows() };
+      }
+      if (request.action === 'test') {
+        if (!config) throw new Error('Save the email server first.');
+        return { test: test(config.host) };
+      }
+      if (request.on && !config) throw new Error('Save the email server first.');
+      if (request.on && !String(settings.notification_from_email ?? '').includes('@')) throw new Error('Fill in the Sender email under Notification emails first.');
+      for (const w of demoEmailWorkflows) w.active = request.on;
+      log(request.on ? 'email_workflows.on' : 'email_workflows.off', {});
+      return { workflows: workflows() };
+    },
     async listStaff() {
       requireAdmin();
       if (session && !staff.some((s) => s.email === session!.email)) {
@@ -650,6 +680,15 @@ export function createDemoApi(): Api {
     async listAudit(filters, page, pageSize) {
       const rows = filterAudit(filters);
       return { rows: rows.slice(page * pageSize, page * pageSize + pageSize), total: rows.length };
+    },
+    async clearAuditLog(confirm) {
+      if (session?.role !== 'admin') throw new Error('Your role does not allow this action');
+      if (settings.environment !== 'test') throw new Error('The audit log of a live system is permanent and cannot be cleared.');
+      if (confirm !== 'CLEAR') throw new Error('Type CLEAR to confirm.');
+      const removed = audit.length;
+      audit.length = 0;
+      log('audit.cleared', { entries_removed: removed });
+      return { removed };
     },
     async exportAudit(filters) {
       log('audit.exported', { filters });

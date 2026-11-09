@@ -7,6 +7,7 @@ import type { PauseScope } from '../api/types';
 import { canOperate, formatDate, formatDateTime, humanize, showError, showSuccess } from '../lib/util';
 import { useAuth } from './AuthContext';
 import { hintLabel } from '../components/HintLabel';
+import { SmtpPanel } from './SmtpPanel';
 import { TestModePanel } from './TestModePanel';
 
 export function ControlsPage() {
@@ -135,6 +136,8 @@ export function ControlsPage() {
           </Stack>
         )}
       </Paper>
+
+      {admin && <SmtpPanel />}
     </Stack>
   );
 }

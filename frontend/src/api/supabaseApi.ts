@@ -3,7 +3,7 @@ import { createAuthFetch } from './authFetch';
 import { AUDIT_CATEGORIES } from './types';
 import type {
   Api, AuditEntry, AuditFilters, BrandProfile, CampaignFilters, CampaignRow, ChecklistItem, ContentItem, DashboardCards, Edition, EditionItem,
-  Industry, MetricRow, NewsletterPrefs, PauseSwitch, Plan, ReviewView, Session, StaffMember, StaffRole, TemplateInfo, Tenant, TenantListRow,
+  Industry, MetricRow, NewsletterPrefs, PauseSwitch, Plan, ReviewView, Session, SmtpStatus, StaffMember, StaffRole, TemplateInfo, Tenant, TenantListRow,
 } from './types';
 
 // Every write goes through an RPC or RLS-protected table. The database enforces access and
@@ -269,6 +269,18 @@ export function createSupabaseApi(url: string, anonKey: string): Api {
     setTemplateSample: async (division, value) => {
       await rpc('set_template_sample', { p_division: division, p_value: value });
     },
+    async smtpSettings(request) {
+      const { data } = await db.auth.getSession();
+      if (!data.session) throw new Error('Please sign in again.');
+      const response = await fetch(`${url}/functions/v1/smtp-settings`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', apikey: anonKey, Authorization: `Bearer ${data.session.access_token}` },
+        body: JSON.stringify(request),
+      });
+      const json = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(json.error ?? 'Could not reach the email settings service.');
+      return json as SmtpStatus;
+    },
     listStaff: () => rpc<StaffMember[]>('list_staff'),
     async inviteStaff(email, role) {
       const { data } = await db.auth.getSession();
@@ -294,6 +306,7 @@ export function createSupabaseApi(url: string, anonKey: string): Api {
       if (error) throw new Error(error.message);
       return { rows: (data ?? []) as AuditEntry[], total: count ?? 0 };
     },
+    clearAuditLog: (confirm) => rpc<{ removed: number }>('clear_audit_log', { p_confirm: confirm }),
     async exportAudit(filters) {
       await rpc('log_audit_export', { p_search: JSON.stringify(filters) });
       return must(await auditQuery(filters).limit(10000)) as AuditEntry[];

@@ -298,6 +298,28 @@ export interface ReviewView {
 
 export type ReviewAction = 'approve' | 'request_changes' | 'skip';
 
+// The email server n8n uses. The password is never sent back to the app.
+export interface SmtpConfig {
+  credential_id: string;
+  host: string;
+  port: number;
+  user: string;
+  secure: boolean;
+  updated_at: string;
+}
+
+export interface SmtpStatus {
+  config?: SmtpConfig | null;
+  workflows?: Array<{ id: string; name: string; active: boolean }>;
+  test?: { ok: boolean; message: string };
+}
+
+export type SmtpRequest =
+  | { action: 'status' }
+  | { action: 'test' }
+  | { action: 'save'; host: string; port: number; user: string; password: string; secure: boolean }
+  | { action: 'workflows'; on: boolean };
+
 export interface StaffMember {
   user_id: string;
   email: string;
@@ -363,6 +385,8 @@ export interface Api {
 
   setTemplateSample(division: Division, value: unknown | null): Promise<void>;
 
+  smtpSettings(request: SmtpRequest): Promise<SmtpStatus>;
+
   listStaff(): Promise<StaffMember[]>;
   inviteStaff(email: string, role: StaffRole): Promise<{ status: 'invited' | 'added'; email: string }>;
   setStaffRole(userId: string, role: StaffRole): Promise<void>;
@@ -370,6 +394,7 @@ export interface Api {
 
   listAudit(filters: AuditFilters, page: number, pageSize: number): Promise<{ rows: AuditEntry[]; total: number }>;
   exportAudit(filters: AuditFilters): Promise<AuditEntry[]>;
+  clearAuditLog(confirm: string): Promise<{ removed: number }>;
 
   reviewLoad(token: string): Promise<ReviewView>;
   reviewDecide(token: string, action: ReviewAction, versionHash: string, notes?: string): Promise<ReviewView>;

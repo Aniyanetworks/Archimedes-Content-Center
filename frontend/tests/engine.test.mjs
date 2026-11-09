@@ -598,7 +598,8 @@ describe('editorial workflow', () => {
     await asStaff(async () => {
       const cards = (await db.query(`select dashboard_cards('{}') as c`)).rows[0].c;
       assert.ok(cards.active_tenants > 0);
-      assert.equal(cards.cost_estimate_usd, null);
+      // The default rate (0.675 per 1,000) is set, so the dashboard shows a cost estimate instead of "Rate not set".
+      assert.equal(typeof cards.cost_estimate_usd, 'number');
       assert.ok((await db.query('select * from go_live_checklist((select id from tenants limit 1))')).rows.length);
     });
   });

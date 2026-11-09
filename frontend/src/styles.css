@@ -504,7 +504,7 @@ body {
 }
 
 /* Fields in a row keep their input boxes level, even when one description wraps to two lines. */
-.field-grid > * {
+.field-grid > *:not(style) {
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
