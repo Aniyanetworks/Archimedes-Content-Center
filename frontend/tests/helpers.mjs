@@ -12,9 +12,10 @@ const SUPABASE_STUBS = `
   create schema auth; create schema vault;
   create table auth.users (id uuid primary key default gen_random_uuid(), email text, last_sign_in_at timestamptz, email_confirmed_at timestamptz);
   create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.sub', true), '')::uuid $$;
-  create table vault.secrets (name text primary key, decrypted_secret text);
+  create table vault.secrets (id uuid primary key default gen_random_uuid(), name text unique, decrypted_secret text);
   create view vault.decrypted_secrets as select * from vault.secrets;
-  create function vault.create_secret(secret text, name text) returns uuid language sql as $$ insert into vault.secrets values (name, secret) returning gen_random_uuid() $$;
+  create function vault.create_secret(secret text, name text) returns uuid language sql as $$ insert into vault.secrets (name, decrypted_secret) values (name, secret) returning id $$;
+  create function vault.update_secret(secret_id uuid, new_secret text) returns void language sql as $$ update vault.secrets set decrypted_secret = new_secret where id = secret_id $$;
   grant usage on schema auth, vault, public to anon, authenticated, service_role;
   grant select on auth.users to authenticated;
   alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
@@ -40,6 +41,8 @@ export async function createDb() {
   await db.exec(read('supabase/migrations/0013_clear_audit_log.sql'));
   await db.exec(read('supabase/migrations/0014_smtp_settings.sql'));
   await db.exec(read('supabase/migrations/0015_n8n_config_vault.sql'));
+  await db.exec(read('supabase/migrations/0016_notification_channel.sql'));
+  await db.exec(read('supabase/migrations/0017_ghl_default_channel.sql'));
   await db.exec(read('supabase/seed/reference.sql'));
   await db.exec(read('supabase/seed/templates.sql'));
   return db;

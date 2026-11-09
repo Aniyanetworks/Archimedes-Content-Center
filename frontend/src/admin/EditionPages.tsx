@@ -27,7 +27,7 @@ function DeleteEditionModal({ edition, onClose, onDeleted }: { edition: Edition 
     setBusy(true);
     try {
       await api.deleteEdition(edition.id);
-      showSuccess('Edition deleted');
+      showSuccess('Campaign deleted');
       await client.invalidateQueries({ queryKey: ['editions'] });
       onDeleted();
     } catch (error) {
@@ -37,14 +37,14 @@ function DeleteEditionModal({ edition, onClose, onDeleted }: { edition: Edition 
     }
   }
   return (
-    <Modal opened={!!edition} onClose={onClose} title="Delete this edition?">
+    <Modal opened={!!edition} onClose={onClose} title="Delete this campaign?">
       <Stack>
         <Text size="sm">
           “{edition?.subject || 'Untitled'}” ({edition ? `${humanize(edition.industry)}, week of ${formatDate(edition.publication_week)}` : ''}) will be deleted. Its stories stay in the content library. This cannot be undone.
         </Text>
         <Group justify="flex-end">
           <Button variant="default" onClick={onClose} disabled={busy}>Cancel</Button>
-          <Button color="red" loading={busy} onClick={() => void remove()}>Delete edition</Button>
+          <Button color="red" loading={busy} onClick={() => void remove()}>Delete campaign</Button>
         </Group>
       </Stack>
     </Modal>
@@ -107,7 +107,7 @@ export function EditionListPage() {
     try {
       const picked = industries.data?.find((i) => i.key === industry);
       const id = await api.saveEdition({ division: picked?.division as Division, industry: industry ?? undefined, publication_week: week, subject });
-      navigate(`/admin/editions/${id}`);
+      navigate(`/admin/campaigns/${id}`);
     } catch (error) {
       showError(error);
     }
@@ -129,13 +129,13 @@ export function EditionListPage() {
 
   return (
     <Stack>
-      <PageHeader title="Editions" description="Weekly industry editions. Approve one and every eligible tenant gets a branded version." actions={<>{canEdit(session?.role) && <Button onClick={openNew}>New edition</Button>}</>} />
+      <PageHeader title="Campaigns" description="Weekly industry campaigns. Approve one and every eligible sub-account gets a branded version." actions={<>{canEdit(session?.role) && <Button onClick={openNew}>New campaign</Button>}</>} />
       {editions.error && <Alert color="red">{(editions.error as Error).message}</Alert>}
       <Paper withBorder p="sm">
         <FilterBar
           search={search}
           onSearch={setSearch}
-          searchPlaceholder="Search editions"
+          searchPlaceholder="Search campaigns"
           tabs={statusTabs}
           tab={filterStatus}
           onTab={setFilterStatus}
@@ -145,7 +145,7 @@ export function EditionListPage() {
           ]}
           total={all.length}
           shown={rows.length}
-          noun={['edition', 'editions']}
+          noun={['campaign', 'campaigns']}
           onClear={clearFilters}
         />
         <ScrollArea>
@@ -154,7 +154,7 @@ export function EditionListPage() {
             <Table.Tbody>
               {rows.map((edition) => (
                 <Table.Tr key={edition.id}>
-                  <Table.Td style={{ whiteSpace: 'nowrap' }}><Anchor component={Link} to={`/admin/editions/${edition.id}`} size="sm" fw={600}>{formatDate(edition.publication_week)}</Anchor></Table.Td>
+                  <Table.Td style={{ whiteSpace: 'nowrap' }}><Anchor component={Link} to={`/admin/campaigns/${edition.id}`} size="sm" fw={600}>{formatDate(edition.publication_week)}</Anchor></Table.Td>
                   <Table.Td>{humanize(edition.industry)}</Table.Td>
                   <Table.Td>{edition.subject || 'Untitled'}</Table.Td>
                   <Table.Td>v{edition.version}</Table.Td>
@@ -162,7 +162,7 @@ export function EditionListPage() {
                   {editor && (
                     <Table.Td>
                       {canDelete(edition) && (
-                        <ActionIcon variant="subtle" color="red" aria-label={`Delete ${edition.subject || 'edition'}`} title="Delete edition" onClick={() => setDeleting(edition)}>
+                        <ActionIcon variant="subtle" color="red" aria-label={`Delete ${edition.subject || 'campaign'}`} title="Delete campaign" onClick={() => setDeleting(edition)}>
                           <IconTrash size={16} />
                         </ActionIcon>
                       )}
@@ -170,24 +170,24 @@ export function EditionListPage() {
                   )}
                 </Table.Tr>
               ))}
-              {!editions.isLoading && rows.length === 0 && <Table.Tr><Table.Td colSpan={editor ? 6 : 5}><Text c="dimmed" ta="center" py="lg">{filtering ? 'No editions match these filters.' : 'No editions yet.'}</Text></Table.Td></Table.Tr>}
+              {!editions.isLoading && rows.length === 0 && <Table.Tr><Table.Td colSpan={editor ? 6 : 5}><Text c="dimmed" ta="center" py="lg">{filtering ? 'No campaigns match these filters.' : 'No campaigns yet.'}</Text></Table.Td></Table.Tr>}
             </Table.Tbody>
           </Table>
         </ScrollArea>
       </Paper>
 
       <DeleteEditionModal edition={deleting} onClose={() => setDeleting(null)} onDeleted={() => setDeleting(null)} />
-      <Modal opened={creating} onClose={() => setCreating(false)} title="New edition">
+      <Modal opened={creating} onClose={() => setCreating(false)} title="New campaign">
         <Stack>
           <Select label="Industry" placeholder="Choose an industry" allowDeselect={false} value={industry} onChange={changeIndustry} data={(industries.data ?? []).map((i) => ({ value: i.key, label: i.label }))} />
-          <TextInput label={hintLabel('Publication week', 'The Monday of the week this newsletter is for. Each sub-account sends it on its own chosen day that week.')} type="date" error={!weekIsMonday ? 'Pick a Monday' : existing ? `${industryLabel} already has an edition this week` : undefined} value={week} onChange={(e) => setWeek(e.currentTarget.value)} />
+          <TextInput label={hintLabel('Publication week', 'The Monday of the week this newsletter is for. Each sub-account sends it on its own chosen day that week.')} type="date" error={!weekIsMonday ? 'Pick a Monday' : existing ? `${industryLabel} already has a campaign this week` : undefined} value={week} onChange={(e) => setWeek(e.currentTarget.value)} />
           {existing && (
             <Alert color="blue" p="sm">
-              Each industry has one edition per week. <Anchor component="button" type="button" size="sm" onClick={() => navigate(`/admin/editions/${existing.id}`)}>Open “{existing.subject || 'Untitled'}”</Anchor> or pick another week.
+              Each industry has one campaign per week. <Anchor component="button" type="button" size="sm" onClick={() => navigate(`/admin/campaigns/${existing.id}`)}>Open “{existing.subject || 'Untitled'}”</Anchor> or pick another week.
             </Alert>
           )}
           <TextInput label={hintLabel('Subject line', 'The subject people see in their inbox. Keep it short and specific.')} placeholder="What to check on your roof after a storm" value={subject} onChange={(e) => setSubject(e.currentTarget.value)} />
-          <Button disabled={!weekIsMonday || !!existing || !subject.trim()} onClick={() => void create()}>Create edition</Button>
+          <Button disabled={!weekIsMonday || !!existing || !subject.trim()} onClick={() => void create()}>Create campaign</Button>
         </Stack>
       </Modal>
     </Stack>
@@ -274,7 +274,7 @@ export function EditionDetailPage() {
     return result.html as string | null;
   }, [templates.data, candidates, hero, secondary, edition, form, settings.data]);
 
-  if (detail.error) return <Alert color="red" title="Could not load this edition">{(detail.error as Error).message}</Alert>;
+  if (detail.error) return <Alert color="red" title="Could not load this campaign">{(detail.error as Error).message}</Alert>;
   if (!edition) return <Text c="dimmed">Loading…</Text>;
   const division = edition.division;
 
@@ -282,14 +282,14 @@ export function EditionDetailPage() {
     <Stack>
       <Group justify="space-between">
         <div>
-          <Title order={2}>{humanize(edition.industry)} edition</Title>
+          <Title order={2}>{humanize(edition.industry)} campaign</Title>
           <Text c="dimmed" size="sm">Week of {formatDate(edition.publication_week)} · v{edition.version}</Text>
         </div>
         <Badge size="lg" variant="light" color={EDITION_COLORS[edition.status]}>{humanize(edition.status)}</Badge>
       </Group>
 
       {edition.status === 'approved' && (
-        <Alert color="blue">This edition is centrally approved. Saving any change sends it back to draft, creates a new version, and requires approval again.</Alert>
+        <Alert color="blue">This campaign is centrally approved. Saving any change sends it back to draft, creates a new version, and requires approval again.</Alert>
       )}
       {edition.notes && <Alert color="yellow" title="Notes">{edition.notes}</Alert>}
 
@@ -298,7 +298,7 @@ export function EditionDetailPage() {
         <SimpleGrid cols={{ base: 1, sm: 2 }}>
           <TextInput label={hintLabel('Subject line', 'The subject people see in their inbox. Keep it short and specific.')} placeholder="What to check on your roof after a storm" disabled={!editor} value={form.subject ?? ''} onChange={(e) => { const subject = e.currentTarget.value; setForm((c) => ({ ...c, subject })); }} />
           <TextInput label={hintLabel('Preview text', 'The short line most inboxes show after the subject. Use it to add a reason to open the email.')} placeholder="A ten-minute walk-around that can save you a costly repair" disabled={!editor} value={form.preview_text ?? ''} onChange={(e) => { const preview_text = e.currentTarget.value; setForm((c) => ({ ...c, preview_text })); }} />
-          <MultiSelect label={hintLabel('Eligible plans', 'Which plans get this edition. Leave it empty to send it to every plan in this division.')} placeholder="All plans in this division" disabled={!editor} value={form.eligible_plans ?? []} data={(plans.data ?? []).filter((p) => p.division === division).map((p) => ({ value: p.plan_key, label: p.label }))} onChange={(eligible_plans) => setForm((c) => ({ ...c, eligible_plans }))} />
+          <MultiSelect label={hintLabel('Eligible plans', 'Which plans get this campaign. Leave it empty to send it to every plan in this division.')} placeholder="All plans in this division" disabled={!editor} value={form.eligible_plans ?? []} data={(plans.data ?? []).filter((p) => p.division === division).map((p) => ({ value: p.plan_key, label: p.label }))} onChange={(eligible_plans) => setForm((c) => ({ ...c, eligible_plans }))} />
           <SimpleGrid cols={2}>
             <TextInput label={hintLabel('Embargo until', 'Optional. Nothing is sent before this date, even if the send time comes earlier.')} type="date" disabled={!editor} value={form.embargo_at?.slice(0, 10) ?? ''} onChange={(e) => { const embargo_at = e.currentTarget.value; setForm((c) => ({ ...c, embargo_at })); }} />
             <TextInput label={hintLabel('Expires on', 'Optional. Nothing is sent after this date, for example when the content would be out of date.')} type="date" disabled={!editor} value={form.expires_at?.slice(0, 10) ?? ''} onChange={(e) => { const expires_at = e.currentTarget.value; setForm((c) => ({ ...c, expires_at })); }} />
@@ -335,26 +335,26 @@ export function EditionDetailPage() {
       {editor && (
         <Group justify="flex-end">
           {canDelete(edition) && (
-            <Button variant="subtle" color="red" leftSection={<IconTrash size={16} />} disabled={busy} onClick={() => setDeleting(true)} mr="auto">Delete edition</Button>
+            <Button variant="subtle" color="red" leftSection={<IconTrash size={16} />} disabled={busy} onClick={() => setDeleting(true)} mr="auto">Delete campaign</Button>
           )}
-          <Button variant="default" loading={busy} onClick={() => void run(saveAll, 'Edition saved')}>Save</Button>
+          <Button variant="default" loading={busy} onClick={() => void run(saveAll, 'Campaign saved')}>Save</Button>
           {(edition.status === 'draft' || edition.status === 'rejected') && (
             <Button loading={busy} disabled={!hero} onClick={() => void run(async () => { await saveAll(); await api.submitEdition(id); }, 'Submitted for approval')}>Submit for approval</Button>
           )}
           {edition.status === 'pending_approval' && (
             <>
               <Button color="red" variant="light" loading={busy} onClick={() => setRejectOpen(true)}>Reject</Button>
-              <Button color="green" loading={busy} onClick={() => void run(() => api.approveEdition(id), 'Edition approved. Tenant campaigns are being queued.')}>Approve and publish</Button>
+              <Button color="green" loading={busy} onClick={() => void run(() => api.approveEdition(id), 'Campaign approved. Sub-account newsletters are being queued.')}>Approve and publish</Button>
             </>
           )}
         </Group>
       )}
 
-      <DeleteEditionModal edition={deleting ? edition : null} onClose={() => setDeleting(false)} onDeleted={() => navigate('/admin/editions', { replace: true })} />
-      <Modal opened={rejectOpen} onClose={() => setRejectOpen(false)} title="Reject edition">
+      <DeleteEditionModal edition={deleting ? edition : null} onClose={() => setDeleting(false)} onDeleted={() => navigate('/admin/campaigns', { replace: true })} />
+      <Modal opened={rejectOpen} onClose={() => setRejectOpen(false)} title="Reject campaign">
         <Stack>
           <Textarea label="Notes for the editor" placeholder="What needs to change before this can be approved" required autosize minRows={3} value={rejectNotes} onChange={(e) => setRejectNotes(e.currentTarget.value)} />
-          <Button color="red" disabled={!rejectNotes.trim()} onClick={() => { setRejectOpen(false); void run(() => api.rejectEdition(id, rejectNotes.trim()), 'Edition rejected'); }}>Reject edition</Button>
+          <Button color="red" disabled={!rejectNotes.trim()} onClick={() => { setRejectOpen(false); void run(() => api.rejectEdition(id, rejectNotes.trim()), 'Campaign rejected'); }}>Reject campaign</Button>
         </Stack>
       </Modal>
     </Stack>

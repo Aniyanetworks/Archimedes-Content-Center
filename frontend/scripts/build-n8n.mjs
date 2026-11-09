@@ -4,7 +4,8 @@
 //
 // Set values through the environment or edit the Config node after import:
 //   SUPABASE_URL  ERROR_WORKFLOW_ID  N8N_SUPABASE_CREDENTIAL_ID  N8N_SMTP_CREDENTIAL_ID  GHL_BASE  N8N_OUT_DIR
-// The notification sender is not built in: workflows read it from Supabase (notification_sender).
+// The notification sender is not built in: workflows read it from Supabase (notification_sender),
+// including whether to send by SMTP or through GoHighLevel (the notify-ghl Edge Function).
 import fs from 'node:fs';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
@@ -134,6 +135,27 @@ class Flow {
       html,
       options: { appendAttribution: false },
     }, x, y, { credentials: SMTP_CRED, retryOnFail: true, maxTries: 2, waitBetweenTries: 5000 });
+  }
+
+  // Sends one email per item through whichever method is chosen on Pause and safety:
+  // the SMTP node keeps the plain name (so the app can link the SMTP credential to it), and
+  // "<name> (GHL)" calls the notify-ghl Edge Function, which holds the GHL token. Returns both send nodes.
+  notify(name, x, y = 300) {
+    const choice = this.condition(`${name}: via GoHighLevel?`, "$('Get sender').first().json.channel === 'ghl'", x, y);
+    const ghl = this.add(`${name} (GHL)`, 'n8n-nodes-base.httpRequest', 4.2, {
+      method: 'POST',
+      url: "={{ $('Config').first().json.supabaseUrl }}/functions/v1/notify-ghl",
+      authentication: 'predefinedCredentialType',
+      nodeCredentialType: 'supabaseApi',
+      sendBody: true,
+      specifyBody: 'json',
+      jsonBody: '={{ JSON.stringify({ to: $json.to, subject: $json.subject, html: $json.html }) }}',
+      options: { timeout: 30000 },
+    }, x + 220, y - 120, { credentials: SUPABASE_CRED, retryOnFail: true, maxTries: 2, waitBetweenTries: 5000 });
+    const smtp = this.email(name, '={{ $json.to }}', '={{ $json.subject }}', '={{ $json.html }}', x + 220, y + 120);
+    this.link(choice, ghl, 0);
+    this.link(choice, smtp, 1);
+    return { choice, sends: [ghl, smtp] };
   }
 
   toJSON() {
@@ -278,13 +300,15 @@ const html = '<p>Hello' + (c.reviewer_name ? ' ' + esc(c.reviewer_name) : '') + 
   + '<p><a href="' + esc(link.url) + '">Review the newsletter</a></p>'
   + '<p>This secure link is for you only and expires at the deadline.</p>';
 return [{ json: { to: link.to, subject: 'Review needed: ' + c.newsletter_name, html } }];`, 1100);
-  f.email('Send invite', '={{ $json.to }}', '={{ $json.subject }}', '={{ $json.html }}', 1320);
-  f.rpc('Mark invite sent', 'mark_review_invite_sent', `{ p_id: ${CURRENT}.campaign_id }`, 1540);
-  f.pace(1760, 300, 1);
+  const invite = f.notify('Send invite', 1320);
+  f.rpc('Mark invite sent', 'mark_review_invite_sent', `{ p_id: ${CURRENT}.campaign_id }`, 1760);
+  f.pace(1980, 300, 1);
   f.rpc('Get sender', 'notification_sender', '{}', 330, 480);
   f.chain('Every 5 min', 'Config', 'Get sender', 'Invites due', 'Loop');
   f.link('Loop', 'Issue signed link', 1);
-  f.chain('Issue signed link', 'Build email', 'Send invite', 'Mark invite sent', 'Pace', 'Loop');
+  f.chain('Issue signed link', 'Build email', invite.choice);
+  for (const send of invite.sends) f.link(send, 'Mark invite sent');
+  f.chain('Mark invite sent', 'Pace', 'Loop');
   return f;
 }
 
@@ -300,9 +324,9 @@ return $input.all().map(({ json: c }) => ({ json: {
   subject: 'Newsletter held: ' + c.newsletter_name,
   html: '<p>The review deadline for <strong>' + esc(c.newsletter_name) + '</strong> passed without a decision, so this issue has been held and will not be sent.</p><p>Contact Archimedes support if you would still like it to go out.</p>',
 } }));`, 660);
-  f.email('Notify reviewer', '={{ $json.to }}', '={{ $json.subject }}', '={{ $json.html }}', 880);
+  const notice = f.notify('Notify reviewer', 880);
   f.rpc('Get sender', 'notification_sender', '{}', 330, 480);
-  f.chain('Every 15 min', 'Config', 'Get sender', 'Hold expired reviews', 'Build notice', 'Notify reviewer');
+  f.chain('Every 15 min', 'Config', 'Get sender', 'Hold expired reviews', 'Build notice', notice.choice);
   return f;
 }
 
@@ -423,9 +447,9 @@ const alerts = $input.all().map((item) => item.json);
 if (!alerts.length || !alerts[0].id) return [];
 const rows = alerts.map((a) => '<li><strong>' + esc(a.severity) + '</strong> ' + esc(a.kind) + ': ' + esc(a.message) + '</li>').join('');
 return [{ json: { to: alerts[0].notify_email, subject: 'Archimedes engine: ' + alerts.length + ' alert(s)', html: '<ul>' + rows + '</ul>' } }];`, 660);
-  f.email('Email operations', '={{ $json.to }}', '={{ $json.subject }}', '={{ $json.html }}', 880);
+  const digest = f.notify('Email operations', 880);
   f.rpc('Get sender', 'notification_sender', '{}', 330, 480);
-  f.chain('Every 15 min', 'Config', 'Get sender', 'Claim alerts', 'Build digest', 'Email operations');
+  f.chain('Every 15 min', 'Config', 'Get sender', 'Claim alerts', 'Build digest', digest.choice);
   return f;
 }
 

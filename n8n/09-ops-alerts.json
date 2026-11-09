@@ -2,7 +2,7 @@
   "name": "Archimedes 09 Operations alerts",
   "nodes": [
     {
-      "id": "f373cc22-a358-4293-8063-880f77869ca9",
+      "id": "f8097edf-69fa-43e5-af5d-cb424806843e",
       "name": "Every 15 min",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
@@ -22,7 +22,7 @@
       }
     },
     {
-      "id": "efda82dc-0053-438e-b288-6947b443b357",
+      "id": "f2fe567b-e1a0-4cba-ac4b-184c0d97c030",
       "name": "Config",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
@@ -36,7 +36,7 @@
         "assignments": {
           "assignments": [
             {
-              "id": "c90be06c-08fe-4d37-aaa4-b995cf54807f",
+              "id": "0f5bc827-e957-4e9e-a3bb-9adaa2241b60",
               "name": "supabaseUrl",
               "value": "https://YOUR-PROJECT.supabase.co",
               "type": "string"
@@ -47,7 +47,7 @@
       }
     },
     {
-      "id": "ee77b8f2-d240-4051-8700-0a1a5b59b836",
+      "id": "62567f78-b7d2-43f0-9b15-d006c9d642a8",
       "name": "Claim alerts",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -78,7 +78,7 @@
       "waitBetweenTries": 2000
     },
     {
-      "id": "58a0232b-9772-4dc0-8146-98297ce6b7fa",
+      "id": "e8cdb353-aa03-4b27-98a0-1f108fcead4e",
       "name": "Build digest",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -93,13 +93,78 @@
       }
     },
     {
-      "id": "544ead5e-94c0-4939-a632-612facfbb2e0",
+      "id": "23243795-c016-4a03-a040-0a21fe3016a3",
+      "name": "Email operations: via GoHighLevel?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        880,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c5d246ce-a202-4118-97e2-3576bca35b10",
+              "leftValue": "={{ $('Get sender').first().json.channel === 'ghl' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "c86930c1-fc74-49c8-bf82-9b17bca2a3e4",
+      "name": "Email operations (GHL)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1100,
+        180
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Config').first().json.supabaseUrl }}/functions/v1/notify-ghl",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ to: $json.to, subject: $json.subject, html: $json.html }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "credentials": {
+        "supabaseApi": {
+          "id": "nhNQM44yDbiWIFG5",
+          "name": "Archemedies"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
+    },
+    {
+      "id": "6973c27a-c5b8-4194-be36-33f37bf71429",
       "name": "Email operations",
       "type": "n8n-nodes-base.emailSend",
       "typeVersion": 2.1,
       "position": [
-        880,
-        300
+        1100,
+        420
       ],
       "parameters": {
         "fromEmail": "={{ $('Get sender').first().json.from }}",
@@ -122,7 +187,7 @@
       "waitBetweenTries": 5000
     },
     {
-      "id": "d69baf37-7193-4fb9-9f1c-240b2c026e48",
+      "id": "0c99148c-b96f-4cd6-a431-ab83b2f1af70",
       "name": "Get sender",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -154,6 +219,24 @@
     }
   ],
   "connections": {
+    "Email operations: via GoHighLevel?": {
+      "main": [
+        [
+          {
+            "node": "Email operations (GHL)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Email operations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "Every 15 min": {
       "main": [
         [
@@ -202,7 +285,7 @@
       "main": [
         [
           {
-            "node": "Email operations",
+            "node": "Email operations: via GoHighLevel?",
             "type": "main",
             "index": 0
           }

@@ -98,6 +98,8 @@ describe('delivery check', () => {
 
 describe('notification sender', () => {
   test('email workflows stop with a clear message until the sender is set', async () => {
+    // This test is about the sender address, so it uses the SMTP method (GoHighLevel also needs a location).
+    await db.exec(`update system_settings set value = '"smtp"' where key = 'notification_channel';`);
     await assert.rejects(db.query('select notification_sender()'), /Set the notification sender/);
     await db.exec(`update system_settings set value = '"ops@example.com"' where key = 'notification_from_email';`);
     const s = (await one(db, 'select notification_sender() as s')).s;

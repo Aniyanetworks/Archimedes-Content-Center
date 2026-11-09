@@ -2,7 +2,7 @@
   "name": "Archimedes 03 Render and route",
   "nodes": [
     {
-      "id": "cad726f1-a635-4955-97ba-f1632086f415",
+      "id": "8757109c-c449-4a83-b928-692dc4200b9c",
       "name": "Every 5 min",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
@@ -22,7 +22,7 @@
       }
     },
     {
-      "id": "9f243b79-a36a-49b4-8df1-892e36b38997",
+      "id": "12881bdf-8e8c-4918-85ca-6df474fc571e",
       "name": "Config",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
@@ -36,7 +36,7 @@
         "assignments": {
           "assignments": [
             {
-              "id": "b289b045-ed62-4308-b618-03821c0c729d",
+              "id": "1a008f1b-637f-4a71-93e7-50801920c590",
               "name": "supabaseUrl",
               "value": "https://YOUR-PROJECT.supabase.co",
               "type": "string"
@@ -47,7 +47,7 @@
       }
     },
     {
-      "id": "da6d0e67-b41a-4d67-b72d-ae91d4e615a3",
+      "id": "349b6c5f-90b7-40f4-b716-6d1228f7bc4e",
       "name": "Claim campaigns to render",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -78,7 +78,7 @@
       "waitBetweenTries": 2000
     },
     {
-      "id": "0a551c51-4583-43ab-8bf2-90fe085f4879",
+      "id": "b9992b14-40f2-40cc-892c-0142a5a0ffbd",
       "name": "Loop",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
@@ -92,7 +92,7 @@
       }
     },
     {
-      "id": "244df965-9e5e-42d7-8563-9c012ebb4013",
+      "id": "e6fe86ea-10e9-43aa-bf14-64974a8c4df7",
       "name": "Render HTML",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -107,7 +107,7 @@
       }
     },
     {
-      "id": "fea4e042-0c8e-4842-a386-ee4f319f0c01",
+      "id": "9415fbf8-d6f2-429e-8c27-4e853c77e5bc",
       "name": "Rendered cleanly?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
@@ -125,7 +125,7 @@
           },
           "conditions": [
             {
-              "id": "da084caf-986b-4e91-ad72-ffc3c41b2332",
+              "id": "0ab8f608-2da7-46cc-a0d6-c6d127f375bc",
               "leftValue": "={{ $json.errors.length === 0 }}",
               "rightValue": "",
               "operator": {
@@ -141,7 +141,7 @@
       }
     },
     {
-      "id": "4af69fbc-6334-473d-a27b-3e1c53abdb58",
+      "id": "2dd86e64-63b3-4464-9506-0b0a689d8167",
       "name": "Store render and route",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -172,7 +172,7 @@
       "waitBetweenTries": 2000
     },
     {
-      "id": "04054998-7b57-402c-a640-0c6b6ea6cbd8",
+      "id": "cd6da612-5118-438f-978f-b828cc220e63",
       "name": "Hold render failure",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -203,7 +203,7 @@
       "waitBetweenTries": 2000
     },
     {
-      "id": "3cdcbbac-3b95-47c2-92f1-b7870b9e9c13",
+      "id": "db921116-ce58-458f-a0e7-89549b365b31",
       "name": "Pace",
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
@@ -215,7 +215,7 @@
         "amount": 1,
         "unit": "seconds"
       },
-      "webhookId": "a74b15a3-aab8-41a5-9107-fa933e3dec74"
+      "webhookId": "8fe14a9c-3dd1-4904-beb2-85b14201f0c0"
     }
   ],
   "connections": {

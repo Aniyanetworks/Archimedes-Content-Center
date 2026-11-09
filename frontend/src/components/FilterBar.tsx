@@ -1,5 +1,6 @@
 import { Button, CloseButton, Group, ScrollArea, Select, Text, TextInput, UnstyledButton } from '@mantine/core';
 import { IconSearch } from '@tabler/icons-react';
+import type { ReactNode } from 'react';
 
 export interface FilterSelect {
   key: string;
@@ -24,26 +25,31 @@ interface Props {
   shown: number;
   noun: [string, string];
   onClear: () => void;
+  // An action shown at the right end of the tabs row, such as a page-level button.
+  tabsRight?: ReactNode;
 }
 
 // The toolbar above a list: status tabs, then search and a few compact filters.
-export function FilterBar({ search, onSearch, searchPlaceholder, tabs, tabsLabel, tab, onTab, selects, total, shown, noun, onClear }: Props) {
+export function FilterBar({ search, onSearch, searchPlaceholder, tabs, tabsLabel, tab, onTab, selects, total, shown, noun, onClear, tabsRight }: Props) {
   const filtering = !!search.trim() || !!tab || selects.some((s) => s.value);
   const visibleTabs = tabs.filter((t) => t.count === undefined || t.count > 0 || t.value === tab);
   return (
     <div className="filter-bar">
-      <ScrollArea type="never">
-        <Group gap={4} wrap="nowrap" className="filter-tabs" role="tablist" aria-label={tabsLabel ?? "Filter by status"}>
-          <UnstyledButton role="tab" aria-selected={!tab} data-active={!tab} className="filter-tab" onClick={() => onTab(null)}>
-            All <span className="filter-count">{total}</span>
-          </UnstyledButton>
-          {visibleTabs.map((t) => (
-            <UnstyledButton key={t.value} role="tab" aria-selected={tab === t.value} data-active={tab === t.value} className="filter-tab" onClick={() => onTab(tab === t.value ? null : t.value)}>
-              {t.label}{t.count !== undefined && <span className="filter-count">{t.count}</span>}
+      <Group gap="sm" wrap="nowrap" justify="space-between" align="center">
+        <ScrollArea type="never" style={{ minWidth: 0, flex: 1 }}>
+          <Group gap={4} wrap="nowrap" className="filter-tabs" role="tablist" aria-label={tabsLabel ?? "Filter by status"}>
+            <UnstyledButton role="tab" aria-selected={!tab} data-active={!tab} className="filter-tab" onClick={() => onTab(null)}>
+              All <span className="filter-count">{total}</span>
             </UnstyledButton>
-          ))}
-        </Group>
-      </ScrollArea>
+            {visibleTabs.map((t) => (
+              <UnstyledButton key={t.value} role="tab" aria-selected={tab === t.value} data-active={tab === t.value} className="filter-tab" onClick={() => onTab(tab === t.value ? null : t.value)}>
+                {t.label}{t.count !== undefined && <span className="filter-count">{t.count}</span>}
+              </UnstyledButton>
+            ))}
+          </Group>
+        </ScrollArea>
+        {tabsRight}
+      </Group>
       <Group gap="xs" mt="sm" wrap="wrap" align="center">
         <TextInput
           className="filter-search"

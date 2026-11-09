@@ -1,5 +1,6 @@
 import { notifications } from '@mantine/notifications';
 import type { CampaignStatus, StaffRole } from '../api/types';
+import { renameTerms } from './terms';
 
 export function formatDateTime(value: string | null | undefined, timeZone?: string): string {
   if (!value) return '—';
@@ -16,12 +17,13 @@ export function formatDate(value: string | null | undefined): string {
 export function humanize(value: string | null | undefined): string {
   if (!value) return '—';
   const text = value.replace(/[_.]/g, ' ').toLowerCase();
-  return (text.charAt(0).toUpperCase() + text.slice(1)).replace(/\b(hsg|hvac|ghl)\b/gi, (word) => word.toUpperCase());
+  // Names from the database (tenant, edition, campaign.status) are shown with the words people use.
+  return renameTerms((text.charAt(0).toUpperCase() + text.slice(1)).replace(/\b(hsg|hvac|ghl)\b/gi, (word) => word.toUpperCase()));
 }
 
 const FRIENDLY_ERRORS: Array<[RegExp, string]> = [
-  [/editions_division_industry_publication_week_key/, 'This industry already has an edition for that week. Open the existing edition or pick another week.'],
-  [/tenants_ghl_location_id_key/, 'Another tenant already uses this GHL location ID.'],
+  [/editions_division_industry_publication_week_key/, 'This industry already has a campaign for that week. Open the existing campaign or pick another week.'],
+  [/tenants_ghl_location_id_key/, 'Another sub-account already uses this GHL location ID.'],
   [/content_items_content_id_version_key/, 'That story version already exists. Reload the page and try again.'],
   [/violates check constraint ".*color/, 'Colors must be hex values like #14344F.'],
   [/permission denied|role does not allow/i, 'Your role does not allow this action.'],
@@ -30,7 +32,7 @@ const FRIENDLY_ERRORS: Array<[RegExp, string]> = [
 
 export function friendlyError(error: unknown): string {
   const message = error instanceof Error ? error.message : String(error);
-  return FRIENDLY_ERRORS.find(([pattern]) => pattern.test(message))?.[1] ?? message;
+  return FRIENDLY_ERRORS.find(([pattern]) => pattern.test(message))?.[1] ?? renameTerms(message);
 }
 
 export function showError(error: unknown) {

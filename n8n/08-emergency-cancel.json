@@ -2,7 +2,7 @@
   "name": "Archimedes 08 Emergency cancel in GHL",
   "nodes": [
     {
-      "id": "5a0ce434-43c5-45f5-b962-8264ad881388",
+      "id": "757f7458-7eea-43ae-b545-66cd60f39dd5",
       "name": "Every 5 min",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
@@ -22,7 +22,7 @@
       }
     },
     {
-      "id": "1b06abc5-6a7d-4805-92aa-6dae3dfa0bc5",
+      "id": "604f68de-3d35-48fd-b41a-1b49e76a5dbf",
       "name": "Config",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
@@ -36,7 +36,7 @@
         "assignments": {
           "assignments": [
             {
-              "id": "b445bcfd-6230-4c59-a8b9-bd78647d896c",
+              "id": "2f0ef3e7-e78f-4abf-b32d-efe506a8f0e8",
               "name": "supabaseUrl",
               "value": "https://YOUR-PROJECT.supabase.co",
               "type": "string"
@@ -47,7 +47,7 @@
       }
     },
     {
-      "id": "fefbaa7f-7624-47fd-8b7e-096eef83fd65",
+      "id": "125914c3-6ef3-4c82-b058-284ae18654de",
       "name": "Cancel requests",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -78,7 +78,7 @@
       "waitBetweenTries": 2000
     },
     {
-      "id": "fa7cd4b8-caf6-425e-a827-04d0d1aead1e",
+      "id": "8465ec80-c02c-4951-a810-fe4b340daa52",
       "name": "Loop",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
@@ -92,7 +92,7 @@
       }
     },
     {
-      "id": "d58ae484-2b51-4e63-8152-d9a82382e821",
+      "id": "b3ba86b2-127e-4993-bcaf-c3c3a2ab7de9",
       "name": "Get GHL Token",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -123,7 +123,7 @@
       "waitBetweenTries": 2000
     },
     {
-      "id": "b3887250-6f20-4a87-ad16-7e47d2ddf00e",
+      "id": "620abc1a-42ce-4a89-9ca6-037702ed106d",
       "name": "Delete GHL campaign",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -165,7 +165,7 @@
       "onError": "continueRegularOutput"
     },
     {
-      "id": "67bee876-878d-431c-bd82-b16e1b7102d2",
+      "id": "4a4a99ce-209c-4ab8-99f7-31583d3ffc15",
       "name": "Check result",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -180,7 +180,7 @@
       }
     },
     {
-      "id": "d44d78be-2498-48d6-8dd2-8f30cef12994",
+      "id": "1b02fa9a-8698-4d51-917c-38e0663b0243",
       "name": "Record cancel result",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -211,7 +211,7 @@
       "waitBetweenTries": 2000
     },
     {
-      "id": "40a03416-2ea9-4318-bd30-f217ed84fc9a",
+      "id": "5346f622-8b06-4653-922d-71b3ecebe3cd",
       "name": "Pace",
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
@@ -223,7 +223,7 @@
         "amount": 1,
         "unit": "seconds"
       },
-      "webhookId": "54c2bf17-57e0-43ca-be64-6523285f2fda"
+      "webhookId": "b1147249-4df8-4007-8a07-39bcf54d547e"
     }
   ],
   "connections": {

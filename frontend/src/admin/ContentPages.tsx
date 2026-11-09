@@ -178,7 +178,7 @@ export function ContentEditorPage() {
       </Group>
 
       {status === 'approved' && (
-        <Alert color="blue">Approved versions are locked so editions stay reproducible. Create a new version to make changes; it goes through review again.</Alert>
+        <Alert color="blue">Approved versions are locked so campaigns stay reproducible. Create a new version to make changes; it goes through review again.</Alert>
       )}
       {item.review_notes && <Alert color="yellow" title="Review notes">{item.review_notes}</Alert>}
 

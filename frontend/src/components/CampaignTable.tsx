@@ -69,8 +69,8 @@ export function CampaignTable({ rows, role, showTenant = true }: { rows: Campaig
         <Table highlightOnHover miw={880}>
           <Table.Thead>
             <Table.Tr>
-              {showTenant && <Table.Th miw={210}>Tenant</Table.Th>}
-              <Table.Th miw={230}>Edition</Table.Th>
+              {showTenant && <Table.Th miw={210}>Sub-account</Table.Th>}
+              <Table.Th miw={230}>Campaign</Table.Th>
               <Table.Th>{hintLabel("Status", "Where this newsletter is right now. Hover over a status to see what it means.")}</Table.Th>
               <Table.Th>{hintLabel("Approval", "Owner approves: the sub-account owner must approve before it is sent. Automatic: it is sent without asking.")}</Table.Th>
               <Table.Th>{hintLabel('Goes out', "When the newsletter is sent, or was sent, shown in the sub-account's own timezone.")}</Table.Th>
@@ -85,7 +85,7 @@ export function CampaignTable({ rows, role, showTenant = true }: { rows: Campaig
                 <Table.Tr key={row.id}>
                   {showTenant && (
                     <Table.Td>
-                      <Text size="sm" fw={600} component={Link} to={`/admin/tenants/${row.tenant_id}`} c="inherit" td="none">
+                      <Text size="sm" fw={600} component={Link} to={`/admin/sub-accounts/${row.tenant_id}`} c="inherit" td="none">
                         {row.tenant_name}
                       </Text>
                       <Text size="xs" c="dimmed">{humanize(row.industry)} · {humanize(row.plan_key)}</Text>
@@ -141,7 +141,7 @@ export function CampaignTable({ rows, role, showTenant = true }: { rows: Campaig
             })}
             {rows.length === 0 && (
               <Table.Tr>
-                <Table.Td colSpan={7}><Text c="dimmed" ta="center" py="lg">No campaigns match these filters.</Text></Table.Td>
+                <Table.Td colSpan={7}><Text c="dimmed" ta="center" py="lg">No newsletters match these filters.</Text></Table.Td>
               </Table.Tr>
             )}
           </Table.Tbody>
@@ -155,7 +155,7 @@ export function CampaignTable({ rows, role, showTenant = true }: { rows: Campaig
       <Modal opened={!!pending} onClose={() => setPending(null)} title={pending ? `${ACTION_LABELS[pending.action]}: ${pending.row.tenant_name}` : ''}>
         <Stack>
           {pending?.action === 'cancel' && pending.row.status === 'SCHEDULED' && (
-            <Text size="sm">This campaign is already scheduled in GHL. The engine will ask GHL to delete it, and you should confirm the result in the event history.</Text>
+            <Text size="sm">This newsletter is already scheduled in GHL. The engine will ask GHL to delete it, and you should confirm the result in the event history.</Text>
           )}
           <Textarea label="Reason" description="Recorded in the audit log" required value={reason} onChange={(e) => setReason(e.currentTarget.value)} autosize minRows={2} />
           <Group justify="flex-end">

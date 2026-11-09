@@ -181,8 +181,8 @@ export interface MetricRow {
 
 // Audit events grouped for the filter tabs, by the start of the event name.
 export const AUDIT_CATEGORIES = [
-  { value: 'campaigns', label: 'Campaigns', prefixes: ['campaign', 'review', 'approval', 'dispatch'] },
-  { value: 'editions', label: 'Editions', prefixes: ['edition'] },
+  { value: 'campaigns', label: 'Newsletters', prefixes: ['campaign', 'review', 'approval', 'dispatch'] },
+  { value: 'editions', label: 'Campaigns', prefixes: ['edition'] },
   { value: 'stories', label: 'Stories', prefixes: ['content'] },
   { value: 'subaccounts', label: 'Sub-accounts', prefixes: ['tenant'] },
   { value: 'staff', label: 'Staff', prefixes: ['staff'] },
@@ -320,6 +320,15 @@ export type SmtpRequest =
   | { action: 'save'; host: string; port: number; user: string; password: string; secure: boolean }
   | { action: 'workflows'; on: boolean };
 
+export type NotificationChannel = 'smtp' | 'ghl';
+
+// What the screen shows for GoHighLevel notification emails. The token itself stays in Vault.
+export interface NotificationGhl {
+  location_id: string;
+  token_saved: boolean;
+  updated_at: string;
+}
+
 export interface StaffMember {
   user_id: string;
   email: string;
@@ -386,6 +395,9 @@ export interface Api {
   setTemplateSample(division: Division, value: unknown | null): Promise<void>;
 
   smtpSettings(request: SmtpRequest): Promise<SmtpStatus>;
+  setNotificationChannel(channel: NotificationChannel): Promise<void>;
+  saveNotificationGhl(locationId: string, token: string | null): Promise<void>;
+  sendGhlTestEmail(): Promise<{ ok: boolean; to?: string; error?: string }>;
 
   listStaff(): Promise<StaffMember[]>;
   inviteStaff(email: string, role: StaffRole): Promise<{ status: 'invited' | 'added'; email: string }>;

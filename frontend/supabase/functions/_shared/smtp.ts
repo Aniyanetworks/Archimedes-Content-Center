@@ -30,6 +30,9 @@ export interface SmtpDeps {
   callerRole(authorization: string): Promise<string | null>;
   getConfig(): Promise<SmtpConfig | null>;
   senderEmailSet(): Promise<boolean>;
+  // Which way notification emails go, and whether GoHighLevel has a location and token saved.
+  channel(): Promise<'smtp' | 'ghl'>;
+  ghlReady(): Promise<boolean>;
   saveConfig(authorization: string, config: SmtpConfig): Promise<void>;
   logEvent(authorization: string, action: string, details: Record<string, unknown>): Promise<void>;
   // n8n. createCredential returns the new id; updateCredential returns false when the credential no longer exists.
@@ -125,9 +128,13 @@ export async function handleSmtp(request: Request, deps: SmtpDeps): Promise<Resp
 
       case 'workflows': {
         const on = body.on === true;
-        if (on && !config) return json({ error: 'Save the email server first.' }, 400, origin);
-        if (on && !(await deps.senderEmailSet())) return json({ error: 'Fill in the Sender email under Notification emails first.' }, 400, origin);
-        if (on) await deps.linkWorkflows(config!.credential_id);
+        if (on) {
+          const channel = await deps.channel();
+          if (channel === 'smtp' && !config) return json({ error: 'Save the email server first.' }, 400, origin);
+          if (channel === 'ghl' && !(await deps.ghlReady())) return json({ error: 'Save the GoHighLevel location and token first.' }, 400, origin);
+          if (!(await deps.senderEmailSet())) return json({ error: 'Fill in the Sender email under Notification emails first.' }, 400, origin);
+          if (config) await deps.linkWorkflows(config.credential_id);
+        }
         const workflows = await deps.setWorkflowsActive(on);
         await deps.logEvent(authorization, on ? 'email_workflows.on' : 'email_workflows.off', { workflows: workflows.map((w) => w.name) });
         return json({ workflows }, 200, origin);

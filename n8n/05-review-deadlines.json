@@ -2,7 +2,7 @@
   "name": "Archimedes 05 Hold missed review deadlines",
   "nodes": [
     {
-      "id": "b9406ad1-0348-4a2a-92eb-94ade6966606",
+      "id": "3a5df098-d6d4-482a-880f-e897520b60a4",
       "name": "Every 15 min",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
@@ -22,7 +22,7 @@
       }
     },
     {
-      "id": "d0f9d6b5-be4e-4ecf-af13-3235596e01bd",
+      "id": "ccbe659f-a3ca-4401-b9bb-2975ad370138",
       "name": "Config",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
@@ -36,7 +36,7 @@
         "assignments": {
           "assignments": [
             {
-              "id": "481d5ecc-9dee-4459-ae6a-0c3869181b5b",
+              "id": "d61a09ec-c51b-4b44-9e99-515d41483a45",
               "name": "supabaseUrl",
               "value": "https://YOUR-PROJECT.supabase.co",
               "type": "string"
@@ -47,7 +47,7 @@
       }
     },
     {
-      "id": "6f8dadf6-d427-4536-9c27-4130e7e15a94",
+      "id": "9e8583ab-10ba-4630-ad60-055c847d1793",
       "name": "Hold expired reviews",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -78,7 +78,7 @@
       "waitBetweenTries": 2000
     },
     {
-      "id": "d0194277-dcfb-4881-8a41-9425ae306301",
+      "id": "99d64281-94fd-45ea-b092-e16cd10a2ff4",
       "name": "Build notice",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -93,13 +93,78 @@
       }
     },
     {
-      "id": "eaee8b21-fca7-4cf2-baa3-7af3ade42095",
+      "id": "5fca43fd-decd-4515-8923-b12cf2a44ec3",
+      "name": "Notify reviewer: via GoHighLevel?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        880,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ae749bf4-3c0b-432c-b0da-9cb57716b6d5",
+              "leftValue": "={{ $('Get sender').first().json.channel === 'ghl' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "05f5eba0-c1d5-4e43-ba34-e8644b5ff76a",
+      "name": "Notify reviewer (GHL)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1100,
+        180
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Config').first().json.supabaseUrl }}/functions/v1/notify-ghl",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ to: $json.to, subject: $json.subject, html: $json.html }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "credentials": {
+        "supabaseApi": {
+          "id": "nhNQM44yDbiWIFG5",
+          "name": "Archemedies"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
+    },
+    {
+      "id": "44cec00b-ff04-4534-9e47-95d484b7cab2",
       "name": "Notify reviewer",
       "type": "n8n-nodes-base.emailSend",
       "typeVersion": 2.1,
       "position": [
-        880,
-        300
+        1100,
+        420
       ],
       "parameters": {
         "fromEmail": "={{ $('Get sender').first().json.from }}",
@@ -122,7 +187,7 @@
       "waitBetweenTries": 5000
     },
     {
-      "id": "29284db1-dd0f-4bfa-bce5-b6ca88d34aac",
+      "id": "8be35ded-7bc4-4bac-9721-f529be10f925",
       "name": "Get sender",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -154,6 +219,24 @@
     }
   ],
   "connections": {
+    "Notify reviewer: via GoHighLevel?": {
+      "main": [
+        [
+          {
+            "node": "Notify reviewer (GHL)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notify reviewer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "Every 15 min": {
       "main": [
         [
@@ -202,7 +285,7 @@
       "main": [
         [
           {
-            "node": "Notify reviewer",
+            "node": "Notify reviewer: via GoHighLevel?",
             "type": "main",
             "index": 0
           }

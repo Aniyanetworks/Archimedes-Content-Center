@@ -1,5 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 import { createAuthFetch } from './authFetch';
+import { renameTerms } from '../lib/terms';
+
+// Messages from the database and server functions use the database's names; people see the new words.
+const fail = (message: string) => new Error(renameTerms(message));
 import { AUDIT_CATEGORIES } from './types';
 import type {
   Api, AuditEntry, AuditFilters, BrandProfile, CampaignFilters, CampaignRow, ChecklistItem, ContentItem, DashboardCards, Edition, EditionItem,
@@ -23,12 +27,12 @@ export function createSupabaseApi(url: string, anonKey: string): Api {
 
   async function rpc<T = unknown>(name: string, args: Record<string, unknown> = {}): Promise<T> {
     const { data, error } = await db.rpc(name, args);
-    if (error) throw new Error(error.message);
+    if (error) throw fail(error.message);
     return data as T;
   }
 
   function must<T>(result: { data: T | null; error: { message: string } | null }): T {
-    if (result.error) throw new Error(result.error.message);
+    if (result.error) throw fail(result.error.message);
     return result.data as T;
   }
 
@@ -39,7 +43,7 @@ export function createSupabaseApi(url: string, anonKey: string): Api {
       body: JSON.stringify(body),
     });
     const json = await response.json();
-    if (!response.ok) throw new Error(json.error ?? 'This link could not be verified.');
+    if (!response.ok) throw fail(json.error ?? 'This link could not be verified.');
     return json as ReviewView;
   }
 
@@ -76,23 +80,23 @@ export function createSupabaseApi(url: string, anonKey: string): Api {
       const { data } = await db.auth.getSession();
       if (!data.session) return null;
       const { data: role, error } = await db.from('staff_roles').select('role').eq('user_id', data.session.user.id).maybeSingle();
-      if (error) throw new Error(error.message);
+      if (error) throw fail(error.message);
       return { email: data.session.user.email ?? '', role: (role?.role as StaffRole) ?? null };
     },
     async signIn(email, password) {
       const { error } = await db.auth.signInWithPassword({ email, password });
-      if (error) throw new Error(error.message);
+      if (error) throw fail(error.message);
     },
     async signOut() {
       await db.auth.signOut();
     },
     async requestPasswordReset(email) {
       const { error } = await db.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/admin/reset-password` });
-      if (error) throw new Error(error.message);
+      if (error) throw fail(error.message);
     },
     async updatePassword(password) {
       const { error } = await db.auth.updateUser({ password });
-      if (error) throw new Error(error.message);
+      if (error) throw fail(error.message);
     },
     async recoveryStatus() {
       if (linkError) return { ready: false, error: linkError };
@@ -109,7 +113,7 @@ export function createSupabaseApi(url: string, anonKey: string): Api {
       const { data, error, count } = await campaignQuery(filters)
         .order('scheduled_at', { ascending: false, nullsFirst: false })
         .range(page * pageSize, page * pageSize + pageSize - 1);
-      if (error) throw new Error(error.message);
+      if (error) throw fail(error.message);
       return { rows: (data ?? []) as CampaignRow[], total: count ?? 0 };
     },
     async getCampaignHtml(id) {
@@ -271,27 +275,46 @@ export function createSupabaseApi(url: string, anonKey: string): Api {
     },
     async smtpSettings(request) {
       const { data } = await db.auth.getSession();
-      if (!data.session) throw new Error('Please sign in again.');
+      if (!data.session) throw fail('Please sign in again.');
       const response = await fetch(`${url}/functions/v1/smtp-settings`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', apikey: anonKey, Authorization: `Bearer ${data.session.access_token}` },
         body: JSON.stringify(request),
       });
       const json = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(json.error ?? 'Could not reach the email settings service.');
+      if (!response.ok) throw fail(json.error ?? 'Could not reach the email settings service.');
       return json as SmtpStatus;
+    },
+    setNotificationChannel: async (channel) => {
+      await rpc('set_notification_channel', { p_channel: channel });
+    },
+    saveNotificationGhl: async (locationId, token) => {
+      await rpc('set_notification_ghl', { p_location: locationId, p_token: token });
+    },
+    async sendGhlTestEmail() {
+      const { data } = await db.auth.getSession();
+      if (!data.session) throw fail('Please sign in again.');
+      const response = await fetch(`${url}/functions/v1/notify-ghl`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', apikey: anonKey, Authorization: `Bearer ${data.session.access_token}` },
+        body: JSON.stringify({ action: 'test' }),
+      });
+      const json = await response.json().catch(() => ({}));
+      if (response.status >= 500 && json.ok === false) return { ok: false, to: json.to, error: renameTerms(String(json.error ?? '')) };
+      if (!response.ok) throw fail(json.error ?? 'Could not reach the GoHighLevel email service.');
+      return json as { ok: boolean; to?: string };
     },
     listStaff: () => rpc<StaffMember[]>('list_staff'),
     async inviteStaff(email, role) {
       const { data } = await db.auth.getSession();
-      if (!data.session) throw new Error('Please sign in again.');
+      if (!data.session) throw fail('Please sign in again.');
       const response = await fetch(`${url}/functions/v1/staff-invite`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', apikey: anonKey, Authorization: `Bearer ${data.session.access_token}` },
         body: JSON.stringify({ email, role }),
       });
       const json = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(json.error ?? 'The invite could not be sent.');
+      if (!response.ok) throw fail(json.error ?? 'The invite could not be sent.');
       return json as { status: 'invited' | 'added'; email: string };
     },
     setStaffRole: async (userId, role) => {
@@ -303,7 +326,7 @@ export function createSupabaseApi(url: string, anonKey: string): Api {
 
     async listAudit(filters, page, pageSize) {
       const { data, error, count } = await auditQuery(filters).range(page * pageSize, page * pageSize + pageSize - 1);
-      if (error) throw new Error(error.message);
+      if (error) throw fail(error.message);
       return { rows: (data ?? []) as AuditEntry[], total: count ?? 0 };
     },
     clearAuditLog: (confirm) => rpc<{ removed: number }>('clear_audit_log', { p_confirm: confirm }),

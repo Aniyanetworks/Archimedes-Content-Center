@@ -47,13 +47,13 @@ export function TestModePanel({ isTest }: { isTest: boolean }) {
       </Group>
       <div>
         <div className="tool-row"><div>
-              <Text fw={600} size="sm">{hintLabel('Load test data', 'Adds four sample sub-accounts (Equinox, Summit Peak, Timber Ridge and Craft Mountain), each with an approved edition for next week.')}</Text>
+              <Text fw={600} size="sm">{hintLabel('Load test data', 'Adds four sample sub-accounts (Equinox, Summit Peak, Timber Ridge and Craft Mountain), each with an approved campaign for next week.')}</Text>
             </div><Button variant="default" loading={busy} onClick={() => void run(api.seedTestData, 'Test data loaded. n8n renders it within about 5 minutes.')}>Load test data</Button></div>
         <div className="tool-row"><div>
               <Text fw={600} size="sm">{hintLabel('Send test batch now', 'Sends the ready test newsletters within a few minutes instead of waiting for their send day.')}</Text>
-            </div><Button variant="default" loading={busy} onClick={() => void run(api.testSendNow, 'Rendered campaigns moved forward.')}>Send test batch now</Button></div>
+            </div><Button variant="default" loading={busy} onClick={() => void run(api.testSendNow, 'Rendered newsletters moved forward.')}>Send test batch now</Button></div>
         <div className="tool-row"><div>
-              <Text fw={600} size="sm">{hintLabel('Reset test data', 'Deletes sub-accounts, stories, editions, campaigns, approvals and the audit log. Keeps staff logins, plans and designs, and turns practice mode and safe test mode back on.')}</Text>
+              <Text fw={600} size="sm">{hintLabel('Reset test data', 'Deletes sub-accounts, stories, campaigns, newsletters, approvals and the audit log. Keeps staff logins, plans and designs, and turns practice mode and safe test mode back on.')}</Text>
             </div><Button color="red" variant="light" onClick={() => setConfirming('reset')}>Reset test data</Button></div>
         <div className="tool-row"><div>
               <Text fw={600} size="sm">{hintLabel('Go live', 'Ends test mode for good. Reset is turned off forever and the audit log becomes permanent. Reset the test data first.')}</Text>
@@ -65,7 +65,7 @@ export function TestModePanel({ isTest }: { isTest: boolean }) {
           <Stack>
             <Text size="sm">
               {confirming === 'reset'
-                ? 'This permanently deletes all tenants, content, editions, campaigns, approvals and audit entries in this project.'
+                ? 'This permanently deletes all sub-accounts, content, campaigns, newsletters, approvals and audit entries in this project.'
                 : 'This cannot be undone. The system can never return to test mode or be reset.'}
             </Text>
             <TextInput label={`Type ${PHRASE[confirming]} to confirm`} value={typed} onChange={(e) => setTyped(e.currentTarget.value)} />

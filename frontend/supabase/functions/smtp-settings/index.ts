@@ -76,6 +76,15 @@ async function loadDeps(): Promise<SmtpDeps> {
       const { data } = await admin.from('system_settings').select('value').eq('key', 'notification_from_email').maybeSingle();
       return typeof data?.value === 'string' && data.value.includes('@');
     },
+    async channel() {
+      const { data } = await admin.from('system_settings').select('value').eq('key', 'notification_channel').maybeSingle();
+      return data?.value === 'ghl' ? 'ghl' : 'smtp';
+    },
+    async ghlReady() {
+      const { data } = await admin.rpc('notification_ghl_config', {});
+      const ghl = (data ?? {}) as { location_id?: string | null; token?: string | null };
+      return !!ghl.location_id && !!ghl.token;
+    },
     async saveConfig(authorization, saved) {
       const { error: saveError } = await asCaller(authorization).rpc('save_smtp_config', { p_config: saved });
       if (saveError) throw new Error(saveError.message);

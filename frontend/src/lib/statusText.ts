@@ -17,14 +17,14 @@ export const CAMPAIGN_STATUS_TEXT: Record<CampaignStatus, { label: string; hint:
   REJECTED: { label: 'Rejected', hint: 'This newsletter was rejected and will not be sent as it is. Fix the problem, then use Re-render.' },
   HELD: { label: 'On hold', hint: 'Stopped for now and will not be sent until someone uses Release hold. The reason is shown underneath.' },
   FAILED: { label: 'Failed', hint: 'Something went wrong while sending. The reason is shown underneath. Use Retry if it is offered.' },
-  CANCELED: { label: 'Cancelled', hint: 'Will not be sent. Either staff cancelled it, or the sub-account owner chose to skip this edition. The next edition is not affected.' },
+  CANCELED: { label: 'Cancelled', hint: 'Will not be sent. Either staff cancelled it, or the sub-account owner chose to skip this campaign. The next campaign is not affected.' },
 };
 
 const REASON_TEXT: Record<string, string> = {
   automatic: 'No approval needed',
   dry_run: 'Practice mode, not really sent',
   approval_revoked: 'Approval withdrawn',
-  edition_changed: 'The edition was changed',
+  edition_changed: 'The campaign was changed',
   entitlement_inactive: 'Plan is not active',
   ghl_rejected: 'GoHighLevel refused it',
   ghl_reported_failed: 'GoHighLevel reported a failure',
@@ -39,7 +39,7 @@ const REASON_TEXT: Record<string, string> = {
   operator_cancel: 'Cancelled by staff',
   'paused:embargo': 'Waiting for the embargo date',
   'paused:switch': 'Paused',
-  plan_not_eligible: 'Plan does not include this edition',
+  plan_not_eligible: 'Plan does not include this campaign',
   reconciled: 'Confirmed with GoHighLevel',
   retries_exhausted: 'Gave up after several tries',
   review_deadline_missed: 'Owner did not approve in time',

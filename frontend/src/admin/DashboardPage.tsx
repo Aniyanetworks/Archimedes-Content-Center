@@ -43,9 +43,9 @@ function CampaignFlow({ cards }: { cards: DashboardCards }) {
   return (
     <Paper withBorder p="md">
       <Group justify="space-between" mb="sm" gap="xs">
-        <Title order={4}>Campaign status</Title>
+        <Title order={4}>Newsletter status</Title>
         <Text size="sm" c="dimmed">
-          {total === 0 ? 'No campaigns yet' : attention > 0 ? `${attention} of ${total} need attention` : `${total} campaigns, none need attention`}
+          {total === 0 ? 'No newsletters yet' : attention > 0 ? `${attention} of ${total} need attention` : `${total} newsletters, none need attention`}
         </Text>
       </Group>
       {total > 0 && (
@@ -118,7 +118,7 @@ export function DashboardPage() {
     <Stack gap="md">
       <PageHeader
         title="Operations dashboard"
-        description="Every tenant campaign, from approval through to sending."
+        description="Every sub-account newsletter, from approval through to sending."
         actions={
           <Group gap={8} wrap="nowrap">
             <span className="live-dot" />
@@ -130,13 +130,13 @@ export function DashboardPage() {
       {activePauses.length > 0 && (
         <Alert color="orange" title="Sending is paused for part of the system" icon={<IconClockPause size={18} />}>
           {activePauses.map((pause) => `${humanize(pause.scope)}${pause.scope_value === '*' ? '' : `: ${pause.scope_value}`}`).join(', ')}.{' '}
-          <Text component={Link} to="/admin/controls" size="sm" td="underline" c="inherit">Review pause switches</Text>
+          <Text component={Link} to="/admin/settings" size="sm" td="underline" c="inherit">Review pause switches</Text>
         </Alert>
       )}
       {cards.error && <Alert color="red" title="Could not load the dashboard">{(cards.error as Error).message}</Alert>}
 
       <SimpleGrid cols={{ base: 2, sm: 3, xl: 6 }} spacing="sm">
-        <StatTile label="Active tenants" value={value?.active_tenants ?? '—'} icon={IconBuildingStore} color="gray" onClick={() => navigate('/admin/tenants')} />
+        <StatTile label="Active sub-accounts" value={value?.active_tenants ?? '—'} icon={IconBuildingStore} color="gray" onClick={() => navigate('/admin/sub-accounts')} />
         <StatTile label="Pending approvals" value={value?.pending_approvals ?? '—'} icon={IconHourglass} color="grape" active={filters.status === 'CLIENT_REVIEW_PENDING'} onClick={() => showStatus('CLIENT_REVIEW_PENDING')} />
         <StatTile label="Scheduled" value={value?.scheduled ?? '—'} icon={IconCalendarCheck} color="brand" active={filters.status === 'SCHEDULED'} onClick={() => showStatus('SCHEDULED')} />
         <StatTile label="Sent" value={value?.sent ?? '—'} icon={IconChecks} color="teal" active={filters.status === 'SENT'} onClick={() => showStatus('SENT')} />
@@ -147,17 +147,17 @@ export function DashboardPage() {
       {value && <CampaignFlow cards={value} />}
 
       <Paper withBorder className="stat-strip">
-        <button type="button" className="strip-item" onClick={() => navigate('/admin/editions')}><Text size="xs" c="dimmed">Upcoming editions</Text><Text fw={600}>{value?.upcoming_editions ?? '—'}</Text></button>
+        <button type="button" className="strip-item" onClick={() => navigate('/admin/campaigns')}><Text size="xs" c="dimmed">Upcoming campaigns</Text><Text fw={600}>{value?.upcoming_editions ?? '—'}</Text></button>
         <button type="button" className="strip-item" data-active={filters.status === 'SCHEDULED'} aria-pressed={filters.status === 'SCHEDULED'} onClick={() => showStatus('SCHEDULED')}><Text size="xs" c="dimmed">Recipients scheduled</Text><Text fw={600}>{value?.scheduled_recipients ?? '—'}</Text></button>
         <button type="button" className="strip-item" data-active={filters.status === 'SENT'} aria-pressed={filters.status === 'SENT'} onClick={() => showStatus('SENT')}><Text size="xs" c="dimmed">Unsubscribed or invalid</Text><Text fw={600}>{value?.unsubscribed_invalid ?? '—'}</Text></button>
-        <button type="button" className="strip-item" onClick={() => navigate('/admin/controls')}><Text size="xs" c="dimmed">Cost estimate</Text><Text fw={600}>{value?.cost_estimate_usd == null ? 'Rate not set' : `$${value.cost_estimate_usd.toFixed(2)}`}</Text></button>
+        <button type="button" className="strip-item" onClick={() => navigate('/admin/settings')}><Text size="xs" c="dimmed">Cost estimate</Text><Text fw={600}>{value?.cost_estimate_usd == null ? 'Rate not set' : `$${value.cost_estimate_usd.toFixed(2)}`}</Text></button>
       </Paper>
 
       <Paper withBorder p="md" ref={listRef} style={{ scrollMarginTop: 76 }}>
         <Group justify="space-between" mb="sm" gap="xs">
           <div>
-            <Title order={4}>Campaigns</Title>
-            <Text size="xs" c="dimmed">{total} {total === 1 ? 'campaign' : 'campaigns'}{activeFilters > 0 ? ' match your filters' : ''}</Text>
+            <Title order={4}>Newsletters</Title>
+            <Text size="xs" c="dimmed">{total} {total === 1 ? 'newsletter' : 'newsletters'}{activeFilters > 0 ? ' match your filters' : ''}</Text>
           </div>
           <Group gap="xs">
             {activeFilters > 0 && (
@@ -181,8 +181,8 @@ export function DashboardPage() {
             <Select label="Division" clearable value={filters.division ?? null} onChange={set('division')} data={[{ value: 'hsg', label: 'Home ServiceGenius' }, { value: 'hospitality', label: 'Hospitality' }]} />
             <Select label="Industry" clearable searchable value={filters.industry ?? null} onChange={set('industry')} data={(industries.data ?? []).map((i) => ({ value: i.key, label: i.label }))} />
             <Select label="Plan" clearable value={filters.plan_key ?? null} onChange={set('plan_key')} data={(plans.data ?? []).map((p) => ({ value: p.plan_key, label: p.label }))} />
-            <Select label="Tenant" clearable searchable value={filters.tenant_id ?? null} onChange={set('tenant_id')} data={(tenants.data ?? []).map((t) => ({ value: t.id, label: t.name }))} />
-            <Select label="Edition" clearable searchable value={filters.edition_id ?? null} onChange={set('edition_id')} data={(editions.data ?? []).map((e) => ({ value: e.id, label: `${formatDate(e.publication_week)} · ${e.industry} · ${e.subject || 'Untitled'}` }))} />
+            <Select label="Sub-account" clearable searchable value={filters.tenant_id ?? null} onChange={set('tenant_id')} data={(tenants.data ?? []).map((t) => ({ value: t.id, label: t.name }))} />
+            <Select label="Campaign" clearable searchable value={filters.edition_id ?? null} onChange={set('edition_id')} data={(editions.data ?? []).map((e) => ({ value: e.id, label: `${formatDate(e.publication_week)} · ${e.industry} · ${e.subject || 'Untitled'}` }))} />
             <TextInput label="Send date" type="date" value={filters.send_date ?? ''} onChange={(event) => set('send_date')(event.currentTarget.value)} />
             <Select label="Approval mode" clearable value={filters.review_mode ?? null} onChange={set('review_mode')} data={[{ value: 'auto', label: 'Automatic' }, { value: 'review', label: 'Review' }]} />
             <Select label="Status" clearable searchable value={filters.status ?? null} onChange={set('status')} data={CAMPAIGN_STATUSES.map((s) => ({ value: s, label: CAMPAIGN_STATUS_TEXT[s].label }))} />
@@ -190,7 +190,7 @@ export function DashboardPage() {
         </Collapse>
 
         {campaigns.error ? (
-          <Alert color="red" title="Could not load campaigns">{(campaigns.error as Error).message}</Alert>
+          <Alert color="red" title="Could not load newsletters">{(campaigns.error as Error).message}</Alert>
         ) : (
           <CampaignTable rows={campaigns.data?.rows ?? []} role={session?.role} />
         )}

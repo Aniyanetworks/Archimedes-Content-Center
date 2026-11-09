@@ -23,21 +23,21 @@ const NAV: Array<{ section: string; items: NavItem[] }> = [
     section: 'Operate',
     items: [
       { to: '/admin', label: 'Dashboard', icon: IconLayoutDashboard, exact: true },
-      { to: '/admin/tenants', label: 'Tenants', icon: IconUsers },
+      { to: '/admin/sub-accounts', label: 'Sub-accounts', icon: IconUsers },
     ],
   },
   {
     section: 'Publish',
     items: [
       { to: '/admin/content', label: 'Content library', icon: IconFileText },
-      { to: '/admin/editions', label: 'Editions', icon: IconNews },
+      { to: '/admin/campaigns', label: 'Campaigns', icon: IconNews },
       { to: '/admin/templates', label: 'Templates', icon: IconTemplate },
     ],
   },
   {
     section: 'Govern',
     items: [
-      { to: '/admin/controls', label: 'Pause and safety', icon: IconAdjustments },
+      { to: '/admin/settings', label: 'Settings', icon: IconAdjustments },
       { to: '/admin/audit', label: 'Audit log', icon: IconHistory },
       { to: '/admin/staff', label: 'Staff', icon: IconUserShield, adminOnly: true },
     ],
@@ -119,25 +119,36 @@ function Shell() {
         <div className="app-content">
           <Routes>
             <Route index element={<DashboardPage />} />
-            <Route path="tenants" element={<TenantListPage />} />
-            <Route path="tenants/new" element={<TenantFormPage />} />
-            <Route path="tenants/:id" element={<TenantDetailPage />} />
-            <Route path="tenants/:id/edit" element={<TenantFormPage />} />
+            <Route path="sub-accounts" element={<TenantListPage />} />
+            <Route path="sub-accounts/new" element={<TenantFormPage />} />
+            <Route path="sub-accounts/:id" element={<TenantDetailPage />} />
+            <Route path="sub-accounts/:id/edit" element={<TenantFormPage />} />
             <Route path="content" element={<ContentListPage />} />
             <Route path="content/new" element={<ContentEditorPage />} />
             <Route path="content/:id" element={<ContentEditorPage />} />
-            <Route path="editions" element={<EditionListPage />} />
-            <Route path="editions/:id" element={<EditionDetailPage />} />
+            <Route path="campaigns" element={<EditionListPage />} />
+            <Route path="campaigns/:id" element={<EditionDetailPage />} />
             <Route path="templates" element={<TemplatesPage />} />
-            <Route path="controls" element={<ControlsPage />} />
+            <Route path="settings" element={<ControlsPage />} />
             <Route path="audit" element={<AuditPage />} />
             <Route path="staff" element={<StaffPage />} />
+            {/* Old addresses keep working: bookmarks and links in emails go to the renamed pages. */}
+            <Route path="tenants/*" element={<RenamedPath from="tenants" to="sub-accounts" />} />
+            <Route path="editions/*" element={<RenamedPath from="editions" to="campaigns" />} />
+            <Route path="controls/*" element={<RenamedPath from="controls" to="settings" />} />
             <Route path="*" element={<Navigate to="/admin" replace />} />
           </Routes>
         </div>
       </AppShell.Main>
     </AppShell>
   );
+}
+
+// Sends an old address (for example /admin/tenants/123) to its new name (/admin/sub-accounts/123).
+function RenamedPath({ from, to }: { from: string; to: string }) {
+  const location = useLocation();
+  const next = location.pathname.replace(`/admin/${from}`, `/admin/${to}`) + location.search + location.hash;
+  return <Navigate to={next} replace />;
 }
 
 function Gate() {

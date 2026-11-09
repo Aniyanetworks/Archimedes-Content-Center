@@ -4,7 +4,7 @@ import { Box, SegmentedControl, Text } from '@mantine/core';
 // sandbox="" gives the email no scripts, no same-origin access, no forms and no navigation.
 export function EmailPreview({ html, height = 640 }: { html: string | null | undefined; height?: number }) {
   const [width, setWidth] = useState('desktop');
-  if (!html) return <Text c="dimmed">Nothing has been rendered for this campaign yet.</Text>;
+  if (!html) return <Text c="dimmed">Nothing has been rendered for this newsletter yet.</Text>;
   return (
     <div className="preview-frame">
       <div className="preview-bar">

@@ -7,7 +7,7 @@ import { BrandMark, Spiral } from '../components/BrandMark';
 import { showError, showSuccess } from '../lib/util';
 
 const LOGIN_POINTS = [
-  'Approve one edition, and every client gets their own branded version',
+  'Approve one campaign, and every client gets their own branded version',
   'Clients can review the exact version through a secure link',
   'Every send, approval and operator action is recorded',
 ];
@@ -26,7 +26,7 @@ function AuthLayout({ title, subtitle, children }: { title: string; subtitle: st
             <div className="app-brand-sub">Content Center</div>
           </div>
         </Group>
-        <div className="login-headline">One approved edition. Every client newsletter, sent safely.</div>
+        <div className="login-headline">One approved campaign. Every client newsletter, sent safely.</div>
         <Stack gap="sm" className="login-points" style={{ position: 'relative' }}>
           {LOGIN_POINTS.map((point) => (
             <Group key={point} gap="sm" wrap="nowrap" align="flex-start">

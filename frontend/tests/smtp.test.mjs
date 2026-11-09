@@ -51,6 +51,8 @@ describe('smtp-settings function', () => {
       callerRole: async () => 'admin',
       getConfig: async () => null,
       senderEmailSet: async () => true,
+      channel: async () => 'smtp',
+      ghlReady: async () => false,
       saveConfig: async (_a, c) => calls.push(['saveConfig', c]),
       logEvent: async (_a, action) => calls.push(['log', action]),
       createCredential: async (input) => { calls.push(['create', input]); return 'cred-new'; },
@@ -109,6 +111,15 @@ describe('smtp-settings function', () => {
     const result = await (await handleSmtp(post({ action: 'workflows', on: true }), ready)).json();
     assert.equal(result.workflows[0].active, true);
     assert.deepEqual(ready.calls.map((c) => c[0]), ['link', 'active', 'log']);
+  });
+
+  test('with GoHighLevel chosen, they turn on once GoHighLevel is set up, even without SMTP', async () => {
+    const notReady = deps({ channel: async () => 'ghl' });
+    assert.match((await (await handleSmtp(post({ action: 'workflows', on: true }), notReady)).json()).error, /GoHighLevel location and token/);
+    const ready = deps({ channel: async () => 'ghl', ghlReady: async () => true });
+    const result = await (await handleSmtp(post({ action: 'workflows', on: true }), ready)).json();
+    assert.equal(result.workflows[0].active, true);
+    assert.equal(ready.calls.some((c) => c[0] === 'link'), false);
   });
 
   test('turning them off always works', async () => {

@@ -53,7 +53,7 @@ export function TenantListPage() {
 
   return (
     <Stack>
-      <PageHeader title="Tenants" description="Every sub-account, its plan and whether it can send." actions={<>{canOperate(session?.role) && <Button component={Link} to="/admin/tenants/new">Add tenant</Button>}</>} />
+      <PageHeader title="Sub-accounts" description="Every sub-account, its plan and whether it can send." actions={<>{canOperate(session?.role) && <Button component={Link} to="/admin/sub-accounts/new">Add sub-account</Button>}</>} />
       {tenants.error && <Alert color="red">{(tenants.error as Error).message}</Alert>}
       <Paper withBorder p="sm">
         <FilterBar
@@ -84,7 +84,7 @@ export function TenantListPage() {
             <Table.Tbody>
               {rows.map((t) => (
                 <Table.Tr key={t.id}>
-                  <Table.Td><Anchor component={Link} to={`/admin/tenants/${t.id}`} fw={600} size="sm">{t.name}</Anchor></Table.Td>
+                  <Table.Td><Anchor component={Link} to={`/admin/sub-accounts/${t.id}`} fw={600} size="sm">{t.name}</Anchor></Table.Td>
                   <Table.Td>{humanize(t.industry)}</Table.Td>
                   <Table.Td>{plans.data?.find((p) => p.plan_key === t.plan_key)?.label ?? t.plan_key}</Table.Td>
                   <Table.Td>{t.cadence ? CADENCE_LABELS[t.cadence] : '—'}</Table.Td>
@@ -127,7 +127,7 @@ export function TenantDetailPage() {
     }
   };
 
-  if (detail.error) return <Alert color="red" title="Could not load this tenant">{(detail.error as Error).message}</Alert>;
+  if (detail.error) return <Alert color="red" title="Could not load this sub-account">{(detail.error as Error).message}</Alert>;
   if (!detail.data) return <Text c="dimmed">Loading…</Text>;
   const { tenant, brand, prefs, plan, campaigns, metrics, events, checklist } = detail.data;
   const template = templates.data?.find((t) => t.key === prefs.template_key);
@@ -147,7 +147,7 @@ export function TenantDetailPage() {
             {campaigns.length === 0 && !tenant.live_send_enabled && (
               <Button variant="subtle" color="red" leftSection={<IconTrash size={16} />} onClick={() => setDeleting(true)}>Delete</Button>
             )}
-            <Button variant="default" component={Link} to={`/admin/tenants/${id}/edit`}>Edit profile</Button>
+            <Button variant="default" component={Link} to={`/admin/sub-accounts/${id}/edit`}>Edit profile</Button>
           </Group>
         )}
       </Group>
@@ -159,11 +159,11 @@ export function TenantDetailPage() {
         success={`${tenant.name} deleted`}
         onClose={() => setDeleting(false)}
         onConfirm={() => api.deleteTenant(id)}
-        onDone={() => { void client.invalidateQueries({ queryKey: ['tenants'] }); navigate('/admin/tenants', { replace: true }); }}
+        onDone={() => { void client.invalidateQueries({ queryKey: ['tenants'] }); navigate('/admin/sub-accounts', { replace: true }); }}
       />
 
       {plan.signoff_pending && (
-        <Alert color="yellow" title="Plan terms are pending Archimedes signoff">This tenant can run test sends only until the plan's tiers, templates and cadence are confirmed.</Alert>
+        <Alert color="yellow" title="Plan terms are pending Archimedes signoff">This sub-account can run test sends only until the plan's tiers, templates and cadence are confirmed.</Alert>
       )}
 
       <SimpleGrid cols={{ base: 1, md: 2 }}>
@@ -173,7 +173,7 @@ export function TenantDetailPage() {
             <Text size="sm"><b>Title:</b> {brand.newsletter_name || '—'}</Text>
             <Text size="sm"><b>Design:</b> {template ? `${template.name} (v${template.version})` : prefs.template_key ?? '—'}</Text>
             <Text size="sm"><b>Next send:</b> {formatDateTime(upcoming?.scheduled_at, tenant.timezone)}</Text>
-            <Text size="sm"><b>Last campaign:</b> {formatDateTime(last?.sent_at, tenant.timezone)}</Text>
+            <Text size="sm"><b>Last newsletter:</b> {formatDateTime(last?.sent_at, tenant.timezone)}</Text>
             <Text size="sm"><b>Mode:</b> {prefs.review_mode === 'review' ? `Review by ${prefs.reviewer_email ?? 'no reviewer set'}` : 'Automatic'}</Text>
             <Text size="sm"><b>Sender:</b> {brand.from_name} &lt;{brand.from_email ?? 'not set'}&gt; · {brand.sender_verified ? 'verified' : 'not verified'}</Text>
             <Text size="sm"><b>Service areas:</b> {tenant.service_areas.join(', ') || '—'}</Text>
@@ -219,7 +219,7 @@ export function TenantDetailPage() {
       </SimpleGrid>
 
       <Paper withBorder p="md">
-        <Title order={4} mb="sm">Campaigns</Title>
+        <Title order={4} mb="sm">Newsletters</Title>
         <CampaignTable rows={campaigns} role={session?.role} showTenant={false} />
       </Paper>
 
@@ -228,7 +228,7 @@ export function TenantDetailPage() {
         {metrics.length === 0 ? <Text c="dimmed" size="sm">No delivery metrics have been recorded yet.</Text> : (
           <ScrollArea>
             <Table miw={600}>
-              <Table.Thead><Table.Tr><Table.Th>Campaign</Table.Th><Table.Th>Recipients</Table.Th><Table.Th>Delivered</Table.Th><Table.Th>Opened</Table.Th><Table.Th>Clicked</Table.Th><Table.Th>Bounced</Table.Th><Table.Th>Unsubscribed</Table.Th></Table.Tr></Table.Thead>
+              <Table.Thead><Table.Tr><Table.Th>Newsletter</Table.Th><Table.Th>Recipients</Table.Th><Table.Th>Delivered</Table.Th><Table.Th>Opened</Table.Th><Table.Th>Clicked</Table.Th><Table.Th>Bounced</Table.Th><Table.Th>Unsubscribed</Table.Th></Table.Tr></Table.Thead>
               <Table.Tbody>
                 {metrics.map((m) => (
                   <Table.Tr key={m.campaign_id}>
@@ -331,9 +331,9 @@ export function TenantFormPage() {
     try {
       const payload = { ...tenant, compliance_acknowledged_at: acknowledged ? tenant.compliance_acknowledged_at ?? new Date().toISOString() : null };
       const saved = await api.saveTenant(payload, brand, prefs);
-      showSuccess('Tenant saved');
+      showSuccess('Sub-account saved');
       await client.invalidateQueries();
-      navigate(`/admin/tenants/${saved}`);
+      navigate(`/admin/sub-accounts/${saved}`);
     } catch (error) {
       showError(error);
     } finally {
@@ -344,7 +344,7 @@ export function TenantFormPage() {
   return (
     <form onSubmit={(event) => void save(event)}>
       <Stack>
-        <Title order={2}>{id ? `Edit ${tenant.name ?? 'tenant'}` : 'Add tenant'}</Title>
+        <Title order={2}>{id ? `Edit ${tenant.name ?? 'sub-account'}` : 'Add sub-account'}</Title>
 
         <Paper withBorder p="md">
           <Title order={4} mb="sm">Business and plan</Title>
@@ -446,7 +446,7 @@ export function TenantFormPage() {
 
         <Group justify="flex-end">
           <Button variant="default" onClick={() => navigate(-1)}>Discard</Button>
-          <Button type="submit" loading={busy}>Save tenant</Button>
+          <Button type="submit" loading={busy}>Save sub-account</Button>
         </Group>
       </Stack>
     </form>

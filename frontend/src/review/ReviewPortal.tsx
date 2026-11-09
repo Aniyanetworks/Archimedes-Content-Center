@@ -102,7 +102,7 @@ export default function ReviewPortal() {
                   <Stack gap="xs">
                     <Button color="teal" size="md" fullWidth onClick={() => setConfirm('approve')}>Approve</Button>
                     <Button variant="default" fullWidth onClick={() => setConfirm('request_changes')}>Request changes</Button>
-                    <Button variant="subtle" color="gray" fullWidth onClick={() => setConfirm('skip')}>Skip this edition</Button>
+                    <Button variant="subtle" color="gray" fullWidth onClick={() => setConfirm('skip')}>Skip this newsletter</Button>
                   </Stack>
                 </>
               ) : (
@@ -123,11 +123,11 @@ export default function ReviewPortal() {
       <Modal
         opened={!!confirm}
         onClose={() => setConfirm(null)}
-        title={confirm === 'approve' ? 'Approve this newsletter?' : confirm === 'skip' ? 'Skip this edition?' : 'Request changes'}
+        title={confirm === 'approve' ? 'Approve this newsletter?' : confirm === 'skip' ? 'Skip this newsletter?' : 'Request changes'}
       >
         <Stack>
           {confirm === 'approve' && <Text size="sm">It will be sent to your subscribers as shown at the planned send time.</Text>}
-          {confirm === 'skip' && <Text size="sm">Nothing will be sent for this edition. Your next edition is not affected.</Text>}
+          {confirm === 'skip' && <Text size="sm">Nothing will be sent this time. Your next newsletter is not affected.</Text>}
           {confirm === 'request_changes' && (
             <Textarea label="What should change?" required autosize minRows={3} value={notes} onChange={(e) => setNotes(e.currentTarget.value)} />
           )}
@@ -139,7 +139,7 @@ export default function ReviewPortal() {
               disabled={confirm === 'request_changes' && !notes.trim()}
               onClick={() => confirm && void decide(confirm)}
             >
-              {confirm === 'approve' ? 'Approve' : confirm === 'skip' ? 'Skip edition' : 'Send request'}
+              {confirm === 'approve' ? 'Approve' : confirm === 'skip' ? 'Skip newsletter' : 'Send request'}
             </Button>
           </Group>
         </Stack>

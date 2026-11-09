@@ -157,7 +157,7 @@ export function createDemoApi(): Api {
   const campaigns: DemoCampaign[] = [];
   const pauses: PauseSwitch[] = [];
   const settings: Settings = {
-    environment: 'test', ghl_dry_run: true, safe_test_mode: true, internal_preview_addresses: ['ops@archimedes.example.com'], ops_alert_email: 'ops@archimedes.example.com', daily_send_cap: null, cost_per_1000_emails_usd: null,
+    environment: 'test', ghl_dry_run: true, safe_test_mode: true, internal_preview_addresses: ['ops@archimedes.example.com'], ops_alert_email: 'ops@archimedes.example.com', daily_send_cap: 500, cost_per_1000_emails_usd: 0.675, notification_channel: 'ghl',
   };
   const audit: AuditEntry[] = [];
 
@@ -225,7 +225,7 @@ export function createDemoApi(): Api {
   }
   const tenantById = (id: string) => {
     const found = tenants.find((t) => t.tenant.id === id);
-    if (!found) throw new Error('Tenant not found');
+    if (!found) throw new Error('Sub-account not found');
     return found;
   };
   const editionById = (id: string) => byId(editions, id);
@@ -235,7 +235,7 @@ export function createDemoApi(): Api {
   const roof = editionById('ed-roof');
   createCampaign(equinox, roof, 'CLIENT_REVIEW_PENDING', { review_deadline: days(1), scheduled_at: days(2) });
   createCampaign(summit, roof, 'SCHEDULED', { ghl_campaign_id: 'dry-run-001', dispatch_state: 'done', dispatch_attempts: 1, scheduled_at: days(2) });
-  createCampaign(timber, editionById('ed-hvac'), 'FAILED', { last_error: 'GHL 503 while scheduling. Campaign state reconciled: not scheduled, safe to retry.', dispatch_state: 'retry_safe', dispatch_attempts: 2, scheduled_at: days(1) });
+  createCampaign(timber, editionById('ed-hvac'), 'FAILED', { last_error: 'GHL 503 while scheduling. Newsletter state reconciled: not scheduled, safe to retry.', dispatch_state: 'retry_safe', dispatch_attempts: 2, scheduled_at: days(1) });
   createCampaign(craft, editionById('ed-brew'), 'HELD', { status_reason: 'review_deadline_missed', review_deadline: days(-1), scheduled_at: days(1) });
   createCampaign(equinox, { ...roof, id: 'ed-roof', subject: 'Five signs your gutters need attention', publication_week: monday(-1) }, 'SENT', {
     idempotency_key: 'equinox:ed-roof-last:default', sent_at: days(-5), scheduled_at: days(-5), ghl_campaign_id: 'dry-run-000', dispatch_state: 'done',
@@ -254,7 +254,7 @@ export function createDemoApi(): Api {
       { item: 'reviewer', label: 'Reviewer set (review mode only)', passed: prefs.review_mode !== 'review' || !!prefs.reviewer_email },
       { item: 'segment', label: 'Contact segment selected', passed: prefs.allowed_segments.length > 0 },
       { item: 'ghl_user', label: 'GHL user id set', passed: !!prefs.ghl_user_id },
-      { item: 'opt_in', label: 'Tenant opted in', passed: tenant.opted_in },
+      { item: 'opt_in', label: 'Sub-account opted in', passed: tenant.opted_in },
       { item: 'compliance', label: 'Compliance acknowledged', passed: !!tenant.compliance_acknowledged_at },
       { item: 'plan_terms', label: 'Plan terms signed off', passed: !plan.signoff_pending },
       { item: 'test_email', label: 'Test email passed', passed: !!tenant.test_email_passed_at },
@@ -415,7 +415,7 @@ export function createDemoApi(): Api {
         return tenant.id;
       }
       const id = uid();
-      tenants.push(demoTenant(id, tenant.name ?? 'New tenant', tenant.division ?? 'hsg', tenant.industry ?? 'roofing', tenant.plan_key ?? 'hsg_essentials', tenant.service_areas ?? [], brand, prefs, { ...tenant, id }));
+      tenants.push(demoTenant(id, tenant.name ?? 'New sub-account', tenant.division ?? 'hsg', tenant.industry ?? 'roofing', tenant.plan_key ?? 'hsg_essentials', tenant.service_areas ?? [], brand, prefs, { ...tenant, id }));
       log('tenant.created', {}, { tenant_id: id });
       return id;
     },
@@ -467,7 +467,7 @@ export function createDemoApi(): Api {
       if (session?.role !== 'admin' && session?.role !== 'editor') throw new Error('Your role does not allow this action');
       const item = byId(contentItems, id);
       if (item.status === 'approved' || item.status === 'retired') throw new Error('An approved story cannot be deleted. Retire it instead.');
-      if ([...editionItems.values()].some((list) => list.some((i) => i.content_item_id === id))) throw new Error('This story is used in an edition. Remove it from the edition first.');
+      if ([...editionItems.values()].some((list) => list.some((i) => i.content_item_id === id))) throw new Error('This story is used in a campaign. Remove it from the campaign first.');
       contentItems.splice(contentItems.indexOf(item), 1);
       log('content.deleted', { headline: item.headline, version: item.version });
     },
@@ -535,7 +535,7 @@ export function createDemoApi(): Api {
     },
     async approveEdition(id) {
       const edition = editionById(id);
-      if (edition.status !== 'pending_approval') throw new Error('Submit the edition for approval first.');
+      if (edition.status !== 'pending_approval') throw new Error('Submit the campaign for approval first.');
       edition.status = 'approved';
       edition.central_approved_at = now();
       log('edition.approved', { version: edition.version }, { edition_id: id });
@@ -556,7 +556,7 @@ export function createDemoApi(): Api {
       if (session?.role !== 'admin' && session?.role !== 'editor') throw new Error('Your role does not allow this action');
       const edition = editionById(id);
       if (edition.status === 'approved' || edition.central_approved_at || campaigns.some((c) => c.edition_id === id)) {
-        throw new Error('An approved edition cannot be deleted. Cancel its campaigns on the dashboard instead.');
+        throw new Error('An approved campaign cannot be deleted. Cancel its newsletters on the dashboard instead.');
       }
       editions.splice(editions.indexOf(edition), 1);
       editionItems.delete(id);
@@ -634,6 +634,25 @@ export function createDemoApi(): Api {
       for (const w of demoEmailWorkflows) w.active = request.on;
       log(request.on ? 'email_workflows.on' : 'email_workflows.off', {});
       return { workflows: workflows() };
+    },
+    async setNotificationChannel(channel) {
+      if (session?.role !== 'admin') throw new Error('Your role does not allow this action');
+      if (channel === 'ghl' && !settings.notification_ghl) throw new Error('Save the GoHighLevel location and token first.');
+      log('settings.notification_channel', { from: settings.notification_channel ?? 'ghl', to: channel });
+      settings.notification_channel = channel;
+    },
+    async saveNotificationGhl(locationId, token) {
+      if (session?.role !== 'admin') throw new Error('Your role does not allow this action');
+      if (!/^[A-Za-z0-9]{10,40}$/.test(locationId.trim())) throw new Error('Enter the GoHighLevel location ID (letters and numbers only).');
+      if (!token && !settings.notification_ghl) throw new Error('Paste the GoHighLevel private integration token.');
+      settings.notification_ghl = { location_id: locationId.trim(), token_saved: true, updated_at: now() };
+      log('settings.notification_ghl', { location_id: locationId.trim(), token_changed: !!token });
+    },
+    async sendGhlTestEmail() {
+      if (!settings.notification_ghl) throw new Error('Save the GoHighLevel location and token under Settings first.');
+      // Demo mode has no GoHighLevel; a location ID containing "bad" fails, anything else passes.
+      const ok = !(settings.notification_ghl as { location_id: string }).location_id.toLowerCase().includes('bad');
+      return ok ? { ok, to: session?.email } : { ok, to: session?.email, error: 'GoHighLevel said (401): Invalid token.' };
     },
     async listStaff() {
       requireAdmin();

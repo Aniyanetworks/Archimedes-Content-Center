@@ -72,10 +72,7 @@ export function AuditPage() {
 
   return (
     <Stack>
-      <PageHeader title="Audit log" description="A permanent record of sends, approvals and staff actions." actions={<>
-        {canClear && <Button color="red" variant="light" onClick={() => setClearing(true)}>Clear audit log</Button>}
-        <Button variant="default" onClick={() => void exportCsv()}>Export CSV</Button>
-      </>} />
+      <PageHeader title="Audit log" description="A permanent record of sends, approvals and staff actions." actions={<><Button variant="default" onClick={() => void exportCsv()}>Export CSV</Button></>} />
       {audit.error && <Alert color="red">{(audit.error as Error).message}</Alert>}
       <Paper withBorder p="sm">
         <FilterBar
@@ -94,6 +91,7 @@ export function AuditPage() {
           shown={total}
           noun={['entry', 'entries']}
           onClear={clearFilters}
+          tabsRight={canClear && <Button size="xs" color="red" variant="light" onClick={() => setClearing(true)}>Clear audit log</Button>}
         />
         <ScrollArea>
           <Table miw={760}>

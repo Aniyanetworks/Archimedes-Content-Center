@@ -2,7 +2,7 @@
   "name": "Archimedes 04 Send review invites",
   "nodes": [
     {
-      "id": "b4c8a6c3-0098-497e-ad9a-3a96ac3b3799",
+      "id": "8e9fc11d-75d7-4222-befe-4ba2c3603149",
       "name": "Every 5 min",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
@@ -22,7 +22,7 @@
       }
     },
     {
-      "id": "8901340b-a950-48dd-b8a2-93a7afda8191",
+      "id": "098966fa-3ea8-4feb-bccf-80f5c7d2b977",
       "name": "Config",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
@@ -36,7 +36,7 @@
         "assignments": {
           "assignments": [
             {
-              "id": "8b372075-e4a0-4269-ace7-f6a4fc51a601",
+              "id": "f353cf5d-ac0e-4838-be02-f60b0d7e79a6",
               "name": "supabaseUrl",
               "value": "https://YOUR-PROJECT.supabase.co",
               "type": "string"
@@ -47,7 +47,7 @@
       }
     },
     {
-      "id": "315b10b4-e77d-4779-931e-088e8daaee1b",
+      "id": "afad2c08-27d7-4866-b378-b2d7434e63cc",
       "name": "Invites due",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -78,7 +78,7 @@
       "waitBetweenTries": 2000
     },
     {
-      "id": "1aa4478b-c98a-482b-bc25-661f7c13749a",
+      "id": "c7641dbb-f4f1-4ca4-af30-46b0a01988e4",
       "name": "Loop",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
@@ -92,7 +92,7 @@
       }
     },
     {
-      "id": "708fea06-9a3f-4f22-a9e6-d96900d780d4",
+      "id": "c9d85adc-db46-4dd0-ab96-2b86ec684e07",
       "name": "Issue signed link",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -123,7 +123,7 @@
       "waitBetweenTries": 2000
     },
     {
-      "id": "2ef50db6-c056-4c5c-9acb-5414edb3c608",
+      "id": "7a196e03-c1f2-4a6e-b1f2-21b73e3ce7b7",
       "name": "Build email",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -138,13 +138,78 @@
       }
     },
     {
-      "id": "2086a6a1-5d97-4f97-8f8b-3c53671b3664",
+      "id": "882bc2cf-4723-49c5-8c2f-7674b08f10e9",
+      "name": "Send invite: via GoHighLevel?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1320,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "a8b903b6-ee45-4409-8566-e18e5e0dc8d6",
+              "leftValue": "={{ $('Get sender').first().json.channel === 'ghl' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "83c4e330-cbed-4dfd-93fa-165e9e3f457c",
+      "name": "Send invite (GHL)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1540,
+        180
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Config').first().json.supabaseUrl }}/functions/v1/notify-ghl",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ to: $json.to, subject: $json.subject, html: $json.html }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "credentials": {
+        "supabaseApi": {
+          "id": "nhNQM44yDbiWIFG5",
+          "name": "Archemedies"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
+    },
+    {
+      "id": "0fa0a4f2-4aee-454f-8f08-265de5f155e7",
       "name": "Send invite",
       "type": "n8n-nodes-base.emailSend",
       "typeVersion": 2.1,
       "position": [
-        1320,
-        300
+        1540,
+        420
       ],
       "parameters": {
         "fromEmail": "={{ $('Get sender').first().json.from }}",
@@ -167,12 +232,12 @@
       "waitBetweenTries": 5000
     },
     {
-      "id": "a591dccd-af28-414e-8908-829f1155716a",
+      "id": "6f5997ee-6be2-4620-a58d-5e25a30c28fb",
       "name": "Mark invite sent",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1540,
+        1760,
         300
       ],
       "parameters": {
@@ -198,22 +263,22 @@
       "waitBetweenTries": 2000
     },
     {
-      "id": "813eacde-0a4f-48c9-8e52-f6045529702b",
+      "id": "10d68770-392d-4d8c-a7c5-99a6c24ed7c8",
       "name": "Pace",
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        1760,
+        1980,
         300
       ],
       "parameters": {
         "amount": 1,
         "unit": "seconds"
       },
-      "webhookId": "45f353b0-0bbc-47b3-8f29-58d80ac7550e"
+      "webhookId": "92fe6bed-8557-447d-8659-a6560e146dd0"
     },
     {
-      "id": "890613cc-f9be-46dd-9089-3fe423445eca",
+      "id": "ad9b667a-7c0a-4566-b859-3283389f2565",
       "name": "Get sender",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -245,6 +310,24 @@
     }
   ],
   "connections": {
+    "Send invite: via GoHighLevel?": {
+      "main": [
+        [
+          {
+            "node": "Send invite (GHL)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send invite",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "Every 5 min": {
       "main": [
         [
@@ -316,7 +399,18 @@
       "main": [
         [
           {
-            "node": "Send invite",
+            "node": "Send invite: via GoHighLevel?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send invite (GHL)": {
+      "main": [
+        [
+          {
+            "node": "Mark invite sent",
             "type": "main",
             "index": 0
           }

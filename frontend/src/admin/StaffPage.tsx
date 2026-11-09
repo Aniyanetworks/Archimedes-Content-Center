@@ -10,7 +10,7 @@ import { useAuth } from './AuthContext';
 
 const ROLES: Array<{ value: StaffRole; label: string; description: string }> = [
   { value: 'admin', label: 'Admin', description: 'Everything, including staff, safety settings and test mode' },
-  { value: 'editor', label: 'Editor', description: 'Writes stories, builds and approves weekly editions' },
+  { value: 'editor', label: 'Editor', description: 'Writes stories, builds and approves weekly campaigns' },
   { value: 'operator', label: 'Operator', description: 'Adds sub-accounts, looks after sending and pauses' },
 ];
 const ROLE_OPTIONS = ROLES.map((r) => ({ value: r.value, label: r.label }));
