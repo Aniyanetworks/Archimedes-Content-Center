@@ -7,6 +7,17 @@ import { IconCheck, IconTrash, IconX } from '@tabler/icons-react';
 import { ConfirmDelete } from '../components/ConfirmDelete';
 import { FilterBar } from '../components/FilterBar';
 import { hintLabel } from '../components/HintLabel';
+
+// Hints for the GoHighLevel fields: what it is, where to find it, and an example.
+function fieldHint(what: string, where: string, example?: string) {
+  return (
+    <Stack gap={4}>
+      <div><b>What it is:</b> {what}</div>
+      <div><b>Where to find it:</b> {where}</div>
+      {example && <div><b>Example:</b> {example}</div>}
+    </Stack>
+  );
+}
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api';
@@ -350,7 +361,7 @@ export function TenantFormPage() {
           <Title order={4} mb="sm">Business and plan</Title>
           <SimpleGrid cols={{ base: 1, sm: 2 }}>
             <TextInput label={hintLabel("Business name", "The sub-account's business name, as shown in this app.")} placeholder="Ridgeline Roofing" required value={tenant.name ?? ''} onChange={text(setTenant, 'name')} />
-            <TextInput label={hintLabel("GHL location ID", "Find it in GoHighLevel under Settings → Business Profile → Location ID. Each location can belong to only one sub-account.")} placeholder="e.g. aBcD1234EfGh5678IjKl" required value={tenant.ghl_location_id ?? ''} onChange={text(setTenant, 'ghl_location_id')} />
+            <TextInput label={hintLabel("GHL location ID", fieldHint("The ID of this business's GoHighLevel sub-account. Each one can only be added once.", "In GoHighLevel, open the sub-account, then Settings, Business Profile. It is shown as Location ID. It is also in the page address after /location/.", "cQwQ3iQgRx5E1llflstv"))} placeholder="e.g. aBcD1234EfGh5678IjKl" required value={tenant.ghl_location_id ?? ''} onChange={text(setTenant, 'ghl_location_id')} />
             <Select
               label={hintLabel("Division", "Home ServiceGenius or Hospitality. Decides which industries and plans you can pick.")} required allowDeselect={false} value={tenant.division}
               data={[{ value: 'hsg', label: 'Home ServiceGenius' }, { value: 'hospitality', label: 'Hospitality' }]}
@@ -390,13 +401,13 @@ export function TenantFormPage() {
             <TextInput label={hintLabel("Legal business name", "Shown in the email footer, as email law requires.")} placeholder="Ridgeline Roofing & Exteriors LLC" required value={brand.legal_business_name ?? ''} onChange={text(setBrand, 'legal_business_name')} />
             <TextInput label={hintLabel("Postal address", "Required in every email footer by email law.")} placeholder="2150 Market Street, Suite 200, Denver, CO 80205" required value={brand.postal_address ?? ''} onChange={text(setBrand, 'postal_address')} />
             <TextInput label={hintLabel("From name", "The sender name people see in their inbox.")} placeholder="Ridgeline Roofing" value={brand.from_name ?? ''} onChange={text(setBrand, 'from_name')} />
-            <TextInput label={hintLabel("From email", "The sender address. It must be on a sending domain verified in GoHighLevel, or emails may be blocked as spam.")} placeholder="news@yourdomain.com" type="email" value={brand.from_email ?? ''} onChange={text(setBrand, 'from_email')} />
+            <TextInput label={hintLabel("From email", fieldHint("The address customers see the newsletter come from.", "Use an address on a domain that is verified in this GoHighLevel sub-account (Settings, Email Services). Otherwise emails may land in spam.", "news@equinoxroofing.com"))} placeholder="news@yourdomain.com" type="email" value={brand.from_email ?? ''} onChange={text(setBrand, 'from_email')} />
             <TextInput label={hintLabel("Reply-to", "Where replies from readers go.")} placeholder="office@yourdomain.com" type="email" value={brand.reply_to ?? ''} onChange={text(setBrand, 'reply_to')} />
-            <TextInput label={hintLabel("GHL user ID", "The GoHighLevel user the newsletter is scheduled as. GoHighLevel needs one to schedule emails.")} placeholder="e.g. aBcD1234EfGh5678IjKl" value={prefs.ghl_user_id ?? ''} onChange={text(setPrefs, 'ghl_user_id')} />
+            <TextInput label={hintLabel("GHL user ID", fieldHint("A team member of this sub-account. GoHighLevel needs a person to be named as the sender when a newsletter is scheduled. The owner or any staff user is fine.", "In GoHighLevel, open the sub-account, then Settings, My Staff, and open the person. Copy their user ID. If you cannot see it, ask your GoHighLevel admin.", "YG04H0YJSnUiBiAz96tc"))} placeholder="e.g. aBcD1234EfGh5678IjKl" value={prefs.ghl_user_id ?? ''} onChange={text(setPrefs, 'ghl_user_id')} />
           </SimpleGrid>
           <Stack mt="sm" gap="xs">
-            <Checkbox label={hintLabel("Sender identity verified in GHL", "Tick only after the From email is verified in GoHighLevel.")} checked={!!brand.sender_verified} onChange={(e) => { const sender_verified = e.currentTarget.checked; setBrand((c) => ({ ...c, sender_verified })); }} />
-            <Checkbox label={hintLabel("Sending domain authenticated", "Tick only after the sending domain is authenticated in GoHighLevel. Without it, emails are likely to be blocked as spam.")} checked={!!brand.domain_authenticated} onChange={(e) => { const domain_authenticated = e.currentTarget.checked; setBrand((c) => ({ ...c, domain_authenticated })); }} />
+            <Checkbox label={hintLabel("Sender identity verified in GHL", fieldHint("Confirms the From email has been verified in GoHighLevel.", "Tick it only after checking in GoHighLevel, Settings, Email Services."))} checked={!!brand.sender_verified} onChange={(e) => { const sender_verified = e.currentTarget.checked; setBrand((c) => ({ ...c, sender_verified })); }} />
+            <Checkbox label={hintLabel("Sending domain authenticated", fieldHint("Confirms the email domain is set up in GoHighLevel, so emails are trusted and do not go to spam.", "Tick it only after the domain shows as verified in GoHighLevel, Settings, Email Services."))} checked={!!brand.domain_authenticated} onChange={(e) => { const domain_authenticated = e.currentTarget.checked; setBrand((c) => ({ ...c, domain_authenticated })); }} />
             <Checkbox label={hintLabel("Business has opted in to the newsletter", "The business has agreed to receive the newsletter service.")} checked={!!tenant.opted_in} onChange={(e) => { const opted_in = e.currentTarget.checked; setTenant((c) => ({ ...c, opted_in })); }} />
             <Checkbox label={hintLabel("Business accepted the email rules", "The business has confirmed it follows email rules, such as only emailing people who agreed to it.")} checked={acknowledged} onChange={(e) => setAcknowledged(e.currentTarget.checked)} />
           </Stack>
@@ -416,8 +427,8 @@ export function TenantFormPage() {
             <Select label={hintLabel("Cadence", "How often newsletters go out: weekly or every two weeks.")} allowDeselect={false} value={prefs.cadence} data={(plan?.allowed_cadences ?? []).map((c) => ({ value: c, label: CADENCE_LABELS[c] }))} onChange={(value) => setPrefs((c) => ({ ...c, cadence: value as Cadence }))} />
             <Select label={hintLabel("Send day", "The day of the week the newsletter goes out.")} allowDeselect={false} value={String(prefs.preferred_weekday ?? 4)} data={WEEKDAYS} onChange={(value) => setPrefs((c) => ({ ...c, preferred_weekday: Number(value) }))} />
             <TextInput label={hintLabel("Send time", "The time it goes out, in the sub-account's own timezone.")} type="time" value={(prefs.preferred_local_time ?? '09:00').slice(0, 5)} onChange={text(setPrefs, 'preferred_local_time')} />
-            <TagsInput label={hintLabel("Contact tags", "Only GoHighLevel contacts with these tags get the newsletter. Type a tag ID and press Enter.")} placeholder="Paste a GHL tag ID, then press Enter" value={prefs.allowed_segments ?? []} onChange={(allowed_segments) => setPrefs((c) => ({ ...c, allowed_segments }))} />
-            <TagsInput label={hintLabel("Test contacts", "The only people who get it while testing. Type a GoHighLevel contact ID and press Enter.")} placeholder="Paste a GHL contact ID, then press Enter" value={prefs.test_contact_ids ?? []} onChange={(test_contact_ids) => setPrefs((c) => ({ ...c, test_contact_ids }))} />
+            <TagsInput label={hintLabel("Contact tags", fieldHint("Only contacts with these tags get the newsletter, so you control who is on the list.", "The tags are in GoHighLevel under Settings, Tags. Paste each tag ID and press Enter. Your GoHighLevel admin can copy the IDs for you.", "a1B2c3D4e5F6g7H8i9J0"))} placeholder="Paste a GHL tag ID, then press Enter" value={prefs.allowed_segments ?? []} onChange={(allowed_segments) => setPrefs((c) => ({ ...c, allowed_segments }))} />
+            <TagsInput label={hintLabel("Test contacts", fieldHint("The only people who get the newsletter while this sub-account is in test mode. Use yourself or a colleague.", "In GoHighLevel, open the contact. Their ID is the last part of the page address. Paste it and press Enter.", "h3WRSE9JHQyGvaqwc6kr"))} placeholder="Paste a GHL contact ID, then press Enter" value={prefs.test_contact_ids ?? []} onChange={(test_contact_ids) => setPrefs((c) => ({ ...c, test_contact_ids }))} />
           </SimpleGrid>
           <Divider my="md" />
           <SimpleGrid cols={{ base: 1, sm: 2 }}>

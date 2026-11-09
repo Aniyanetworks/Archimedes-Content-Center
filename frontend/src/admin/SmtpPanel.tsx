@@ -198,6 +198,22 @@ function SmtpSection({ status, loading, error }: { status: SmtpStatus | undefine
   );
 }
 
+// Where to make the token, and exactly which permissions to tick in GoHighLevel.
+function TokenHint({ saved }: { saved: boolean }) {
+  return (
+    <Stack gap={4}>
+      {saved && <div>Leave empty to keep the saved token, or paste a new one.</div>}
+      <div><b>Where:</b> GoHighLevel, Settings, Private Integrations, Create new integration.</div>
+      <div><b>Tick only these 4 permissions:</b></div>
+      <div>• View Contacts (contacts.readonly)</div>
+      <div>• Edit Contacts (contacts.write)</div>
+      <div>• Edit Conversations (conversations.write)</div>
+      <div>• Edit Conversation Messages (conversations/message.write)</div>
+      <div>It is stored encrypted and never shown again.</div>
+    </Stack>
+  );
+}
+
 function GhlSection({ ghl }: { ghl: NotificationGhl | null }) {
   const client = useQueryClient();
   const [editing, setEditing] = useState(false);
@@ -268,7 +284,7 @@ function GhlSection({ ghl }: { ghl: NotificationGhl | null }) {
           <Stack gap="sm">
             <SimpleGrid cols={{ base: 1, sm: 2 }} className="field-grid">
               <TextInput label={hintLabel('Location ID', 'The GoHighLevel sub-account to send from. Find it in GoHighLevel under Settings → Business Profile → Location ID. Use a location you own, not a client\'s.')} placeholder="e.g. cQwQ3iQgRx5E1llflstv" required value={location} onChange={(e) => setLocation(e.currentTarget.value)} />
-              <PasswordInput label={hintLabel('Private integration token', ghl ? 'Leave empty to keep the saved token, or paste a new one. It is stored encrypted and never shown again.' : 'Create it in GoHighLevel under Settings → Private Integrations, with the contacts write and conversations/message write permissions. It is stored encrypted and never shown again.')} placeholder={ghl ? 'Leave empty to keep the saved token' : 'pit-…'} required={!ghl} autoComplete="new-password" value={token} onChange={(e) => setToken(e.currentTarget.value)} />
+              <PasswordInput label={hintLabel('Private integration token', <TokenHint saved={!!ghl} />)} placeholder={ghl ? 'Leave empty to keep the saved token' : 'pit-…'} required={!ghl} autoComplete="new-password" value={token} onChange={(e) => setToken(e.currentTarget.value)} />
             </SimpleGrid>
             <Text size="xs" c="dimmed">Emails go out from the Sender email under Notification emails. That address must be on a domain verified in this GoHighLevel location, or they may land in spam.</Text>
             <Group justify="flex-end" gap="xs">

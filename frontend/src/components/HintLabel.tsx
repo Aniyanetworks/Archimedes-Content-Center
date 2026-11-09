@@ -8,7 +8,7 @@ export function hintLabel(label: ReactNode, hint: ReactNode) {
   return (
     <span className="hint-label">
       {label}
-      <Tooltip label={hint} multiline w={280} withArrow events={{ hover: true, focus: true, touch: true }}>
+      <Tooltip label={hint} multiline w={300} withArrow position="top-start" arrowOffset={12} events={{ hover: true, focus: true, touch: true }}>
         <span className="hint-icon" tabIndex={0} role="img" aria-label={typeof hint === 'string' ? hint : 'More information'}>
           <IconInfoCircle size={15} stroke={1.75} />
         </span>

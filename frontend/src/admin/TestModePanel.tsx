@@ -1,6 +1,17 @@
 import { useState } from 'react';
 import { Badge, Button, Group, Modal, Paper, Stack, Text, TextInput, Title } from '@mantine/core';
 import { hintLabel } from '../components/HintLabel';
+
+// The same three short lines for every test tool, so each hint answers the same questions.
+function hint(what: string, when: string, undo: string, undoLabel = 'Can it be undone?') {
+  return (
+    <Stack gap={4}>
+      <div><b>What it does:</b> {what}</div>
+      <div><b>When to use it:</b> {when}</div>
+      <div><b>{undoLabel}</b> {undo}</div>
+    </Stack>
+  );
+}
 import { useQueryClient } from '@tanstack/react-query';
 import { api } from '../api';
 import { showError, showSuccess } from '../lib/util';
@@ -34,7 +45,7 @@ export function TestModePanel({ isTest }: { isTest: boolean }) {
   if (!isTest) {
     return (
       <Paper withBorder p="md">
-        <Title order={4}>{hintLabel('Live system', 'This system is live. Test tools are turned off, and the audit log can never be reset.')}</Title>
+        <Title order={4}>{hintLabel('Live system', hint('Real newsletters go to real customers.', 'Test tools are switched off.', 'No. The system cannot go back to test mode.'))}</Title>
       </Paper>
     );
   }
@@ -42,21 +53,21 @@ export function TestModePanel({ isTest }: { isTest: boolean }) {
   return (
     <Paper withBorder p="md">
       <Group gap="sm" mb="sm">
-        <Title order={4}>{hintLabel('Test mode', 'While test mode is on, newsletters only reach test contacts, and review invites only go to the internal preview addresses.')}</Title>
+        <Title order={4}>{hintLabel('Test mode', hint('A safe place to try everything. Newsletters only go to test contacts, and approval emails come to you.', 'While setting up and training staff.', 'When you click Go live, once you are ready for real customers.', 'When does it end?'))}</Title>
         <Badge color="orange" variant="light">On</Badge>
       </Group>
       <div>
         <div className="tool-row"><div>
-              <Text fw={600} size="sm">{hintLabel('Load test data', 'Adds four sample sub-accounts (Equinox, Summit Peak, Timber Ridge and Craft Mountain), each with an approved campaign for next week.')}</Text>
+              <Text fw={600} size="sm">{hintLabel('Load test data', hint('Adds four example businesses, each with a newsletter ready for next week.', 'To try the app without your real sub-accounts.', 'Yes, with Reset test data.'))}</Text>
             </div><Button variant="default" loading={busy} onClick={() => void run(api.seedTestData, 'Test data loaded. n8n renders it within about 5 minutes.')}>Load test data</Button></div>
         <div className="tool-row"><div>
-              <Text fw={600} size="sm">{hintLabel('Send test batch now', 'Sends the ready test newsletters within a few minutes instead of waiting for their send day.')}</Text>
+              <Text fw={600} size="sm">{hintLabel('Send test batch now', hint('Sends the test newsletters that are ready within a few minutes.', "When you don't want to wait for the normal send day.", 'No, but only test contacts receive them.'))}</Text>
             </div><Button variant="default" loading={busy} onClick={() => void run(api.testSendNow, 'Rendered newsletters moved forward.')}>Send test batch now</Button></div>
         <div className="tool-row"><div>
-              <Text fw={600} size="sm">{hintLabel('Reset test data', 'Deletes sub-accounts, stories, campaigns, newsletters, approvals and the audit log. Keeps staff logins, plans and designs, and turns practice mode and safe test mode back on.')}</Text>
+              <Text fw={600} size="sm">{hintLabel('Reset test data', hint('Deletes all test sub-accounts, stories, campaigns, newsletters and history. Staff logins and designs stay.', 'To start again with a clean system.', 'No. You will be asked to type RESET first.'))}</Text>
             </div><Button color="red" variant="light" onClick={() => setConfirming('reset')}>Reset test data</Button></div>
         <div className="tool-row"><div>
-              <Text fw={600} size="sm">{hintLabel('Go live', 'Ends test mode for good. Reset is turned off forever and the audit log becomes permanent. Reset the test data first.')}</Text>
+              <Text fw={600} size="sm">{hintLabel('Go live', hint('Turns on real sending to real customers.', 'Only when everything is set up and checked. Reset the test data first.', 'No. Test mode and Reset are gone for good.'))}</Text>
             </div><Button color="red" onClick={() => setConfirming('live')}>Go live</Button></div>
       </div>
 
