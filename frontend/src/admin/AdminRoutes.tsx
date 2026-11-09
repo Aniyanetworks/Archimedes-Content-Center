@@ -14,6 +14,7 @@ import { EditionDetailPage, EditionListPage } from './EditionPages';
 import { LoginPage, ResetPasswordPage } from './LoginPage';
 import { StaffPage } from './StaffPage';
 import { TemplatesPage } from './TemplatesPage';
+import { TemplateEditorPage } from './TemplateEditorPage';
 import { TenantDetailPage, TenantFormPage, TenantListPage } from './TenantPages';
 
 interface NavItem { to: string; label: string; icon: typeof IconUsers; exact?: boolean; adminOnly?: boolean }
@@ -129,6 +130,8 @@ function Shell() {
             <Route path="campaigns" element={<EditionListPage />} />
             <Route path="campaigns/:id" element={<EditionDetailPage />} />
             <Route path="templates" element={<TemplatesPage />} />
+            <Route path="templates/new" element={<TemplateEditorPage />} />
+            <Route path="templates/:key/edit" element={<TemplateEditorPage />} />
             <Route path="settings" element={<ControlsPage />} />
             <Route path="audit" element={<AuditPage />} />
             <Route path="staff" element={<StaffPage />} />

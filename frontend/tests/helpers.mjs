@@ -43,6 +43,7 @@ export async function createDb() {
   await db.exec(read('supabase/migrations/0015_n8n_config_vault.sql'));
   await db.exec(read('supabase/migrations/0016_notification_channel.sql'));
   await db.exec(read('supabase/migrations/0017_ghl_default_channel.sql'));
+  await db.exec(read('supabase/migrations/0018_custom_templates.sql'));
   await db.exec(read('supabase/seed/reference.sql'));
   await db.exec(read('supabase/seed/templates.sql'));
   return db;

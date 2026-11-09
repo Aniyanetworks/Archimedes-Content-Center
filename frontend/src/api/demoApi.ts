@@ -9,7 +9,7 @@ import type {
   Industry, NewsletterPrefs, PauseSwitch, Plan, ReviewAction, ReviewView, Session, Settings, SmtpConfig, StaffMember, StaffRole, TemplateInfo, Tenant,
 } from './types';
 
-const templates = templatesJson as unknown as TemplateInfo[];
+const templates = [...(templatesJson as unknown as TemplateInfo[])];
 const uid = () => crypto.randomUUID();
 const now = () => new Date().toISOString();
 const days = (count: number) => new Date(Date.now() + count * 86_400_000).toISOString();
@@ -440,7 +440,39 @@ export function createDemoApi(): Api {
 
     listPlans: async () => plans,
     listIndustries: async () => industries,
-    listTemplates: async () => templates,
+    listTemplates: async () => templates.map((t) => ({ ...t })),
+    async saveCustomTemplate(input) {
+      if (session?.role !== 'admin') throw new Error('Your role does not allow this action');
+      if (!input.name.trim()) throw new Error('Give the template a name.');
+      const missing = [['[[unsubscribe_html]]', 'the unsubscribe link [[unsubscribe_html]]'], ['data-slot="legal"', 'the legal footer (an element with data-slot="legal")'], ['[[legal_business_name]]', 'the business name [[legal_business_name]]'], ['[[postal_address]]', 'the postal address [[postal_address]]']]
+        .filter(([needle]) => !input.html.includes(needle)).map(([, label]) => label);
+      if (missing.length) throw new Error(`The template must include ${missing.join(', ')}.`);
+      let key = input.key;
+      const existing = key ? templates.find((t) => t.key === key) : undefined;
+      if (existing && !existing.is_custom) throw new Error('The built-in designs cannot be edited. Copy one to make your own.');
+      if (existing) Object.assign(existing, { name: input.name.trim(), html: input.html, labels: input.labels, version: existing.version + 1 });
+      else {
+        key = `custom_${input.name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '').slice(0, 40) || 'template'}_${Math.floor(Math.random() * 9000) + 1000}`;
+        templates.push({ key, name: input.name.trim(), position: templates.length + 1, version: 1, html: input.html, labels: input.labels, is_custom: true });
+      }
+      for (const plan of plans) {
+        plan.template_keys = plan.template_keys.filter((k) => k !== key);
+        if (input.plans.includes(plan.plan_key)) plan.template_keys.push(key!);
+      }
+      log(existing ? 'templates.updated' : 'templates.created', { key, name: input.name.trim(), plans: input.plans });
+      return key!;
+    },
+    async removeCustomTemplate(key) {
+      if (session?.role !== 'admin') throw new Error('Your role does not allow this action');
+      const index = templates.findIndex((t) => t.key === key);
+      if (index < 0) throw new Error('That template no longer exists.');
+      if (!templates[index].is_custom) throw new Error('The built-in designs cannot be removed.');
+      const users = tenants.filter((t) => t.prefs.template_key === key).length;
+      if (users) throw new Error(`${users} sub-account(s) use this template. Choose another design for them first.`);
+      templates.splice(index, 1);
+      for (const plan of plans) plan.template_keys = plan.template_keys.filter((k) => k !== key);
+      log('templates.removed', { key });
+    },
 
     listContent: async () => [...contentItems].sort((a, b) => b.updated_at.localeCompare(a.updated_at)),
     getContent: async (id) => byId(contentItems, id),

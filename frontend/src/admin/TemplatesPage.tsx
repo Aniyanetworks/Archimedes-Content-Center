@@ -1,7 +1,9 @@
 import { PageHeader } from '../components/PageHeader';
 import { useState } from 'react';
-import { ActionIcon, Alert, Badge, Button, ColorInput, Divider, Group, Paper, ScrollArea, Select, SimpleGrid, Stack, Table, Text, TextInput, Textarea, Title, Tooltip } from '@mantine/core';
-import { IconCheck, IconPencil, IconPlus, IconTrash } from '@tabler/icons-react';
+import { ActionIcon, Badge, Button, ColorInput, Divider, Group, Paper, ScrollArea, Select, SimpleGrid, Stack, Table, Text, TextInput, Textarea, Title, Tooltip } from '@mantine/core';
+import { IconCheck, IconCode, IconCopy, IconPencil, IconPlus, IconTrash } from '@tabler/icons-react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { ConfirmDelete } from '../components/ConfirmDelete';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../api';
 import { EmailPreview } from '../components/EmailPreview';
@@ -10,6 +12,23 @@ import { SAMPLE_ISSUES, sampleIssue, sampleSettingKey, type SampleIssue, type Sa
 import { canEdit, showError, showSuccess } from '../lib/util';
 import type { Division } from '../api/types';
 import { useAuth } from './AuthContext';
+import { hintLabel } from '../components/HintLabel';
+import type { Plan } from '../api/types';
+
+const CADENCE_WORDS: Record<string, string> = { weekly: 'Every week', biweekly: 'Every 2 weeks' };
+
+// Built from the plan itself, so the hint stays right when a plan changes.
+function planHint(plan: Plan) {
+  const often = plan.allowed_cadences.map((c) => CADENCE_WORDS[c] ?? c).join(' or ');
+  return (
+    <Stack gap={2}>
+      <div><b>For:</b> {plan.division === 'hospitality' ? 'Hospitality businesses, such as breweries' : 'Home-service businesses'}</div>
+      <div><b>How often:</b> {often}</div>
+      <div><b>Designs:</b> {plan.template_keys.length} of 5 (the ticks below)</div>
+      {plan.signoff_pending && <div><b>Not final yet:</b> only test emails can be sent on this plan.</div>}
+    </Stack>
+  );
+}
 
 const MAX_EXTRA_STORIES = 4;
 const clone = (issue: SampleIssue): SampleIssue => JSON.parse(JSON.stringify(issue));
@@ -20,7 +39,10 @@ export function TemplatesPage() {
   const templates = useQuery({ queryKey: ['templates'], queryFn: api.listTemplates });
   const plans = useQuery({ queryKey: ['plans'], queryFn: api.listPlans });
   const settings = useQuery({ queryKey: ['settings'], queryFn: api.getSettings });
-  const [selected, setSelected] = useState<string | null>(null);
+  const [params] = useSearchParams();
+  const [selected, setSelected] = useState<string | null>(params.get('design'));
+  const [removing, setRemoving] = useState(false);
+  const admin = session?.role === 'admin';
   const [division, setDivision] = useState<Division>('hsg');
   const [draft, setDraft] = useState<SampleIssue | null>(null);
   const [saving, setSaving] = useState(false);
@@ -61,30 +83,42 @@ export function TemplatesPage() {
 
   return (
     <Stack>
-      <PageHeader title="Master templates" description="Five centrally controlled designs. Clients choose a design, never the HTML." />
-      <Alert color="blue" title="Pending Archimedes signoff">
-        Design names and the two Essentials designs are working choices. Compare the final Protection Report against the original Equinox .msg before approval.
-      </Alert>
+      <PageHeader
+        title="Templates"
+        description="The newsletter designs. Clients choose a design, never the HTML. Admins can add their own designs with the HTML editor."
+        actions={admin ? <Button leftSection={<IconPlus size={16} />} component={Link} to="/admin/templates/new">New template</Button> : undefined}
+      />
+      <Group>
+        <Badge color="yellow" variant="light" size="lg" style={{ textTransform: 'none', fontWeight: 600 }}>
+          {hintLabel('Waiting for Archimedes approval', (
+            <Stack gap={4}>
+              <div>• The five design names are temporary and can still change.</div>
+              <div>• Which two designs the HSG Essentials plan gets is a first guess.</div>
+              <div>• Before approving, compare the Homeowner Protection Report with the original Equinox email it was copied from.</div>
+            </Stack>
+          ))}
+        </Badge>
+      </Group>
 
       <Paper withBorder p="sm">
-        <Title order={4} mb="xs">Plan entitlements</Title>
+        <Title order={4} mb="xs">{hintLabel('Plan entitlements', 'Which designs each plan can use. A tick means sub-accounts on that plan can choose the design. "Not included" means they cannot.')}</Title>
         <ScrollArea>
           <Table miw={720}>
             <Table.Thead>
               <Table.Tr>
-                <Table.Th>Design</Table.Th>
-                <Table.Th>Version</Table.Th>
-                {(plans.data ?? []).map((plan) => <Table.Th key={plan.plan_key}>{plan.label}</Table.Th>)}
+                <Table.Th>{hintLabel('Design', 'The look of the newsletter. There are five to choose from.')}</Table.Th>
+                <Table.Th>{hintLabel('Version', 'The current version of this design. The number goes up each time the design is updated.')}</Table.Th>
+                {(plans.data ?? []).map((plan) => <Table.Th key={plan.plan_key}>{hintLabel(plan.label, planHint(plan))}</Table.Th>)}
               </Table.Tr>
             </Table.Thead>
             <Table.Tbody>
               {list.map((t) => (
                 <Table.Tr key={t.key}>
-                  <Table.Td fw={600}>{t.name}</Table.Td>
+                  <Table.Td fw={600}>{t.name}{t.is_custom && <Badge ml={6} size="xs" variant="light" color="grape">Custom</Badge>}</Table.Td>
                   <Table.Td>v{t.version}</Table.Td>
                   {(plans.data ?? []).map((plan) => (
                     <Table.Td key={plan.plan_key}>
-                      {plan.template_keys.includes(t.key) ? <IconCheck size={16} color="var(--mantine-color-green-7)" aria-label="Included" /> : <Text span c="dimmed" size="sm">Not included</Text>}
+                      {plan.template_keys.includes(t.key) ? <IconCheck size={16} color="var(--mantine-color-green-7)" aria-label="Included" /> : <Tooltip label={`Sub-accounts on ${plan.label} can't choose this design. Move them to a plan with a tick here to use it.`} multiline w={240} withArrow><Text span c="dimmed" size="sm">Not included</Text></Tooltip>}
                     </Table.Td>
                   ))}
                 </Table.Tr>
@@ -96,7 +130,7 @@ export function TemplatesPage() {
 
       <Paper withBorder p="md">
         <Group align="flex-end" mb="sm" gap="sm">
-          <Select style={{ flex: 1, minWidth: 180 }} label="Design" allowDeselect={false} value={template?.key ?? null} onChange={setSelected} data={list.map((t) => ({ value: t.key, label: t.name }))} />
+          <Select style={{ flex: 1, minWidth: 180 }} label="Design" allowDeselect={false} value={template?.key ?? null} onChange={setSelected} data={list.map((t) => ({ value: t.key, label: t.is_custom ? `${t.name} (custom)` : t.name }))} />
           <Select
             style={{ flex: 1, minWidth: 180 }}
             label="Example business"
@@ -110,6 +144,31 @@ export function TemplatesPage() {
             <Button variant="default" leftSection={<IconPencil size={16} />} onClick={() => setDraft(clone(saved))}>Edit example content</Button>
           )}
         </Group>
+        {admin && template && !draft && (
+          <Group gap="xs" mb="sm">
+            {template.is_custom ? (
+              <>
+                <Button size="xs" variant="light" leftSection={<IconCode size={14} />} component={Link} to={`/admin/templates/${template.key}/edit`}>Edit HTML</Button>
+                <Button size="xs" variant="subtle" leftSection={<IconCopy size={14} />} component={Link} to={`/admin/templates/new?from=${template.key}`}>Copy as new template</Button>
+                <Button size="xs" variant="subtle" color="red" leftSection={<IconTrash size={14} />} onClick={() => setRemoving(true)}>Remove</Button>
+              </>
+            ) : (
+              <Button size="xs" variant="light" leftSection={<IconCopy size={14} />} component={Link} to={`/admin/templates/new?from=${template.key}`}>Copy as new template</Button>
+            )}
+          </Group>
+        )}
+        {template && (
+          <ConfirmDelete
+            opened={removing}
+            title="Remove this template?"
+            message={`"${template.name}" will no longer be offered to any plan. Newsletters already made with it are kept. Sub-accounts using it must switch to another design first.`}
+            confirmLabel="Remove template"
+            success="Template removed"
+            onClose={() => setRemoving(false)}
+            onConfirm={() => api.removeCustomTemplate(template.key)}
+            onDone={() => { setRemoving(false); setSelected(null); void client.invalidateQueries({ queryKey: ['templates'] }); void client.invalidateQueries({ queryKey: ['plans'] }); }}
+          />
+        )}
         <Group mb="xs" gap="xs">
           <Badge variant="light" color="gray">Example content · fictional business · never sent</Badge>
           {customised && !draft && <Badge variant="light" color="blue">Edited</Badge>}

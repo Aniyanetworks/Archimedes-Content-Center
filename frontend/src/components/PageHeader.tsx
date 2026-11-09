@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Text, Title } from '@mantine/core';
+import { Group, Text, Title } from '@mantine/core';
 
 export function PageHeader({ title, description, actions }: { title: string; description?: string; actions?: ReactNode }) {
   return (
@@ -8,7 +8,8 @@ export function PageHeader({ title, description, actions }: { title: string; des
         <Title order={2}>{title}</Title>
         {description && <Text c="dimmed" size="sm" mt={2}>{description}</Text>}
       </div>
-      {actions}
+      {/* Buttons stay together on the right, however many there are. */}
+      {actions && <Group gap="xs" wrap="wrap" justify="flex-end">{actions}</Group>}
     </div>
   );
 }

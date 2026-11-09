@@ -171,6 +171,10 @@ export function createSupabaseApi(url: string, anonKey: string): Api {
       await rpc('set_live_send', { p_tenant: tenantId, p_enabled: enabled });
     },
 
+    saveCustomTemplate: (input) => rpc<string>('save_custom_template', { p_key: input.key, p_name: input.name, p_html: input.html, p_labels: input.labels, p_plans: input.plans }),
+    removeCustomTemplate: async (key) => {
+      await rpc('remove_custom_template', { p_key: key });
+    },
     async listPlans() {
       const rows = must(await db.from('plan_entitlements').select('*, plan_templates(template_key)').order('plan_key')) as Array<
         Omit<Plan, 'template_keys'> & { plan_templates: { template_key: string }[] }
@@ -182,9 +186,11 @@ export function createSupabaseApi(url: string, anonKey: string): Api {
     },
     async listTemplates() {
       const rows = must(
-        await db.from('template_versions').select('template_key, version, compiled_html, labels, master_templates(name, position)').eq('is_current', true),
+        // Removed custom templates stay in the database for history, but are not offered any more.
+        await db.from('template_versions').select('template_key, version, compiled_html, labels, master_templates!inner(name, position, is_custom, archived)')
+          .eq('is_current', true).eq('master_templates.archived', false),
       ) as unknown as Array<{
-        template_key: string; version: number; compiled_html: string; labels: TemplateInfo['labels']; master_templates: { name: string; position: number };
+        template_key: string; version: number; compiled_html: string; labels: TemplateInfo['labels']; master_templates: { name: string; position: number; is_custom: boolean };
       }>;
       return rows
         .map((row) => ({
@@ -194,6 +200,7 @@ export function createSupabaseApi(url: string, anonKey: string): Api {
           version: row.version,
           html: row.compiled_html,
           labels: row.labels,
+          is_custom: row.master_templates.is_custom,
         }))
         .sort((a, b) => a.position - b.position);
     },

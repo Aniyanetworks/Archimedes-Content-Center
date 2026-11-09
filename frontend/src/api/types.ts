@@ -160,6 +160,16 @@ export interface TemplateInfo {
   version: number;
   html: string;
   labels: Record<string, Record<string, string>>;
+  // Made in the app with the HTML editor. The five built-in designs are read-only.
+  is_custom?: boolean;
+}
+
+export interface CustomTemplateInput {
+  key: string | null; // null creates a new template
+  name: string;
+  html: string;
+  labels: Record<string, Record<string, string>>;
+  plans: string[];
 }
 
 export interface ChecklistItem {
@@ -366,6 +376,8 @@ export interface Api {
   listPlans(): Promise<Plan[]>;
   listIndustries(): Promise<Industry[]>;
   listTemplates(): Promise<TemplateInfo[]>;
+  saveCustomTemplate(input: CustomTemplateInput): Promise<string>;
+  removeCustomTemplate(key: string): Promise<void>;
 
   listContent(): Promise<ContentItem[]>;
   getContent(id: string): Promise<ContentItem>;
