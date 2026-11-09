@@ -5,6 +5,7 @@ import {
 } from '@mantine/core';
 import { IconCheck, IconTrash, IconX } from '@tabler/icons-react';
 import { ConfirmDelete } from '../components/ConfirmDelete';
+import { FilterBar } from '../components/FilterBar';
 import { hintLabel } from '../components/HintLabel';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from 'react-router-dom';
@@ -21,20 +22,63 @@ export function TenantListPage() {
   const { session } = useAuth();
   const tenants = useQuery({ queryKey: ['tenants'], queryFn: api.listTenants });
   const plans = useQuery({ queryKey: ['plans'], queryFn: api.listPlans });
+  const industries = useQuery({ queryKey: ['industries'], queryFn: api.listIndustries });
   const [search, setSearch] = useState('');
-  const rows = (tenants.data ?? []).filter((t) => t.name.toLowerCase().includes(search.toLowerCase()));
+  const [sending, setSending] = useState<string | null>(null);
+  const [industry, setIndustry] = useState<string | null>(null);
+  const [plan, setPlan] = useState<string | null>(null);
+  const [mode, setMode] = useState<string | null>(null);
+
+  const all = tenants.data ?? [];
+  const sendingState = (t: (typeof all)[number]) => (t.status === 'paused' ? 'paused' : t.live_send_enabled ? 'live' : 'test');
+  const sendingTabs = [
+    { value: 'live', label: 'Live' },
+    { value: 'test', label: 'Test only' },
+    { value: 'paused', label: 'Paused' },
+  ].map((tab) => ({ ...tab, count: all.filter((t) => sendingState(t) === tab.value).length }));
+  // Only offer choices that some sub-account actually has.
+  const industryOptions = [...new Set(all.map((t) => t.industry))]
+    .map((key) => ({ value: key, label: industries.data?.find((i) => i.key === key)?.label ?? humanize(key) }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+  const planOptions = [...new Set(all.map((t) => t.plan_key))]
+    .map((key) => ({ value: key, label: plans.data?.find((p) => p.plan_key === key)?.label ?? key }));
+  const words = search.trim().toLowerCase();
+  const rows = all.filter((t) =>
+    (!words || `${t.name} ${t.ghl_location_id} ${t.service_areas.join(' ')}`.toLowerCase().includes(words))
+    && (!sending || sendingState(t) === sending)
+    && (!industry || t.industry === industry)
+    && (!plan || t.plan_key === plan)
+    && (!mode || (t.review_mode === 'review' ? 'review' : 'auto') === mode));
+  const clearFilters = () => { setSearch(''); setSending(null); setIndustry(null); setPlan(null); setMode(null); };
 
   return (
     <Stack>
-      <PageHeader title="Tenants" description="Every client subaccount, its plan and whether it can send." actions={<>{canOperate(session?.role) && <Button component={Link} to="/admin/tenants/new">Add tenant</Button>}</>} />
-      <TextInput placeholder="Search by name" aria-label="Search tenants" value={search} onChange={(e) => setSearch(e.currentTarget.value)} maw={320} />
+      <PageHeader title="Tenants" description="Every sub-account, its plan and whether it can send." actions={<>{canOperate(session?.role) && <Button component={Link} to="/admin/tenants/new">Add tenant</Button>}</>} />
       {tenants.error && <Alert color="red">{(tenants.error as Error).message}</Alert>}
       <Paper withBorder p="sm">
+        <FilterBar
+          search={search}
+          onSearch={setSearch}
+          searchPlaceholder="Search name, location ID or area"
+          tabs={sendingTabs}
+          tabsLabel="Filter by sending"
+          tab={sending}
+          onTab={setSending}
+          selects={[
+            { key: 'industry', placeholder: 'All industries', value: industry, onChange: setIndustry, data: industryOptions },
+            { key: 'plan', placeholder: 'All plans', value: plan, onChange: setPlan, data: planOptions },
+            { key: 'mode', placeholder: 'Any approval', value: mode, onChange: setMode, data: [{ value: 'review', label: 'Owner approves' }, { value: 'auto', label: 'Automatic' }] },
+          ]}
+          total={all.length}
+          shown={rows.length}
+          noun={['sub-account', 'sub-accounts']}
+          onClear={clearFilters}
+        />
         <ScrollArea>
           <Table highlightOnHover miw={760}>
             <Table.Thead>
               <Table.Tr>
-                <Table.Th>Name</Table.Th><Table.Th>Industry</Table.Th><Table.Th>Plan</Table.Th><Table.Th>Cadence</Table.Th><Table.Th>Mode</Table.Th><Table.Th>Sending</Table.Th>
+                <Table.Th>Name</Table.Th><Table.Th>Industry</Table.Th><Table.Th>Plan</Table.Th><Table.Th>Cadence</Table.Th><Table.Th>Approval</Table.Th><Table.Th>Sending</Table.Th>
               </Table.Tr>
             </Table.Thead>
             <Table.Tbody>
@@ -44,7 +88,7 @@ export function TenantListPage() {
                   <Table.Td>{humanize(t.industry)}</Table.Td>
                   <Table.Td>{plans.data?.find((p) => p.plan_key === t.plan_key)?.label ?? t.plan_key}</Table.Td>
                   <Table.Td>{t.cadence ? CADENCE_LABELS[t.cadence] : '—'}</Table.Td>
-                  <Table.Td>{t.review_mode === 'review' ? 'Review' : 'Automatic'}</Table.Td>
+                  <Table.Td>{t.review_mode === 'review' ? 'Owner approves' : 'Automatic'}</Table.Td>
                   <Table.Td>
                     {t.status === 'paused' ? <Badge color="orange" variant="light">Paused</Badge>
                       : t.live_send_enabled ? <Badge color="green" variant="light">Live</Badge>
@@ -53,7 +97,7 @@ export function TenantListPage() {
                 </Table.Tr>
               ))}
               {!tenants.isLoading && rows.length === 0 && (
-                <Table.Tr><Table.Td colSpan={6}><Text c="dimmed" ta="center" py="lg">No tenants found.</Text></Table.Td></Table.Tr>
+                <Table.Tr><Table.Td colSpan={6}><Text c="dimmed" ta="center" py="lg">{all.length ? 'No sub-accounts match these filters.' : 'No sub-accounts yet.'}</Text></Table.Td></Table.Tr>
               )}
             </Table.Tbody>
           </Table>

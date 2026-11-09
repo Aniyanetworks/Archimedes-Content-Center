@@ -1,7 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 import { createAuthFetch } from './authFetch';
+import { AUDIT_CATEGORIES } from './types';
 import type {
-  Api, AuditEntry, BrandProfile, CampaignFilters, CampaignRow, ChecklistItem, ContentItem, DashboardCards, Edition, EditionItem,
+  Api, AuditEntry, AuditFilters, BrandProfile, CampaignFilters, CampaignRow, ChecklistItem, ContentItem, DashboardCards, Edition, EditionItem,
   Industry, MetricRow, NewsletterPrefs, PauseSwitch, Plan, ReviewView, Session, StaffMember, StaffRole, TemplateInfo, Tenant, TenantListRow,
 } from './types';
 
@@ -56,9 +57,15 @@ export function createSupabaseApi(url: string, anonKey: string): Api {
     return query;
   }
 
-  function auditQuery(search: string) {
+  function auditQuery(filters: AuditFilters) {
     let query = db.from('audit_log').select('*', { count: 'exact' }).order('id', { ascending: false });
-    if (search) query = query.ilike('action', `%${search}%`);
+    // Commas and brackets would break the "or" filter, so they are dropped from the search words.
+    const words = (filters.search ?? '').replace(/[,()%*]/g, ' ').trim();
+    if (words) query = query.or(`action.ilike.%${words}%,actor.ilike.%${words}%`);
+    const category = AUDIT_CATEGORIES.find((c) => c.value === filters.category);
+    if (category) query = query.filter('action', 'match', category.prefixes.map((prefix) => `^${prefix}[.]`).join('|'));
+    if (filters.tenant_id) query = query.eq('tenant_id', filters.tenant_id);
+    if (filters.since) query = query.gte('at', filters.since);
     return query;
   }
 
@@ -282,14 +289,14 @@ export function createSupabaseApi(url: string, anonKey: string): Api {
       await rpc('remove_staff', { p_user: userId });
     },
 
-    async listAudit(search, page, pageSize) {
-      const { data, error, count } = await auditQuery(search).range(page * pageSize, page * pageSize + pageSize - 1);
+    async listAudit(filters, page, pageSize) {
+      const { data, error, count } = await auditQuery(filters).range(page * pageSize, page * pageSize + pageSize - 1);
       if (error) throw new Error(error.message);
       return { rows: (data ?? []) as AuditEntry[], total: count ?? 0 };
     },
-    async exportAudit(search) {
-      await rpc('log_audit_export', { p_search: search });
-      return must(await auditQuery(search).limit(10000)) as AuditEntry[];
+    async exportAudit(filters) {
+      await rpc('log_audit_export', { p_search: JSON.stringify(filters) });
+      return must(await auditQuery(filters).limit(10000)) as AuditEntry[];
     },
 
     reviewLoad: (token) => callReview({ token, action: 'view' }),

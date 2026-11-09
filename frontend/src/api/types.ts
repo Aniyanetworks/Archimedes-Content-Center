@@ -179,6 +179,23 @@ export interface MetricRow {
   unsubscribed: number | null;
 }
 
+// Audit events grouped for the filter tabs, by the start of the event name.
+export const AUDIT_CATEGORIES = [
+  { value: 'campaigns', label: 'Campaigns', prefixes: ['campaign', 'review', 'approval', 'dispatch'] },
+  { value: 'editions', label: 'Editions', prefixes: ['edition'] },
+  { value: 'stories', label: 'Stories', prefixes: ['content'] },
+  { value: 'subaccounts', label: 'Sub-accounts', prefixes: ['tenant'] },
+  { value: 'staff', label: 'Staff', prefixes: ['staff'] },
+  { value: 'settings', label: 'Settings and system', prefixes: ['settings', 'pause', 'templates', 'system', 'test', 'audit', 'workflow'] },
+] as const;
+
+export interface AuditFilters {
+  search?: string;
+  category?: string | null;
+  tenant_id?: string | null;
+  since?: string | null; // ISO time; entries at or after it
+}
+
 export interface AuditEntry {
   id: number;
   at: string;
@@ -351,8 +368,8 @@ export interface Api {
   setStaffRole(userId: string, role: StaffRole): Promise<void>;
   removeStaff(userId: string): Promise<void>;
 
-  listAudit(search: string, page: number, pageSize: number): Promise<{ rows: AuditEntry[]; total: number }>;
-  exportAudit(search: string): Promise<AuditEntry[]>;
+  listAudit(filters: AuditFilters, page: number, pageSize: number): Promise<{ rows: AuditEntry[]; total: number }>;
+  exportAudit(filters: AuditFilters): Promise<AuditEntry[]>;
 
   reviewLoad(token: string): Promise<ReviewView>;
   reviewDecide(token: string, action: ReviewAction, versionHash: string, notes?: string): Promise<ReviewView>;

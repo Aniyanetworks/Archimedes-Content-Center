@@ -66,14 +66,13 @@ export function ControlsPage() {
       {admin && settings.data && <TestModePanel isTest={settings.data.environment === 'test'} />}
 
       <Paper withBorder p="md">
-        <Title order={4} mb="xs">Pause switches</Title>
-        <Text size="sm" c="dimmed" mb="sm">A pause stops future dispatches immediately. Queued campaigns resume when the switch comes off. Campaigns already scheduled in GHL are pulled back and held, so an operator must release them.</Text>
+        <Title order={4} mb="sm">{hintLabel('Pause switches', 'A pause stops sending straight away. Newsletters waiting to be sent carry on when the pause is lifted. Ones already scheduled in GoHighLevel are pulled back and put on hold, so someone must release them.')}</Title>
         {globalPause && <Alert color="red" mb="sm" title="All sending is paused">{globalPause.reason}</Alert>}
         {operate && (
           <SimpleGrid cols={{ base: 1, sm: 4 }} mb="md">
-            <Select label="Level" allowDeselect={false} value={scope} onChange={(next) => { setScope(next as PauseScope); setValue(null); }} data={['global', 'division', 'industry', 'tenant', 'edition'].map((s) => ({ value: s, label: humanize(s) }))} />
-            {scope !== 'global' ? <Select label="Target" placeholder="Choose what to pause" searchable value={value} onChange={setValue} data={options[scope]} /> : <TextInput label="Target" placeholder="Choose what to pause" value="All sending" disabled />}
-            <TextInput label="Reason" placeholder="e.g. Waiting for the client to confirm their offer" required value={reason} onChange={(e) => setReason(e.currentTarget.value)} />
+            <Select label={hintLabel('Level', 'How much to pause: all sending, a division, an industry, one sub-account or one edition.')} allowDeselect={false} value={scope} onChange={(next) => { setScope(next as PauseScope); setValue(null); }} data={['global', 'division', 'industry', 'tenant', 'edition'].map((s) => ({ value: s, label: humanize(s) }))} />
+            {scope !== 'global' ? <Select label={hintLabel('Target', 'Exactly what to pause at that level.')} placeholder="Choose what to pause" searchable value={value} onChange={setValue} data={options[scope]} /> : <TextInput label={hintLabel('Target', 'Everything is paused at this level.')} placeholder="Choose what to pause" value="All sending" disabled />}
+            <TextInput label={hintLabel('Reason', 'Why it is paused. The team sees it here, and it is kept in the audit log.')} placeholder="e.g. Waiting for the client to confirm their offer" required value={reason} onChange={(e) => setReason(e.currentTarget.value)} />
             <Button mt={{ base: 0, sm: 25 }} color="orange" disabled={!canPause} onClick={() => void pause(scope, scope === 'global' ? '*' : value!, true, reason.trim())}>Pause</Button>
           </SimpleGrid>
         )}
@@ -97,7 +96,7 @@ export function ControlsPage() {
       </Paper>
 
       <Paper withBorder p="md">
-        <Title order={4} mb="xs">Safety settings</Title>
+        <Title order={4} mb="xs">{hintLabel('Safety settings', 'Settings that keep test emails away from real customers and limit what can be sent. Only admins can change them.')}</Title>
         {!admin && <Text size="sm" c="dimmed" mb="sm">Only administrators can change these.</Text>}
         {settings.data && (
           <Stack gap="lg">

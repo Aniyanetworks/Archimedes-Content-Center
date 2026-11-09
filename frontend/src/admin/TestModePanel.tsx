@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Alert, Button, Group, Modal, Paper, Stack, Text, TextInput, Title } from '@mantine/core';
+import { Badge, Button, Group, Modal, Paper, Stack, Text, TextInput, Title } from '@mantine/core';
+import { hintLabel } from '../components/HintLabel';
 import { useQueryClient } from '@tanstack/react-query';
 import { api } from '../api';
 import { showError, showSuccess } from '../lib/util';
@@ -33,32 +34,29 @@ export function TestModePanel({ isTest }: { isTest: boolean }) {
   if (!isTest) {
     return (
       <Paper withBorder p="md">
-        <Title order={4} mb="xs">Live system</Title>
-        <Text size="sm" c="dimmed">This system is live. Test tools are disabled, and the audit log can never be reset.</Text>
+        <Title order={4}>{hintLabel('Live system', 'This system is live. Test tools are turned off, and the audit log can never be reset.')}</Title>
       </Paper>
     );
   }
 
   return (
     <Paper withBorder p="md">
-      <Title order={4} mb="xs">Test mode</Title>
-      <Alert color="yellow" mb="sm">Test mode is on. Sends can only reach test contacts, and review invites only go to internal preview addresses.</Alert>
+      <Group gap="sm" mb="sm">
+        <Title order={4}>{hintLabel('Test mode', 'While test mode is on, newsletters only reach test contacts, and review invites only go to the internal preview addresses.')}</Title>
+        <Badge color="orange" variant="light">On</Badge>
+      </Group>
       <div>
         <div className="tool-row"><div>
-              <Text fw={600} size="sm">Load test data</Text>
-              <Text size="sm" c="dimmed">Adds sample Equinox, Summit Peak, Timber Ridge and Craft Mountain tenants, each with an approved edition for next week.</Text>
+              <Text fw={600} size="sm">{hintLabel('Load test data', 'Adds four sample sub-accounts (Equinox, Summit Peak, Timber Ridge and Craft Mountain), each with an approved edition for next week.')}</Text>
             </div><Button variant="default" loading={busy} onClick={() => void run(api.seedTestData, 'Test data loaded. n8n renders it within about 5 minutes.')}>Load test data</Button></div>
         <div className="tool-row"><div>
-              <Text fw={600} size="sm">Send test batch now</Text>
-              <Text size="sm" c="dimmed">Moves rendered campaigns forward so they dispatch on the next n8n run, instead of waiting for their send day.</Text>
+              <Text fw={600} size="sm">{hintLabel('Send test batch now', 'Sends the ready test newsletters within a few minutes instead of waiting for their send day.')}</Text>
             </div><Button variant="default" loading={busy} onClick={() => void run(api.testSendNow, 'Rendered campaigns moved forward.')}>Send test batch now</Button></div>
         <div className="tool-row"><div>
-              <Text fw={600} size="sm">Reset test data</Text>
-              <Text size="sm" c="dimmed">Deletes tenants, content, editions, campaigns, approvals and the audit log. Keeps staff logins, plans and templates, and turns dry run and safe test mode back on.</Text>
+              <Text fw={600} size="sm">{hintLabel('Reset test data', 'Deletes sub-accounts, stories, editions, campaigns, approvals and the audit log. Keeps staff logins, plans and designs, and turns practice mode and safe test mode back on.')}</Text>
             </div><Button color="red" variant="light" onClick={() => setConfirming('reset')}>Reset test data</Button></div>
         <div className="tool-row"><div>
-              <Text fw={600} size="sm">Go live</Text>
-              <Text size="sm" c="dimmed">Ends test mode for good. Reset is disabled permanently and the audit log becomes permanent. Requires test data to be reset first.</Text>
+              <Text fw={600} size="sm">{hintLabel('Go live', 'Ends test mode for good. Reset is turned off forever and the audit log becomes permanent. Reset the test data first.')}</Text>
             </div><Button color="red" onClick={() => setConfirming('live')}>Go live</Button></div>
       </div>
 

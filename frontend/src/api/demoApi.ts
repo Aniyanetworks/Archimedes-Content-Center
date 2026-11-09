@@ -3,8 +3,9 @@
 // the real gates live in supabase/migrations.
 import { renderNewsletter } from '../lib/render.js';
 import templatesJson from '../generated/templates.json';
+import { AUDIT_CATEGORIES } from './types';
 import type {
-  Api, AuditEntry, BrandProfile, CampaignRow, CampaignStatus, ChecklistItem, ContentItem, ContentStatus, Edition, EditionItem,
+  Api, AuditEntry, AuditFilters, BrandProfile, CampaignRow, CampaignStatus, ChecklistItem, ContentItem, ContentStatus, Edition, EditionItem,
   Industry, NewsletterPrefs, PauseSwitch, Plan, ReviewAction, ReviewView, Session, Settings, StaffMember, StaffRole, TemplateInfo, Tenant,
 } from './types';
 
@@ -154,6 +155,16 @@ export function createDemoApi(): Api {
     environment: 'test', ghl_dry_run: true, safe_test_mode: true, internal_preview_addresses: ['ops@archimedes.example.com'], ops_alert_email: 'ops@archimedes.example.com', daily_send_cap: null, cost_per_1000_emails_usd: null,
   };
   const audit: AuditEntry[] = [];
+
+  function filterAudit(filters: AuditFilters): AuditEntry[] {
+    const words = (filters.search ?? '').trim().toLowerCase();
+    const category = AUDIT_CATEGORIES.find((c) => c.value === filters.category);
+    return audit.filter((entry) =>
+      (!words || entry.action.toLowerCase().includes(words) || entry.actor.toLowerCase().includes(words))
+      && (!category || (category.prefixes as readonly string[]).includes(entry.action.split('.')[0]))
+      && (!filters.tenant_id || entry.tenant_id === filters.tenant_id)
+      && (!filters.since || entry.at >= filters.since));
+  }
 
   function log(action: string, details: Record<string, unknown>, ids: Partial<Pick<AuditEntry, 'tenant_id' | 'campaign_id' | 'edition_id'>> = {}) {
     audit.unshift({ id: auditId++, at: now(), actor: session?.email ?? 'system', action, tenant_id: null, campaign_id: null, edition_id: null, details, ...ids });
@@ -636,13 +647,13 @@ export function createDemoApi(): Api {
       log('staff.removed', { email: member.email, role: member.role });
     },
 
-    async listAudit(search, page, pageSize) {
-      const rows = audit.filter((entry) => !search || entry.action.toLowerCase().includes(search.toLowerCase()));
+    async listAudit(filters, page, pageSize) {
+      const rows = filterAudit(filters);
       return { rows: rows.slice(page * pageSize, page * pageSize + pageSize), total: rows.length };
     },
-    async exportAudit(search) {
-      log('audit.exported', { search });
-      return audit.filter((entry) => !search || entry.action.toLowerCase().includes(search.toLowerCase()));
+    async exportAudit(filters) {
+      log('audit.exported', { filters });
+      return filterAudit(filters);
     },
 
     async reviewLoad(token) {

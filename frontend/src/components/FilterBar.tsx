@@ -14,7 +14,9 @@ interface Props {
   onSearch: (value: string) => void;
   searchPlaceholder: string;
   // Status tabs with counts. Tabs with no items are hidden, except the selected one.
-  tabs: Array<{ value: string; label: string; count: number }>;
+  // A tab without a count is always shown.
+  tabs: Array<{ value: string; label: string; count?: number }>;
+  tabsLabel?: string;
   tab: string | null;
   onTab: (value: string | null) => void;
   selects: FilterSelect[];
@@ -25,19 +27,19 @@ interface Props {
 }
 
 // The toolbar above a list: status tabs, then search and a few compact filters.
-export function FilterBar({ search, onSearch, searchPlaceholder, tabs, tab, onTab, selects, total, shown, noun, onClear }: Props) {
+export function FilterBar({ search, onSearch, searchPlaceholder, tabs, tabsLabel, tab, onTab, selects, total, shown, noun, onClear }: Props) {
   const filtering = !!search.trim() || !!tab || selects.some((s) => s.value);
-  const visibleTabs = tabs.filter((t) => t.count > 0 || t.value === tab);
+  const visibleTabs = tabs.filter((t) => t.count === undefined || t.count > 0 || t.value === tab);
   return (
     <div className="filter-bar">
       <ScrollArea type="never">
-        <Group gap={4} wrap="nowrap" className="filter-tabs" role="tablist" aria-label="Filter by status">
+        <Group gap={4} wrap="nowrap" className="filter-tabs" role="tablist" aria-label={tabsLabel ?? "Filter by status"}>
           <UnstyledButton role="tab" aria-selected={!tab} data-active={!tab} className="filter-tab" onClick={() => onTab(null)}>
             All <span className="filter-count">{total}</span>
           </UnstyledButton>
           {visibleTabs.map((t) => (
             <UnstyledButton key={t.value} role="tab" aria-selected={tab === t.value} data-active={tab === t.value} className="filter-tab" onClick={() => onTab(tab === t.value ? null : t.value)}>
-              {t.label} <span className="filter-count">{t.count}</span>
+              {t.label}{t.count !== undefined && <span className="filter-count">{t.count}</span>}
             </UnstyledButton>
           ))}
         </Group>
