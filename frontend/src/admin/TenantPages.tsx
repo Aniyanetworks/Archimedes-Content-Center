@@ -433,8 +433,12 @@ export function TenantFormPage() {
             <Group align="flex-end" gap="xs" wrap="nowrap">
               <div style={{ flex: 1 }}>
                 <Select
-                  label={hintLabel("Design", lines([["What it is","How their newsletter looks."],["Tip","Only designs included in their plan are listed. See them on the Templates page."]]))} placeholder="Choose a design"
-                  description={plan ? `${plan.label} includes ${plan.template_keys.length} of ${templates.data?.length ?? 5} designs` : undefined}
+                  label={hintLabel("Design", lines([
+                    ["What it is", "How their newsletter looks."],
+                    ...(plan ? [["Their plan", `${plan.label} includes ${plan.template_keys.length} of ${templates.data?.length ?? 5} designs.`] as [string, string]] : []),
+                    ["Tip", "Only designs included in their plan are listed. See them on the Templates page."],
+                  ]))}
+                  placeholder={plan ? `Choose a design (${plan.template_keys.length} in their plan)` : 'Choose a design'}
                   required
                   value={prefs.template_key ?? null}
                   data={allowedTemplates.map((t) => ({ value: t.key, label: t.name }))}

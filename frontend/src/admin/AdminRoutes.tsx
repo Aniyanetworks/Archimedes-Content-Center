@@ -26,7 +26,7 @@ const NAV: Array<{ section: string; items: NavItem[] }> = [
     section: 'Operate',
     items: [
       { to: '/admin', label: 'Dashboard', icon: IconLayoutDashboard, exact: true },
-      { to: '/admin/calendar', label: 'Calendar', icon: IconCalendar },
+      { to: '/admin/calendar', label: 'Newsletter Schedule', icon: IconCalendar },
       { to: '/admin/sub-accounts', label: 'Sub-accounts', icon: IconUsers },
     ],
   },
