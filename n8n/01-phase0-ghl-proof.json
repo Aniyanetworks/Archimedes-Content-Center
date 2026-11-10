@@ -2,7 +2,7 @@
   "name": "Archimedes 01 Phase 0 - GHL proof of concept",
   "nodes": [
     {
-      "id": "a7a55471-7a34-4895-9efa-2073c478ed79",
+      "id": "76c47116-db2d-4351-80c1-a32c0250ecda",
       "name": "Run manually",
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
@@ -13,7 +13,7 @@
       "parameters": {}
     },
     {
-      "id": "1907106f-a8cf-46d5-a54c-41a3d76c331f",
+      "id": "8d7cf08c-39a3-4fc0-acf0-09907b4e8b9b",
       "name": "Config",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
@@ -27,43 +27,43 @@
         "assignments": {
           "assignments": [
             {
-              "id": "fd74a8c1-9392-42e6-b7f0-a6b31c1842f6",
+              "id": "b25d1735-b658-41c8-b763-cce995f42bda",
               "name": "testLocationId",
               "value": "SET_TEST_SUBACCOUNT_LOCATION_ID",
               "type": "string"
             },
             {
-              "id": "17cebabb-c5d8-4c2e-8676-dd2e8fdfec81",
+              "id": "6444f7d1-09ad-489d-93b1-384374329346",
               "name": "testUserId",
               "value": "SET_TEST_SUBACCOUNT_USER_ID",
               "type": "string"
             },
             {
-              "id": "c6453ad6-9495-4303-a665-44f3602eb1f1",
+              "id": "f02d58ca-825c-4400-bcda-fbe996c9df01",
               "name": "testContactId",
               "value": "SET_INTERNAL_TEST_CONTACT_ID",
               "type": "string"
             },
             {
-              "id": "7b9f7031-4d81-40df-8bb3-ee2293b551fe",
+              "id": "5c6a1c12-67de-4fff-ad71-63e27121da8c",
               "name": "fromName",
               "value": "Archimedes Test",
               "type": "string"
             },
             {
-              "id": "cba4d1bd-af17-40e4-a532-ff0c87af21b2",
+              "id": "83008801-27c4-4d70-b588-5fc8e3e62513",
               "name": "fromEmail",
               "value": "SET_VERIFIED_SENDER@YOUR-DOMAIN.example",
               "type": "string"
             },
             {
-              "id": "9460123a-23d6-4da4-9018-0c3e0a7b0840",
+              "id": "ccb92e8e-ab9b-49ac-a75d-b0e1347acb9b",
               "name": "timeZone",
               "value": "America/Denver",
               "type": "string"
             },
             {
-              "id": "ab8e894a-15de-407e-8c2f-20548f90d800",
+              "id": "0842c236-765d-4e89-8e55-62e0030f44cf",
               "name": "sendAt",
               "value": "2030-01-01 09:00 AM",
               "type": "string"
@@ -74,7 +74,7 @@
       }
     },
     {
-      "id": "39e205a3-2c72-4b1c-b96d-2244f84f5992",
+      "id": "33ee3317-48d3-4edf-9033-f2c254c2a11e",
       "name": "Render test email",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -89,7 +89,7 @@
       }
     },
     {
-      "id": "45ea78a3-f35d-41d5-9e63-0ddb1c00db73",
+      "id": "55197ac4-2e2d-4468-853d-80ffa755f2d2",
       "name": "Create draft",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -137,7 +137,7 @@
       }
     },
     {
-      "id": "8b28d1cf-9728-4e36-8917-a978c1aa79b6",
+      "id": "a21d4f2a-70dc-431a-9837-45d916cacf04",
       "name": "Schedule to test contact",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -185,7 +185,7 @@
       }
     },
     {
-      "id": "648483a2-2f4d-4629-af51-23465565eb1e",
+      "id": "3f05b57e-1282-44c1-b232-63c658cb40a1",
       "name": "Read back status",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -230,7 +230,7 @@
       }
     },
     {
-      "id": "8509ea73-f30a-497e-b897-796fb3a9224b",
+      "id": "2f80797d-1e38-48ad-b35d-21a8ab39a98b",
       "name": "Try delete (cancel test)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -275,7 +275,7 @@
       }
     },
     {
-      "id": "522ea2b0-7d02-4528-99c8-8599e1047bcc",
+      "id": "71f2d4e1-d7b5-4af0-b7d9-89796074eb20",
       "name": "Feasibility result",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,

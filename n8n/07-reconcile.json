@@ -2,7 +2,7 @@
   "name": "Archimedes 07 Reconcile campaign state",
   "nodes": [
     {
-      "id": "97b36390-5373-42b6-8cff-5ec7de9b0d6b",
+      "id": "6344d345-6155-47a6-bd73-35af155ddbbf",
       "name": "Every 15 min",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
@@ -22,7 +22,7 @@
       }
     },
     {
-      "id": "40dd10d2-485c-4692-a560-174a41be0d02",
+      "id": "941c5aa8-7d94-44de-836d-1fe9d5c27535",
       "name": "Config",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
@@ -36,7 +36,7 @@
         "assignments": {
           "assignments": [
             {
-              "id": "8541ab55-ec22-4bf6-9f42-25d8cb9d9b8d",
+              "id": "ee979c3c-50cd-40c1-9aad-85a88e8e2772",
               "name": "supabaseUrl",
               "value": "https://YOUR-PROJECT.supabase.co",
               "type": "string"
@@ -47,7 +47,7 @@
       }
     },
     {
-      "id": "3137e062-6c25-49e9-bd78-9186dd314315",
+      "id": "901ec723-77a2-406f-af89-10071666cb66",
       "name": "Campaigns to reconcile",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -78,7 +78,7 @@
       "waitBetweenTries": 2000
     },
     {
-      "id": "08ef2257-dfb9-481f-a1f0-2dae7f312cfd",
+      "id": "03ae8a84-41a4-4476-9d01-d07a6c39b79d",
       "name": "Loop",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
@@ -92,7 +92,7 @@
       }
     },
     {
-      "id": "0bc010e9-daf7-4c44-ab84-e2811b8606a6",
+      "id": "757bd9e7-bf5a-4c50-ad34-b5fa80407cd5",
       "name": "Get GHL Token",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -123,7 +123,7 @@
       "waitBetweenTries": 2000
     },
     {
-      "id": "33a77b7f-05a2-4078-958e-2cf15e8babda",
+      "id": "d7f91c14-389c-4077-a336-747cc7852845",
       "name": "GHL id known?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
@@ -141,7 +141,7 @@
           },
           "conditions": [
             {
-              "id": "5e2d10c9-0bc6-486b-8d74-23ed4a9d325a",
+              "id": "ab0169ac-f832-4a88-8938-c308f52c8924",
               "leftValue": "={{ !!$('Loop').first().json.ghl_campaign_id }}",
               "rightValue": "",
               "operator": {
@@ -157,7 +157,7 @@
       }
     },
     {
-      "id": "2bcac65d-64ba-4e94-9411-19e5c0d3d690",
+      "id": "1c30e84a-d933-4ab4-bf4a-26c48aecd885",
       "name": "Get by id",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -199,7 +199,7 @@
       "onError": "continueRegularOutput"
     },
     {
-      "id": "47d63e19-7a39-473e-818f-1b11c2f2b560",
+      "id": "0c3825ba-73d3-48d7-bd5d-eb910881fce7",
       "name": "Search by idempotency key",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -258,7 +258,7 @@
       "onError": "continueRegularOutput"
     },
     {
-      "id": "f5971dd6-d38e-44fa-ab4d-ace2a7a49c1a",
+      "id": "2e4a1ccd-77b8-4f30-8184-835439b33b45",
       "name": "Normalize",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -273,7 +273,7 @@
       }
     },
     {
-      "id": "412e436d-7dce-49fe-9db4-dc1d9e7158af",
+      "id": "398e3cdd-97d8-44ca-a62d-133339a0b5b3",
       "name": "Record reconcile",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -304,7 +304,7 @@
       "waitBetweenTries": 2000
     },
     {
-      "id": "71198b24-e9a1-4e75-9443-87b0372844f8",
+      "id": "a9351059-e0e1-4549-832d-c400161abdea",
       "name": "Pace",
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
@@ -316,7 +316,7 @@
         "amount": 1,
         "unit": "seconds"
       },
-      "webhookId": "e5367295-dd01-4972-9134-a22c97809a3d"
+      "webhookId": "e8ebdc29-d1ec-44b8-b7b6-e542ec3b37bf"
     }
   ],
   "connections": {

@@ -2,7 +2,7 @@
   "name": "Archimedes 11 Check delivery",
   "nodes": [
     {
-      "id": "4fe7ed64-ff11-43cb-ad9c-1f6a75d47d5d",
+      "id": "647a860f-b5c0-4927-9b41-731ba89ce8d1",
       "name": "Every 15 min",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
@@ -22,7 +22,7 @@
       }
     },
     {
-      "id": "6184c4e2-e11f-416e-9337-86b9c3569c20",
+      "id": "ede116d2-3f99-4d40-aec8-3206fa131b6d",
       "name": "Config",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
@@ -36,7 +36,7 @@
         "assignments": {
           "assignments": [
             {
-              "id": "28c94f93-6bca-49b9-9ec6-edb04145dfb8",
+              "id": "dd8b912b-b03d-45a2-9eb6-7d3811bb9d7b",
               "name": "supabaseUrl",
               "value": "https://YOUR-PROJECT.supabase.co",
               "type": "string"
@@ -47,7 +47,7 @@
       }
     },
     {
-      "id": "afc25c9a-5266-4d72-9334-55d2db5c1673",
+      "id": "550697da-5a56-4240-b5d4-f0b73de8ebbf",
       "name": "Campaigns to check",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -78,7 +78,7 @@
       "waitBetweenTries": 2000
     },
     {
-      "id": "1713d1d0-8a31-45c5-b4f9-9a5be161a895",
+      "id": "96496d4d-b77b-4fbb-a0af-83f2a1212605",
       "name": "Loop",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
@@ -92,7 +92,7 @@
       }
     },
     {
-      "id": "760fbd63-fb33-4329-948a-19104d7b324d",
+      "id": "32c22189-8f36-4dc5-bd0f-1fa9518b0bf4",
       "name": "Get GHL Token",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -123,7 +123,7 @@
       "waitBetweenTries": 2000
     },
     {
-      "id": "621057f6-ed47-46e2-8d9f-ed2455654f6e",
+      "id": "efd937f6-d35d-4f9b-bd53-949f9f0842d4",
       "name": "Campaign stats",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -190,7 +190,7 @@
       "onError": "continueRegularOutput"
     },
     {
-      "id": "2c3e4f58-e492-46bf-9cd8-115e42ff4d35",
+      "id": "f561902d-e4d9-48c9-8bc5-3d72d81c93a2",
       "name": "Normalize stats",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -205,7 +205,7 @@
       }
     },
     {
-      "id": "f5a2731f-c083-4850-a5e0-7d78af4136ee",
+      "id": "30ed81c5-cb11-4ff0-933e-0a74fad18c47",
       "name": "Record delivery",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -236,7 +236,7 @@
       "waitBetweenTries": 2000
     },
     {
-      "id": "3dcaec9b-7a80-4a06-a5fb-0a402ed54fa3",
+      "id": "ad121f8f-ee73-4b90-b52c-979f0e991558",
       "name": "Pace",
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
@@ -248,7 +248,7 @@
         "amount": 1,
         "unit": "seconds"
       },
-      "webhookId": "7823950d-86db-4808-84e3-dafe95fce75f"
+      "webhookId": "8c8e79dc-5120-44ee-b638-56c57030d092"
     }
   ],
   "connections": {

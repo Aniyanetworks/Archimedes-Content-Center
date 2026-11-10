@@ -451,6 +451,9 @@ describe('dispatch safety', () => {
     const t = await addTenant(db);
     await asStaff(() => assert.rejects(db.query('select set_live_send($1, true)', [t.id]), /checklist/));
     await asStaff(() => db.query('select mark_test_email_passed($1)', [t.id]));
+    // The GoHighLevel token is part of the checklist too: without it, live sending stays off.
+    await asStaff(() => assert.rejects(db.query('select set_live_send($1, true)', [t.id]), /checklist/));
+    await db.query(`select vault.create_secret('pit-token-for-this-test-0001', 'ghl_' || $1)`, [t.ghl_location_id]);
     await asStaff(() => db.query('select set_live_send($1, true)', [t.id]));
     assert.deepEqual((await call(db, 'campaign_audience', [t.id]))[0].campaign_audience, { type: 'tag', tagIds: ['tag-1'] });
     await db.exec(`update system_settings set value = 'true' where key = 'safe_test_mode';`);

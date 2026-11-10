@@ -7,6 +7,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../api';
 import { CAMPAIGN_STATUSES, type CampaignFilters, type DashboardCards } from '../api/types';
 import { CampaignTable } from '../components/CampaignTable';
+import { EmailSetupBanner } from '../components/EmailSetupBanner';
 import { CAMPAIGN_STATUS_TEXT } from '../lib/statusText';
 import { PageHeader } from '../components/PageHeader';
 import { formatDate, humanize } from '../lib/util';
@@ -126,6 +127,8 @@ export function DashboardPage() {
           </Group>
         }
       />
+
+      {(session?.role === 'admin' || session?.role === 'operator') && <EmailSetupBanner />}
 
       {activePauses.length > 0 && (
         <Alert color="orange" title="Sending is paused for part of the system" icon={<IconClockPause size={18} />}>

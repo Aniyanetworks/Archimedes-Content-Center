@@ -2,7 +2,7 @@
   "name": "Archimedes 09 Operations alerts",
   "nodes": [
     {
-      "id": "f8097edf-69fa-43e5-af5d-cb424806843e",
+      "id": "a514b533-8acb-4e9f-bebd-fe3db6c8631d",
       "name": "Every 15 min",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
@@ -22,7 +22,7 @@
       }
     },
     {
-      "id": "f2fe567b-e1a0-4cba-ac4b-184c0d97c030",
+      "id": "62c815ec-3f75-40cb-a032-1296e48f0e19",
       "name": "Config",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
@@ -36,7 +36,7 @@
         "assignments": {
           "assignments": [
             {
-              "id": "0f5bc827-e957-4e9e-a3bb-9adaa2241b60",
+              "id": "b272864a-0bbd-485b-9997-0b7ebd7d918f",
               "name": "supabaseUrl",
               "value": "https://YOUR-PROJECT.supabase.co",
               "type": "string"
@@ -47,7 +47,7 @@
       }
     },
     {
-      "id": "62567f78-b7d2-43f0-9b15-d006c9d642a8",
+      "id": "f9e9c649-a154-44db-a382-5eb43e090b99",
       "name": "Claim alerts",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -78,7 +78,7 @@
       "waitBetweenTries": 2000
     },
     {
-      "id": "e8cdb353-aa03-4b27-98a0-1f108fcead4e",
+      "id": "89af9c5c-063d-4b2c-98f5-8b60f6a9a2e6",
       "name": "Build digest",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -93,7 +93,7 @@
       }
     },
     {
-      "id": "23243795-c016-4a03-a040-0a21fe3016a3",
+      "id": "66a80ba6-9a48-4896-a7ad-54953c1544e0",
       "name": "Email operations: via GoHighLevel?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
@@ -111,7 +111,7 @@
           },
           "conditions": [
             {
-              "id": "c5d246ce-a202-4118-97e2-3576bca35b10",
+              "id": "e62c14bd-bbc4-4175-9db2-6449e23bbb3c",
               "leftValue": "={{ $('Get sender').first().json.channel === 'ghl' }}",
               "rightValue": "",
               "operator": {
@@ -127,7 +127,7 @@
       }
     },
     {
-      "id": "c86930c1-fc74-49c8-bf82-9b17bca2a3e4",
+      "id": "157c1ff0-35b7-4573-ab22-4d0ade308294",
       "name": "Email operations (GHL)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -158,7 +158,7 @@
       "waitBetweenTries": 5000
     },
     {
-      "id": "6973c27a-c5b8-4194-be36-33f37bf71429",
+      "id": "342d5ed0-cd40-422b-9bde-bb2c06d87372",
       "name": "Email operations",
       "type": "n8n-nodes-base.emailSend",
       "typeVersion": 2.1,
@@ -187,7 +187,7 @@
       "waitBetweenTries": 5000
     },
     {
-      "id": "0c99148c-b96f-4cd6-a431-ab83b2f1af70",
+      "id": "8815e681-51f5-4258-9f87-f08927eab4cb",
       "name": "Get sender",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -216,6 +216,40 @@
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 2000
+    },
+    {
+      "id": "4412fcc4-9907-4877-bfa8-bf722f677ba7",
+      "name": "Email ready?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        440,
+        480
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "2cd40d39-e1c1-40af-84a5-279178a4a9c4",
+              "leftValue": "={{ $('Get sender').first().json.ready === true }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
     }
   ],
   "connections": {
@@ -260,6 +294,17 @@
       ]
     },
     "Get sender": {
+      "main": [
+        [
+          {
+            "node": "Email ready?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email ready?": {
       "main": [
         [
           {

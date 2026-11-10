@@ -4,6 +4,7 @@ import { ActionIcon, Badge, Button, ColorInput, Divider, Group, Paper, ScrollAre
 import { IconCheck, IconCode, IconCopy, IconPencil, IconPlus, IconTrash } from '@tabler/icons-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { ConfirmDelete } from '../components/ConfirmDelete';
+import { ImageInput } from '../components/ImageInput';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../api';
 import { EmailPreview } from '../components/EmailPreview';
@@ -190,7 +191,7 @@ export function TemplatesPage() {
                 <ColorInput label="Main colour" placeholder="#14344F" value={draft.brand.primary_color ?? ''} onChange={(v) => setBrand('primary_color', v)} />
                 <ColorInput label="Accent colour" placeholder="#D9822B" value={draft.brand.secondary_color ?? ''} onChange={(v) => setBrand('secondary_color', v)} />
                 <TextInput label="Phone" placeholder="(555) 014-2290" value={draft.brand.phone ?? ''} onChange={(e) => setBrand('phone', e.currentTarget.value)} />
-                <TextInput label="Logo URL" placeholder="https://example.com/logo.png" value={draft.brand.logo_url ?? ''} onChange={(e) => setBrand('logo_url', e.currentTarget.value)} />
+                <ImageInput folder="examples" label="Logo" placeholder="https://example.com/logo.png" value={draft.brand.logo_url ?? ''} onChange={(url) => setBrand('logo_url', url)} />
               </SimpleGrid>
               <TextInput label="Postal address" placeholder="2150 Market Street, Denver, CO 80205" value={draft.brand.postal_address ?? ''} onChange={(e) => setBrand('postal_address', e.currentTarget.value)} />
               <Textarea label="Local note" description="A short personal message from the business" placeholder="e.g. Our crews are booking fall roof assessments now…" autosize minRows={2} value={draft.brand.local_note ?? ''} onChange={(e) => setBrand('local_note', e.currentTarget.value)} />
@@ -202,7 +203,7 @@ export function TemplatesPage() {
               <Textarea label="Body" description="Separate paragraphs with a blank line" placeholder="The full story" autosize minRows={4} maxRows={14} value={draft.hero.body ?? ''} onChange={(e) => setHero('body', e.currentTarget.value)} />
               <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm">
                 <TextInput label="Button label" placeholder="e.g. Schedule a roof assessment" value={draft.hero.cta_label ?? ''} onChange={(e) => setHero('cta_label', e.currentTarget.value)} />
-                <TextInput label="Image URL" placeholder="https://example.com/roof.jpg" value={draft.hero.image_url ?? ''} onChange={(e) => setHero('image_url', e.currentTarget.value)} />
+                <ImageInput folder="examples" label="Picture" placeholder="https://example.com/roof.jpg" value={draft.hero.image_url ?? ''} onChange={(url) => setHero('image_url', url)} />
               </SimpleGrid>
               <TextInput label="Image alt text" description="Describes the image for screen readers" placeholder="e.g. Roofer checking shingles after a storm" value={draft.hero.image_alt ?? ''} onChange={(e) => setHero('image_alt', e.currentTarget.value)} />
 

@@ -6,7 +6,7 @@ import templatesJson from '../generated/templates.json';
 import { AUDIT_CATEGORIES } from './types';
 import type {
   Api, AuditEntry, AuditFilters, BrandProfile, CampaignRow, CampaignStatus, ChecklistItem, ContentItem, ContentStatus, Edition, EditionItem,
-  Industry, NewsletterPrefs, PauseSwitch, Plan, ReviewAction, ReviewView, Session, Settings, SmtpConfig, StaffMember, StaffRole, TemplateInfo, Tenant,
+  Industry, NewsletterPrefs, PauseSwitch, Plan, ReviewAction, ReviewView, OpsAlert, Session, Settings, SmtpConfig, StaffMember, StaffRole, TemplateInfo, Tenant,
 } from './types';
 
 const templates = [...(templatesJson as unknown as TemplateInfo[])];
@@ -99,6 +99,12 @@ export function createDemoApi(): Api {
   const requireAdmin = () => {
     if (session?.role !== 'admin') throw new Error('Your role does not allow this action');
   };
+  const demoGhlTokens = new Map<string, string>();
+  const demoAlerts: Array<OpsAlert & { resolved: boolean }> = [
+    { id: 3, severity: 'critical', kind: 'dispatch_failed', message: 'GHL 503 while scheduling. Retry is safe.', campaign_id: null, tenant_id: 'timber', created_at: days(-0.05), resolved: false },
+    { id: 2, severity: 'warning', kind: 'review_deadline_missed', message: 'Review deadline missed. Campaign held.', campaign_id: null, tenant_id: 'craft', created_at: days(-0.3), resolved: false },
+    { id: 1, severity: 'info', kind: 'revision_requested', message: 'Reviewer requested changes: please use our new phone number.', campaign_id: null, tenant_id: 'equinox', created_at: days(-1.2), resolved: false },
+  ];
   const demoEmailWorkflows = [
     { id: 'wf-04', name: 'Archimedes 04 Send review invites', active: false },
     { id: 'wf-05', name: 'Archimedes 05 Hold missed review deadlines', active: false },
@@ -254,6 +260,7 @@ export function createDemoApi(): Api {
       { item: 'reviewer', label: 'Reviewer set (review mode only)', passed: prefs.review_mode !== 'review' || !!prefs.reviewer_email },
       { item: 'segment', label: 'Contact segment selected', passed: prefs.allowed_segments.length > 0 },
       { item: 'ghl_user', label: 'GHL user id set', passed: !!prefs.ghl_user_id },
+      { item: 'ghl_connected', label: 'GoHighLevel connected', passed: demoGhlTokens.has(tenant.id) },
       { item: 'opt_in', label: 'Sub-account opted in', passed: tenant.opted_in },
       { item: 'compliance', label: 'Compliance acknowledged', passed: !!tenant.compliance_acknowledged_at },
       { item: 'plan_terms', label: 'Plan terms signed off', passed: !plan.signoff_pending },
@@ -666,6 +673,41 @@ export function createDemoApi(): Api {
       for (const w of demoEmailWorkflows) w.active = request.on;
       log(request.on ? 'email_workflows.on' : 'email_workflows.off', {});
       return { workflows: workflows() };
+    },
+    async uploadImage() {
+      throw new Error('Uploading pictures needs the live system. In this demo, paste a picture link instead.');
+    },
+    async listCampaignsBetween(from, to) {
+      const rows = (await demo.listCampaigns({}, 0, 10000)).rows;
+      return rows.filter((c) => c.scheduled_at && c.scheduled_at >= from && c.scheduled_at < to)
+        .sort((a, b) => (a.scheduled_at ?? '').localeCompare(b.scheduled_at ?? ''));
+    },
+    async listOpenAlerts() {
+      return demoAlerts.filter((a) => !a.resolved).map(({ resolved: _r, ...a }) => a);
+    },
+    async resolveAlerts(id) {
+      if (session?.role !== 'admin' && session?.role !== 'operator') throw new Error('Your role does not allow this action');
+      let n = 0;
+      for (const a of demoAlerts) if (!a.resolved && (id === null || a.id === id)) { a.resolved = true; n += 1; }
+      return n;
+    },
+    async setTenantGhlToken(tenantId, token) {
+      if (session?.role !== 'admin' && session?.role !== 'operator') throw new Error('Your role does not allow this action');
+      if (!token.trim()) throw new Error('Paste the GoHighLevel private integration token.');
+      if (token.trim().length < 20 || /\s/.test(token.trim())) throw new Error('That does not look like a GoHighLevel token. Copy it again.');
+      const t = tenants.find((x) => x.tenant.id === tenantId);
+      if (!t) throw new Error('This sub-account no longer exists.');
+      t.tenant.ghl_token_saved_at = now();
+      demoGhlTokens.set(tenantId, token.trim());
+      log('tenant.ghl_token_saved', { name: t.tenant.name }, { tenant_id: tenantId });
+    },
+    async checkTenantGhl(tenantId) {
+      // Demo mode has no GoHighLevel: a saved token that contains "bad" fails, any other passes.
+      const token = demoGhlTokens.get(tenantId);
+      if (!token) return { ok: false, message: 'No token is saved yet. Paste the token and click Save.' };
+      return token.includes('bad')
+        ? { ok: false, message: 'GoHighLevel did not accept the token. It may be wrong, expired or deleted. Create a new one and save it again.' }
+        : { ok: true, message: 'Connected. GoHighLevel accepted the token for this location.' };
     },
     async setNotificationChannel(channel) {
       if (session?.role !== 'admin') throw new Error('Your role does not allow this action');

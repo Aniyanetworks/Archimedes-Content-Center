@@ -7,6 +7,8 @@ import { IconCheck, IconTrash, IconX } from '@tabler/icons-react';
 import { ConfirmDelete } from '../components/ConfirmDelete';
 import { FilterBar } from '../components/FilterBar';
 import { DesignPreviewButton } from '../components/DesignPreview';
+import { GhlConnectionCard } from './GhlConnectionCard';
+import { ImageInput } from '../components/ImageInput';
 import { hintLabel } from '../components/HintLabel';
 
 // Hints as short labelled lines, for example "What it is", "Where it shows", "Example".
@@ -239,6 +241,8 @@ export function TenantDetailPage() {
         </Paper>
       </SimpleGrid>
 
+      <GhlConnectionCard tenant={tenant} connected={checklist.find((c) => c.item === 'ghl_connected')?.passed ?? false} canEdit={operate} />
+
       <Paper withBorder p="md">
         <Title order={4} mb="sm">Newsletters</Title>
         <CampaignTable rows={campaigns} role={session?.role} showTenant={false} />
@@ -395,7 +399,7 @@ export function TenantFormPage() {
           <Title order={4} mb="sm">Brand</Title>
           <SimpleGrid cols={{ base: 1, sm: 2 }}>
             <TextInput label={hintLabel("Newsletter title", lines([["What it is","The name of their newsletter."],["Where it shows","In big letters at the top of every newsletter."],["Example","The Equinox Home Protection Report"]]))} placeholder="The Ridgeline Home Protection Report" required value={brand.newsletter_name ?? ''} onChange={text(setBrand, 'newsletter_name')} />
-            <TextInput label={hintLabel("Logo URL", lines([["What it is","A link to the business logo picture."],["Where it shows","At the top of the newsletter."],["Example","https://equinoxroofing.com/logo.png (right-click their logo on their website and copy the image address)"]]))} placeholder="https://yourcompany.com/logo.png" type="url" value={brand.logo_url ?? ''} onChange={text(setBrand, 'logo_url')} />
+            <ImageInput folder="logos" label={hintLabel("Logo", lines([["What it is","The business logo. Upload the picture, or paste a link to it."],["Where it shows","At the top of the newsletter."],["Tip","PNG, JPG, GIF or WebP, up to 5 MB. A wide logo on a transparent background looks best."]]))} placeholder="https://yourcompany.com/logo.png" value={brand.logo_url ?? ''} onChange={(url) => setBrand((c) => ({ ...c, logo_url: url }))} />
             <ColorInput label={hintLabel("Main colour", lines([["What it is","The business's main brand colour."],["Where it shows","Newsletter header and headings."],["Example","#14344F (dark blue)"]]))} placeholder="#14344F" format="hex" value={brand.primary_color ?? ''} onChange={(primary_color) => setBrand((c) => ({ ...c, primary_color }))} />
             <ColorInput label={hintLabel("Accent colour", lines([["What it is","A second brand colour that stands out."],["Where it shows","Buttons and small highlights."],["Example","#D9822B (orange)"]]))} placeholder="#D9822B" format="hex" value={brand.secondary_color ?? ''} onChange={(secondary_color) => setBrand((c) => ({ ...c, secondary_color }))} />
             <TextInput label={hintLabel("Phone", lines([["What it is","The phone number customers call."],["Where it shows","In the newsletter footer, so readers can tap to call."],["Example","(303) 555-0142"]]))} placeholder="(303) 555-0142" value={brand.phone ?? ''} onChange={text(setBrand, 'phone')} />

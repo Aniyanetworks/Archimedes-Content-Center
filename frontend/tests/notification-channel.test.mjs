@@ -20,7 +20,9 @@ describe('notification channel SQL', () => {
 
   test('GoHighLevel is the default; email workflows wait until its location is saved', async () => {
     assert.equal(await setting('notification_channel'), 'ghl');
-    await assert.rejects(db.query('select notification_sender()'), /no GoHighLevel location is saved/);
+    const sender = (await one(db, 'select notification_sender() as s')).s;
+    assert.equal(sender.ready, false);
+    assert.match(sender.problem, /no GoHighLevel location is saved/);
     const entry = await one(db, `select details from audit_log where action = 'settings.notification_channel' order by id desc limit 1`);
     assert.equal(entry.details.reason, 'default value');
   });

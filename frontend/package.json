@@ -12,6 +12,7 @@
     "test": "node --test tests/*.test.mjs"
   },
   "dependencies": {
+    "@codemirror/lang-html": "6.4.9",
     "@fontsource-variable/inter": "5.2.5",
     "@fontsource-variable/manrope": "5.2.5",
     "@mantine/core": "7.17.8",
@@ -20,6 +21,7 @@
     "@supabase/supabase-js": "2.49.8",
     "@tabler/icons-react": "3.31.0",
     "@tanstack/react-query": "5.76.1",
+    "@uiw/react-codemirror": "4.23.7",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-router-dom": "6.30.1"

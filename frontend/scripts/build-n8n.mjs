@@ -304,7 +304,11 @@ return [{ json: { to: link.to, subject: 'Review needed: ' + c.newsletter_name, h
   f.rpc('Mark invite sent', 'mark_review_invite_sent', `{ p_id: ${CURRENT}.campaign_id }`, 1760);
   f.pace(1980, 300, 1);
   f.rpc('Get sender', 'notification_sender', '{}', 330, 480);
-  f.chain('Every 5 min', 'Config', 'Get sender', 'Invites due', 'Loop');
+  // While email setup is incomplete, stop quietly: the invites stay due and go out on a later run.
+  f.condition('Email ready?', "$('Get sender').first().json.ready === true", 440, 480);
+  f.chain('Every 5 min', 'Config', 'Get sender', 'Email ready?');
+  f.link('Email ready?', 'Invites due', 0);
+  f.chain('Invites due', 'Loop');
   f.link('Loop', 'Issue signed link', 1);
   f.chain('Issue signed link', 'Build email', invite.choice);
   for (const send of invite.sends) f.link(send, 'Mark invite sent');
@@ -326,7 +330,10 @@ return $input.all().map(({ json: c }) => ({ json: {
 } }));`, 660);
   const notice = f.notify('Notify reviewer', 880);
   f.rpc('Get sender', 'notification_sender', '{}', 330, 480);
-  f.chain('Every 15 min', 'Config', 'Get sender', 'Hold expired reviews', 'Build notice', notice.choice);
+  // Holding missed deadlines never waits. Only the notice email is skipped while email setup is incomplete.
+  f.condition('Email ready?', "$('Get sender').first().json.ready === true", 770, 480);
+  f.chain('Every 15 min', 'Config', 'Get sender', 'Hold expired reviews', 'Build notice', 'Email ready?');
+  f.link('Email ready?', notice.choice, 0);
   return f;
 }
 
@@ -449,7 +456,11 @@ const rows = alerts.map((a) => '<li><strong>' + esc(a.severity) + '</strong> ' +
 return [{ json: { to: alerts[0].notify_email, subject: 'Archimedes engine: ' + alerts.length + ' alert(s)', html: '<ul>' + rows + '</ul>' } }];`, 660);
   const digest = f.notify('Email operations', 880);
   f.rpc('Get sender', 'notification_sender', '{}', 330, 480);
-  f.chain('Every 15 min', 'Config', 'Get sender', 'Claim alerts', 'Build digest', digest.choice);
+  // Alerts are only claimed once they can be emailed, so none are lost while setup is incomplete.
+  f.condition('Email ready?', "$('Get sender').first().json.ready === true", 440, 480);
+  f.chain('Every 15 min', 'Config', 'Get sender', 'Email ready?');
+  f.link('Email ready?', 'Claim alerts', 0);
+  f.chain('Claim alerts', 'Build digest', digest.choice);
   return f;
 }
 

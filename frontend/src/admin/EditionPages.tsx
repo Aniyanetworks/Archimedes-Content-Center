@@ -205,6 +205,11 @@ export function EditionDetailPage() {
   const plans = useQuery({ queryKey: ['plans'], queryFn: api.listPlans });
   const templates = useQuery({ queryKey: ['templates'], queryFn: api.listTemplates });
   const settings = useQuery({ queryKey: ['settings'], queryFn: api.getSettings });
+  const tenants = useQuery({ queryKey: ['tenants'], queryFn: api.listTenants });
+  // Preview choices: which design, and whose branding (the example business or a real sub-account).
+  const [previewDesign, setPreviewDesign] = useState<string | null>(null);
+  const [previewAs, setPreviewAs] = useState<string>('example');
+  const previewTenant = useQuery({ queryKey: ['tenant', previewAs], queryFn: () => api.getTenant(previewAs), enabled: previewAs !== 'example' });
 
   const [form, setForm] = useState<Partial<Edition>>({});
   const [items, setItems] = useState<EditionItem[]>([]);
@@ -257,7 +262,10 @@ export function EditionDetailPage() {
   };
 
   const previewHtml = useMemo(() => {
-    const template = templates.data?.[0];
+    const chosen = previewAs !== 'example' ? previewTenant.data : undefined;
+    // A real sub-account's own design is used unless a design is picked by hand.
+    const designKey = previewDesign ?? chosen?.prefs.template_key ?? templates.data?.[0]?.key;
+    const template = templates.data?.find((x) => x.key === designKey) ?? templates.data?.[0];
     const heroStory = candidates.find((c) => c.id === hero);
     if (!template || !heroStory || !edition) return null;
     // Example branding only. Each tenant's real version is rendered by n8n after approval.
@@ -267,12 +275,13 @@ export function EditionDetailPage() {
       division: edition.division,
       edition: { ...edition, ...form },
       tenant: { division: edition.division },
-      brand: sampleIssue(edition.division, settings.data).brand,
+      brand: chosen ? { ...chosen.brand } : sampleIssue(edition.division, settings.data).brand,
+      offer: chosen?.brand.offer_approved && chosen.brand.offer_headline ? { headline: chosen.brand.offer_headline, body: chosen.brand.offer_body ?? '', cta_label: chosen.brand.offer_cta_label ?? '', url: chosen.brand.offer_url ?? '' } : undefined,
       hero: heroStory,
       secondary: secondary.map((sid) => candidates.find((c) => c.id === sid)).filter(Boolean),
     });
-    return result.html as string | null;
-  }, [templates.data, candidates, hero, secondary, edition, form, settings.data]);
+    return { html: result.html as string | null, errors: (result.errors as string[] | undefined) ?? [], design: template?.name };
+  }, [templates.data, candidates, hero, secondary, edition, form, settings.data, previewDesign, previewAs, previewTenant.data]);
 
   if (detail.error) return <Alert color="red" title="Could not load this campaign">{(detail.error as Error).message}</Alert>;
   if (!edition) return <Text c="dimmed">Loading…</Text>;
@@ -328,8 +337,18 @@ export function EditionDetailPage() {
       </Paper>
 
       <Paper withBorder p="md">
-        <Title order={4} mb="sm">{hintLabel('Preview with example branding', "Shows the content with an example business's branding. Each sub-account's own version is made after approval.")}</Title>
-        <EmailPreview html={previewHtml} height={520} />
+        <Group justify="space-between" align="flex-end" mb="sm" gap="sm">
+          <Title order={4}>{hintLabel('Preview', "See this week's stories in any design, with the example business or a real sub-account's branding. Each sub-account's own newsletter is made after approval, in its own design.")}</Title>
+          <Group gap="sm" align="flex-end">
+            <Select size="sm" w={240} label="Show as" allowDeselect={false} value={previewAs} onChange={(v) => { setPreviewAs(v ?? 'example'); setPreviewDesign(null); }}
+              data={[{ value: 'example', label: 'Example business' }, ...(tenants.data ?? []).filter((x) => x.industry === edition.industry).map((x) => ({ value: x.id, label: x.name }))]} />
+            <Select size="sm" w={240} label="Design" allowDeselect={false} value={previewDesign ?? (previewAs !== 'example' ? previewTenant.data?.prefs.template_key ?? null : null) ?? templates.data?.[0]?.key ?? null}
+              onChange={setPreviewDesign} data={(templates.data ?? []).map((x) => ({ value: x.key, label: x.is_custom ? `${x.name} (custom)` : x.name }))} />
+          </Group>
+        </Group>
+        {previewHtml && !previewHtml.html && previewHtml.errors.length > 0
+          ? <Alert color="orange">This sub-account is missing details needed for a newsletter ({previewHtml.errors.map((e) => humanize(e)).join(', ')}). Fill them in on its page to see the preview.</Alert>
+          : <EmailPreview html={previewHtml?.html ?? null} height={520} />}
       </Paper>
 
       {editor && (

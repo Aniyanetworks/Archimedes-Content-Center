@@ -8,6 +8,7 @@ import { canOperate, formatDate, formatDateTime, humanize, showError, showSucces
 import { useAuth } from './AuthContext';
 import { hintLabel } from '../components/HintLabel';
 import { SmtpPanel } from './SmtpPanel';
+import { EmailSetupBanner } from '../components/EmailSetupBanner';
 import { TestModePanel } from './TestModePanel';
 
 export function ControlsPage() {
@@ -63,6 +64,7 @@ export function ControlsPage() {
   return (
     <Stack>
       <PageHeader title="Settings" description="Stop sending at any level, and control test mode and safety settings." />
+      {admin && <EmailSetupBanner showLink={false} />}
       {pauses.error && <Alert color="red">{(pauses.error as Error).message}</Alert>}
       {admin && settings.data && <TestModePanel isTest={settings.data.environment === 'test'} />}
 

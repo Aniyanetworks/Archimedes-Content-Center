@@ -7,7 +7,7 @@ const fail = (message: string) => new Error(renameTerms(message));
 import { AUDIT_CATEGORIES } from './types';
 import type {
   Api, AuditEntry, AuditFilters, BrandProfile, CampaignFilters, CampaignRow, ChecklistItem, ContentItem, DashboardCards, Edition, EditionItem,
-  Industry, MetricRow, NewsletterPrefs, PauseSwitch, Plan, ReviewView, Session, SmtpStatus, StaffMember, StaffRole, TemplateInfo, Tenant, TenantListRow,
+  Industry, MetricRow, NewsletterPrefs, PauseSwitch, Plan, ReviewView, OpsAlert, Session, SmtpStatus, StaffMember, StaffRole, TemplateInfo, Tenant, TenantListRow,
 } from './types';
 
 // Every write goes through an RPC or RLS-protected table. The database enforces access and
@@ -291,6 +291,37 @@ export function createSupabaseApi(url: string, anonKey: string): Api {
       const json = await response.json().catch(() => ({}));
       if (!response.ok) throw fail(json.error ?? 'Could not reach the email settings service.');
       return json as SmtpStatus;
+    },
+    async uploadImage(file, folder) {
+      const ext = (file.name.split('.').pop() || 'png').toLowerCase().replace(/[^a-z0-9]/g, '') || 'png';
+      const path = `${folder}/${new Date().toISOString().slice(0, 7)}/${crypto.randomUUID()}.${ext}`;
+      const { error } = await db.storage.from('media').upload(path, file, { contentType: file.type, upsert: false, cacheControl: '31536000' });
+      if (error) throw fail(error.message);
+      return db.storage.from('media').getPublicUrl(path).data.publicUrl;
+    },
+    async listCampaignsBetween(from, to) {
+      return must(await db.from('campaign_overview').select('*').gte('scheduled_at', from).lt('scheduled_at', to)
+        .order('scheduled_at', { ascending: true }).limit(2000)) as CampaignRow[];
+    },
+    async listOpenAlerts() {
+      return must(await db.from('ops_alerts').select('id, severity, kind, message, campaign_id, tenant_id, created_at')
+        .is('resolved_at', null).order('created_at', { ascending: false }).limit(100)) as OpsAlert[];
+    },
+    resolveAlerts: (id) => rpc<number>('resolve_ops_alerts', { p_id: id }),
+    setTenantGhlToken: async (tenantId, token) => {
+      await rpc('set_tenant_ghl_token', { p_tenant: tenantId, p_token: token });
+    },
+    async checkTenantGhl(tenantId) {
+      const { data } = await db.auth.getSession();
+      if (!data.session) throw fail('Please sign in again.');
+      const response = await fetch(`${url}/functions/v1/ghl-check`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', apikey: anonKey, Authorization: `Bearer ${data.session.access_token}` },
+        body: JSON.stringify({ tenant_id: tenantId }),
+      });
+      const json = await response.json().catch(() => ({}));
+      if (!response.ok) throw fail(json.error ?? 'Could not reach the connection test.');
+      return json as { ok: boolean; message: string };
     },
     setNotificationChannel: async (channel) => {
       await rpc('set_notification_channel', { p_channel: channel });

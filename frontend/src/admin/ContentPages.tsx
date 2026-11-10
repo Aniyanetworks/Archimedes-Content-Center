@@ -5,6 +5,7 @@ import { IconTrash } from '@tabler/icons-react';
 import { FilterBar } from '../components/FilterBar';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ConfirmDelete } from '../components/ConfirmDelete';
+import { ImageInput } from '../components/ImageInput';
 import { hintLabel } from '../components/HintLabel';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api';
@@ -198,7 +199,7 @@ export function ContentEditorPage() {
           <Textarea label={hintLabel("Teaser", "One or two sentences that make readers want to read the story.")} placeholder="One or two sentences that make readers want to open the story" readOnly={!editable} autosize minRows={2} value={item.teaser ?? ''} onChange={field('teaser')} />
           <Textarea label={hintLabel("Body", "The full story. Leave a blank line between paragraphs. Avoid unchecked statistics, guarantees, weather claims and sales language.")} placeholder="Write the article here. Leave a blank line between paragraphs." readOnly={!editable} autosize minRows={8} value={item.body ?? ''} onChange={field('body')} />
           <SimpleGrid cols={{ base: 1, sm: 2 }}>
-            <TextInput label={hintLabel("Image URL", "Optional. A public link to the story's picture.")} placeholder="https://yourcompany.com/images/roof-inspection.jpg" type="url" readOnly={!editable} value={item.image_url ?? ''} onChange={field('image_url')} />
+            <ImageInput folder="stories" label={hintLabel("Picture", "Optional. Upload a picture, or paste a link to one. PNG, JPG, GIF or WebP, up to 5 MB.")} placeholder="https://yourcompany.com/images/roof-inspection.jpg" readOnly={!editable} value={item.image_url ?? ''} onChange={(url) => setItem((c) => ({ ...c, image_url: url }))} />
             <TextInput label={hintLabel("Image alt text", "Describes the picture for people who use screen readers.")} placeholder="e.g. Roofer checking shingles after a storm" readOnly={!editable} value={item.image_alt ?? ''} onChange={field('image_alt')} />
             <TextInput label={hintLabel("Image license", "Where the picture comes from, for example your own photo or a stock licence and its ID. Needed before the story can be approved.")} placeholder="e.g. Own photo, or stock licence and ID" readOnly={!editable} value={item.image_license ?? ''} onChange={field('image_license')} />
             <TextInput label={hintLabel("Expires on", "Optional. The story stops appearing in newsletters after this date.")} type="date" readOnly={!editable} value={item.expires_at?.slice(0, 10) ?? ''} onChange={field('expires_at')} />

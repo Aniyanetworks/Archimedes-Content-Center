@@ -2,7 +2,7 @@ import { Tooltip } from '@mantine/core';
 import type { CampaignStatus } from '../api/types';
 import { CAMPAIGN_STATUS_TEXT } from '../lib/statusText';
 
-const DOT: Record<CampaignStatus, string> = {
+export const STATUS_DOT: Record<CampaignStatus, string> = {
   NOT_ELIGIBLE: 'var(--mantine-color-gray-5)',
   READY_TO_RENDER: 'var(--mantine-color-gray-5)',
   RENDERED: 'var(--mantine-color-gray-5)',
@@ -25,7 +25,7 @@ export function StatusBadge({ status }: { status: CampaignStatus }) {
   return (
     <Tooltip label={text.hint} multiline w={280} withArrow events={{ hover: true, focus: true, touch: true }}>
       <span className="status-pill" tabIndex={0}>
-        <span className="status-dot" style={{ background: DOT[status] }} />
+        <span className="status-dot" style={{ background: STATUS_DOT[status] }} />
         {text.label}
       </span>
     </Tooltip>

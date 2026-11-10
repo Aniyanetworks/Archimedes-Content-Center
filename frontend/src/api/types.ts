@@ -93,6 +93,8 @@ export interface Tenant {
   test_mode: boolean;
   test_email_passed_at: string | null;
   compliance_acknowledged_at: string | null;
+  // When this sub-account's GoHighLevel token was last saved. The token itself stays in Vault.
+  ghl_token_saved_at?: string | null;
 }
 
 export interface BrandProfile {
@@ -339,6 +341,17 @@ export interface NotificationGhl {
   updated_at: string;
 }
 
+// A problem the system noticed, shown under the bell until someone marks it done.
+export interface OpsAlert {
+  id: number;
+  severity: 'info' | 'warning' | 'critical';
+  kind: string;
+  message: string;
+  campaign_id: string | null;
+  tenant_id: string | null;
+  created_at: string;
+}
+
 export interface StaffMember {
   user_id: string;
   email: string;
@@ -407,6 +420,14 @@ export interface Api {
   setTemplateSample(division: Division, value: unknown | null): Promise<void>;
 
   smtpSettings(request: SmtpRequest): Promise<SmtpStatus>;
+  setTenantGhlToken(tenantId: string, token: string): Promise<void>;
+  listOpenAlerts(): Promise<OpsAlert[]>;
+  // Newsletters whose send time falls in [from, to), for the calendar.
+  listCampaignsBetween(from: string, to: string): Promise<CampaignRow[]>;
+  resolveAlerts(id: number | null): Promise<number>;
+  // Uploads a picture and returns its public link.
+  uploadImage(file: File, folder: 'stories' | 'logos' | 'examples'): Promise<string>;
+  checkTenantGhl(tenantId: string): Promise<{ ok: boolean; message: string }>;
   setNotificationChannel(channel: NotificationChannel): Promise<void>;
   saveNotificationGhl(locationId: string, token: string | null): Promise<void>;
   sendGhlTestEmail(): Promise<{ ok: boolean; to?: string; error?: string }>;

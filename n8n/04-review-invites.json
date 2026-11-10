@@ -2,7 +2,7 @@
   "name": "Archimedes 04 Send review invites",
   "nodes": [
     {
-      "id": "8e9fc11d-75d7-4222-befe-4ba2c3603149",
+      "id": "ba1c4d3e-e15b-47fa-88b3-6d46f0721bad",
       "name": "Every 5 min",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
@@ -22,7 +22,7 @@
       }
     },
     {
-      "id": "098966fa-3ea8-4feb-bccf-80f5c7d2b977",
+      "id": "9577629c-c111-418e-a01e-1376b5fec597",
       "name": "Config",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
@@ -36,7 +36,7 @@
         "assignments": {
           "assignments": [
             {
-              "id": "f353cf5d-ac0e-4838-be02-f60b0d7e79a6",
+              "id": "c48c9740-e803-40cd-b20c-4ddad84d5150",
               "name": "supabaseUrl",
               "value": "https://YOUR-PROJECT.supabase.co",
               "type": "string"
@@ -47,7 +47,7 @@
       }
     },
     {
-      "id": "afad2c08-27d7-4866-b378-b2d7434e63cc",
+      "id": "7685be63-eafa-4023-a881-9f680c2b3858",
       "name": "Invites due",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -78,7 +78,7 @@
       "waitBetweenTries": 2000
     },
     {
-      "id": "c7641dbb-f4f1-4ca4-af30-46b0a01988e4",
+      "id": "a40e0a7f-5e54-48bf-96e6-2927d6d01439",
       "name": "Loop",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
@@ -92,7 +92,7 @@
       }
     },
     {
-      "id": "c9d85adc-db46-4dd0-ab96-2b86ec684e07",
+      "id": "75fa81e0-462f-4fef-b004-9567d077d47a",
       "name": "Issue signed link",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -123,7 +123,7 @@
       "waitBetweenTries": 2000
     },
     {
-      "id": "7a196e03-c1f2-4a6e-b1f2-21b73e3ce7b7",
+      "id": "abff0524-7582-4407-b5b3-194e4cd7d344",
       "name": "Build email",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -138,7 +138,7 @@
       }
     },
     {
-      "id": "882bc2cf-4723-49c5-8c2f-7674b08f10e9",
+      "id": "bc2f6958-6c92-4096-a8e1-a805eff55dee",
       "name": "Send invite: via GoHighLevel?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
@@ -156,7 +156,7 @@
           },
           "conditions": [
             {
-              "id": "a8b903b6-ee45-4409-8566-e18e5e0dc8d6",
+              "id": "64277de0-e833-4d56-ae5f-151c3f32eb37",
               "leftValue": "={{ $('Get sender').first().json.channel === 'ghl' }}",
               "rightValue": "",
               "operator": {
@@ -172,7 +172,7 @@
       }
     },
     {
-      "id": "83c4e330-cbed-4dfd-93fa-165e9e3f457c",
+      "id": "8eb7d721-85d1-4ca5-9ba2-ba2ce9242d5c",
       "name": "Send invite (GHL)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -203,7 +203,7 @@
       "waitBetweenTries": 5000
     },
     {
-      "id": "0fa0a4f2-4aee-454f-8f08-265de5f155e7",
+      "id": "eccce661-c5eb-4e50-9d82-d52665807ce0",
       "name": "Send invite",
       "type": "n8n-nodes-base.emailSend",
       "typeVersion": 2.1,
@@ -232,7 +232,7 @@
       "waitBetweenTries": 5000
     },
     {
-      "id": "6f5997ee-6be2-4620-a58d-5e25a30c28fb",
+      "id": "fd16df54-0f2c-4004-9f4c-e56b6d0962e6",
       "name": "Mark invite sent",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -263,7 +263,7 @@
       "waitBetweenTries": 2000
     },
     {
-      "id": "10d68770-392d-4d8c-a7c5-99a6c24ed7c8",
+      "id": "b64e1bef-db30-4198-b3a0-2c8042530a99",
       "name": "Pace",
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
@@ -275,10 +275,10 @@
         "amount": 1,
         "unit": "seconds"
       },
-      "webhookId": "92fe6bed-8557-447d-8659-a6560e146dd0"
+      "webhookId": "3e8fff1e-b92e-42b7-aa14-1db575bdbc6e"
     },
     {
-      "id": "ad9b667a-7c0a-4566-b859-3283389f2565",
+      "id": "35404bc9-c7c6-463e-b567-0416a7076c1f",
       "name": "Get sender",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -307,6 +307,40 @@
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 2000
+    },
+    {
+      "id": "4c869bf2-aa86-4c78-ab37-6ff5978f0f44",
+      "name": "Email ready?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        440,
+        480
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ebc0784b-fa88-4114-b9b7-384f21b4da79",
+              "leftValue": "={{ $('Get sender').first().json.ready === true }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
     }
   ],
   "connections": {
@@ -351,6 +385,17 @@
       ]
     },
     "Get sender": {
+      "main": [
+        [
+          {
+            "node": "Email ready?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email ready?": {
       "main": [
         [
           {

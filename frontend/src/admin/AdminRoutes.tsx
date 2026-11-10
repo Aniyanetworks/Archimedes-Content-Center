@@ -1,11 +1,13 @@
 import { ActionIcon, AppShell, Avatar, Badge, Burger, Button, Center, Group, Loader, Stack, Text, Title, Tooltip, useComputedColorScheme, useMantineColorScheme } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { IconAdjustments, IconFileText, IconHistory, IconLayoutDashboard, IconLogout, IconMoon, IconNews, IconSun, IconTemplate, IconUserShield, IconUsers } from '@tabler/icons-react';
+import { IconAdjustments, IconCalendar, IconFileText, IconHistory, IconLayoutDashboard, IconLogout, IconMoon, IconNews, IconSun, IconTemplate, IconUserShield, IconUsers } from '@tabler/icons-react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { api } from '../api';
 import { BrandMark } from '../components/BrandMark';
+import { AlertBell } from '../components/AlertBell';
 import { AuditPage } from './AuditPage';
+import { CalendarPage } from './CalendarPage';
 import { AuthProvider, useAuth } from './AuthContext';
 import { ContentEditorPage, ContentListPage } from './ContentPages';
 import { ControlsPage } from './ControlsPage';
@@ -24,6 +26,7 @@ const NAV: Array<{ section: string; items: NavItem[] }> = [
     section: 'Operate',
     items: [
       { to: '/admin', label: 'Dashboard', icon: IconLayoutDashboard, exact: true },
+      { to: '/admin/calendar', label: 'Calendar', icon: IconCalendar },
       { to: '/admin/sub-accounts', label: 'Sub-accounts', icon: IconUsers },
     ],
   },
@@ -76,7 +79,10 @@ function Shell() {
             {settings.data?.environment === 'test' && <Badge color="orange" variant="filled">Test mode</Badge>}
             {settings.data?.ghl_dry_run === true && <Badge color="gray" variant="light" visibleFrom="xs">Dry run</Badge>}
           </Group>
-          <SchemeToggle />
+          <Group gap="xs" wrap="nowrap">
+            <AlertBell role={session?.role} />
+            <SchemeToggle />
+          </Group>
         </Group>
       </AppShell.Header>
       <AppShell.Navbar className="app-navbar">
@@ -134,6 +140,7 @@ function Shell() {
             <Route path="templates/:key/edit" element={<TemplateEditorPage />} />
             <Route path="settings" element={<ControlsPage />} />
             <Route path="audit" element={<AuditPage />} />
+            <Route path="calendar" element={<CalendarPage />} />
             <Route path="staff" element={<StaffPage />} />
             {/* Old addresses keep working: bookmarks and links in emails go to the renamed pages. */}
             <Route path="tenants/*" element={<RenamedPath from="tenants" to="sub-accounts" />} />

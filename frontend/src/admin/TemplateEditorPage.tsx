@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Accordion, Alert, Badge, Button, Checkbox, Group, List, Menu, Paper, ScrollArea, SegmentedControl, Select, SimpleGrid, Stack, Text, TextInput, Textarea, ThemeIcon, Title } from '@mantine/core';
+import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
+import { Accordion, Alert, Badge, Button, Checkbox, Group, List, Menu, Paper, ScrollArea, SegmentedControl, Select, SimpleGrid, Stack, Text, TextInput, ThemeIcon, Title } from '@mantine/core';
 import { IconCheck, IconChevronDown, IconX } from '@tabler/icons-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
@@ -12,6 +12,10 @@ import { renderNewsletter } from '../lib/render.js';
 import { sampleIssue } from '../lib/sampleContent';
 import { showError, showSuccess } from '../lib/util';
 import { useAuth } from './AuthContext';
+import type { HtmlCodeEditorHandle } from '../components/HtmlCodeEditor';
+
+// The code editor is large, so it only loads when this page opens.
+const HtmlCodeEditor = lazy(() => import('../components/HtmlCodeEditor'));
 
 // What a template can use. Anything else in [[double brackets]] comes out empty.
 const PLACEHOLDERS: Array<{ group: string; items: Array<[string, string]> }> = [
@@ -75,7 +79,7 @@ export function TemplateEditorPage() {
   const [division, setDivision] = useState<Division>('hsg');
   const [saving, setSaving] = useState(false);
   const [loaded, setLoaded] = useState(false);
-  const editor = useRef<HTMLTextAreaElement>(null);
+  const editor = useRef<HtmlCodeEditorHandle>(null);
 
   // Fill the form once: from the template being edited, or from the design being copied.
   useEffect(() => {
@@ -100,14 +104,9 @@ export function TemplateEditorPage() {
   }
 
   function insert(text: string) {
-    const area = editor.current;
     const snippet = text.includes('…') ? text.replace('…', '') : text;
-    if (!area) { setHtml((current) => current + snippet); return; }
-    const start = area.selectionStart ?? html.length;
-    const end = area.selectionEnd ?? start;
-    const next = html.slice(0, start) + snippet + html.slice(end);
-    setHtml(next);
-    requestAnimationFrame(() => { area.focus(); area.selectionStart = area.selectionEnd = start + snippet.length; });
+    if (editor.current) editor.current.insert(snippet);
+    else setHtml((current) => current + snippet);
   }
 
   const issue = sampleIssue(division, settings.data);
@@ -211,8 +210,10 @@ export function TemplateEditorPage() {
               </Menu.Dropdown>
             </Menu>
           </Group>
-          <Textarea ref={editor} aria-label="Template HTML" value={html} onChange={(e) => setHtml(e.currentTarget.value)} spellCheck={false}
-            styles={{ input: { fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace', fontSize: 12, lineHeight: 1.5, height: 620, whiteSpace: 'pre', overflowWrap: 'normal' } }} />
+          <Suspense fallback={<Text size="sm" c="dimmed" py="xl" ta="center">Loading the code editor…</Text>}>
+            <HtmlCodeEditor ref={editor} value={html} onChange={setHtml} />
+          </Suspense>
+          <Text size="xs" c="dimmed" mt={4}>Tips: Ctrl+F to search, Ctrl+Z to undo, click the arrows next to the line numbers to fold a section.</Text>
           <Stack gap={6} mt="sm">
             <Text size="sm" fw={600}>Checks</Text>
             <List size="sm" spacing={4} center>
