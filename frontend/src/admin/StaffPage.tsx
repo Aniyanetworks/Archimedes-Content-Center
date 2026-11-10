@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { Alert, Badge, Button, Group, Modal, Paper, ScrollArea, Select, Stack, Table, Text, TextInput } from '@mantine/core';
+import { Alert, Badge, Button, Group, Modal, Paper, ScrollArea, Select, Stack, Table, Text, TextInput, Tooltip } from '@mantine/core';
+import { IconKey } from '@tabler/icons-react';
+import { ChangePasswordModal } from '../components/ChangePasswordModal';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../api';
 import type { StaffMember, StaffRole } from '../api/types';
@@ -32,6 +34,7 @@ export function StaffPage() {
   const [role, setRole] = useState<StaffRole>('editor');
   const [busy, setBusy] = useState<string | null>(null);
   const [removing, setRemoving] = useState<StaffMember | null>(null);
+  const [changingPassword, setChangingPassword] = useState(false);
 
   if (session?.role !== 'admin') {
     return (
@@ -73,6 +76,18 @@ export function StaffPage() {
     try {
       await api.inviteStaff(member.email, member.role);
       showSuccess(`Invite sent again to ${member.email}`);
+    } catch (error) {
+      showError(error);
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function sendReset(member: StaffMember) {
+    setBusy(`reset-${member.user_id}`);
+    try {
+      await api.requestPasswordReset(member.email);
+      showSuccess(`Password reset email sent to ${member.email}`);
     } catch (error) {
       showError(error);
     } finally {
@@ -151,6 +166,14 @@ export function StaffPage() {
                       {member.invite_pending && (
                         <Button size="xs" variant="default" loading={busy === member.user_id} onClick={() => void resend(member)}>Resend invite</Button>
                       )}
+                      {member.is_me && (
+                        <Button size="xs" variant="default" leftSection={<IconKey size={14} />} onClick={() => setChangingPassword(true)}>Change password</Button>
+                      )}
+                      {!member.is_me && !member.invite_pending && (
+                        <Tooltip label="Emails them a link to choose a new password" withArrow>
+                          <Button size="xs" variant="default" loading={busy === `reset-${member.user_id}`} onClick={() => void sendReset(member)}>Send password reset</Button>
+                        </Tooltip>
+                      )}
                       {!member.is_me && (
                         <Button size="xs" variant="subtle" color="red" disabled={busy === member.user_id} onClick={() => setRemoving(member)}>Remove</Button>
                       )}
@@ -192,6 +215,8 @@ export function StaffPage() {
           </Stack>
         </form>
       </Modal>
+
+      <ChangePasswordModal opened={changingPassword} onClose={() => setChangingPassword(false)} email={session?.email} />
 
       <Modal opened={!!removing} onClose={() => setRemoving(null)} title="Remove access?">
         <Stack>

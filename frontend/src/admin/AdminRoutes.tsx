@@ -1,11 +1,13 @@
 import { ActionIcon, AppShell, Avatar, Badge, Burger, Button, Center, Group, Loader, Stack, Text, Title, Tooltip, useComputedColorScheme, useMantineColorScheme } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { IconAdjustments, IconCalendar, IconFileText, IconHistory, IconLayoutDashboard, IconLogout, IconMoon, IconNews, IconSun, IconTemplate, IconUserShield, IconUsers } from '@tabler/icons-react';
+import { IconAdjustments, IconCalendar, IconFileText, IconHistory, IconKey, IconLayoutDashboard, IconLogout, IconMoon, IconNews, IconSun, IconTemplate, IconUserShield, IconUsers } from '@tabler/icons-react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { api } from '../api';
 import { BrandMark } from '../components/BrandMark';
 import { AlertBell } from '../components/AlertBell';
+import { ChangePasswordModal } from '../components/ChangePasswordModal';
+import { useState } from 'react';
 import { AuditPage } from './AuditPage';
 import { CalendarPage } from './CalendarPage';
 import { AuthProvider, useAuth } from './AuthContext';
@@ -68,6 +70,7 @@ function Shell() {
   const location = useLocation();
   const settings = useQuery({ queryKey: ['settings'], queryFn: api.getSettings });
   const initial = (session?.email ?? '?').charAt(0).toUpperCase();
+  const [changingPassword, setChangingPassword] = useState(false);
 
   return (
     <AppShell header={{ height: 60 }} navbar={{ width: 248, breakpoint: 'sm', collapsed: { mobile: !opened } }} padding="md" layout="alt">
@@ -115,6 +118,11 @@ function Shell() {
             <div className="nav-user-email" title={session?.email}>{session?.email}</div>
             <div className="nav-user-role">{session?.role}</div>
           </div>
+          <Tooltip label="Change password">
+            <button type="button" className="nav-user-action" aria-label="Change password" onClick={() => setChangingPassword(true)}>
+              <IconKey size={18} stroke={1.75} />
+            </button>
+          </Tooltip>
           <Tooltip label="Sign out">
             <button type="button" className="nav-user-action" aria-label="Sign out" onClick={() => void api.signOut()}>
               <IconLogout size={18} stroke={1.75} />
@@ -122,6 +130,7 @@ function Shell() {
           </Tooltip>
         </div>
       </AppShell.Navbar>
+      <ChangePasswordModal opened={changingPassword} onClose={() => setChangingPassword(false)} email={session?.email} />
       <AppShell.Main className="app-main">
         <div className="app-content">
           <Routes>
