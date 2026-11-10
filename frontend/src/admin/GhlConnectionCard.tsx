@@ -7,7 +7,7 @@ import type { Tenant } from '../api/types';
 import { hintLabel } from '../components/HintLabel';
 import { formatDateTime, showError, showSuccess } from '../lib/util';
 
-const TOKEN_HINT = (
+export const TOKEN_HINT = (
   <Stack gap={4}>
     <div><b>What it is:</b> The key that lets this app schedule newsletters in this business's GoHighLevel sub-account.</div>
     <div><b>Where to get it:</b> In GoHighLevel, open the sub-account, then Settings, Private Integrations, Create new integration. Copy the token it shows.</div>

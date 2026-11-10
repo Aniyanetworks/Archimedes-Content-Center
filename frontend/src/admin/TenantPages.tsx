@@ -1,13 +1,14 @@
 import { PageHeader } from '../components/PageHeader';
 import { useEffect, useMemo, useState } from 'react';
 import {
-  Alert, Anchor, Badge, Button, Checkbox, ColorInput, Divider, Group, List, NumberInput, Paper, ScrollArea, Select, SimpleGrid, Stack, Switch, Table, TagsInput, Text, Textarea, TextInput, ThemeIcon, Title,
+  ActionIcon, Alert, Anchor, Badge, Tooltip, Button, Checkbox, ColorInput, Divider, Group, List, NumberInput, Paper, PasswordInput, ScrollArea, Select, SimpleGrid, Stack, Switch, Table, TagsInput, Text, Textarea, TextInput, ThemeIcon, Title,
 } from '@mantine/core';
-import { IconCheck, IconTrash, IconX } from '@tabler/icons-react';
+import { IconCheck, IconEye, IconPencil, IconTrash, IconX } from '@tabler/icons-react';
 import { ConfirmDelete } from '../components/ConfirmDelete';
 import { FilterBar } from '../components/FilterBar';
 import { DesignPreviewButton } from '../components/DesignPreview';
-import { GhlConnectionCard } from './GhlConnectionCard';
+import { GhlConnectionCard, TOKEN_HINT } from './GhlConnectionCard';
+import { notifications } from '@mantine/notifications';
 import { ImageInput } from '../components/ImageInput';
 import { hintLabel } from '../components/HintLabel';
 
@@ -101,7 +102,7 @@ export function TenantListPage() {
           <Table highlightOnHover miw={760}>
             <Table.Thead>
               <Table.Tr>
-                <Table.Th>Name</Table.Th><Table.Th>Industry</Table.Th><Table.Th>Plan</Table.Th><Table.Th>Cadence</Table.Th><Table.Th>Approval</Table.Th><Table.Th>Sending</Table.Th>
+                <Table.Th>Name</Table.Th><Table.Th>Industry</Table.Th><Table.Th>Plan</Table.Th><Table.Th>Cadence</Table.Th><Table.Th>Approval</Table.Th><Table.Th>Sending</Table.Th><Table.Th ta="right">Actions</Table.Th>
               </Table.Tr>
             </Table.Thead>
             <Table.Tbody>
@@ -117,10 +118,20 @@ export function TenantListPage() {
                       : t.live_send_enabled ? <Badge color="green" variant="light">Live</Badge>
                         : <Badge color="gray" variant="light">Test only</Badge>}
                   </Table.Td>
+                  <Table.Td>
+                    <Group gap={4} wrap="nowrap" justify="flex-end">
+                      <Tooltip label="View">
+                        <ActionIcon component={Link} to={`/admin/sub-accounts/${t.id}`} variant="subtle" color="gray" aria-label={`View ${t.name}`}><IconEye size={18} /></ActionIcon>
+                      </Tooltip>
+                      <Tooltip label="Edit">
+                        <ActionIcon component={Link} to={`/admin/sub-accounts/${t.id}/edit`} variant="subtle" color="gray" aria-label={`Edit ${t.name}`}><IconPencil size={18} /></ActionIcon>
+                      </Tooltip>
+                    </Group>
+                  </Table.Td>
                 </Table.Tr>
               ))}
               {!tenants.isLoading && rows.length === 0 && (
-                <Table.Tr><Table.Td colSpan={6}><Text c="dimmed" ta="center" py="lg">{all.length ? 'No sub-accounts match these filters.' : 'No sub-accounts yet.'}</Text></Table.Td></Table.Tr>
+                <Table.Tr><Table.Td colSpan={7}><Text c="dimmed" ta="center" py="lg">{all.length ? 'No sub-accounts match these filters.' : 'No sub-accounts yet.'}</Text></Table.Td></Table.Tr>
               )}
             </Table.Tbody>
           </Table>
@@ -312,6 +323,8 @@ export function TenantFormPage() {
   const [prefs, setPrefs] = useState<Partial<NewsletterPrefs>>(EMPTY_PREFS);
   const [acknowledged, setAcknowledged] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [ghlToken, setGhlToken] = useState('');
+  const tokenSaved = !!detail.data?.tenant.ghl_token_saved_at;
 
   useEffect(() => {
     if (!detail.data) return;
@@ -357,6 +370,18 @@ export function TenantFormPage() {
       const payload = { ...tenant, compliance_acknowledged_at: acknowledged ? tenant.compliance_acknowledged_at ?? new Date().toISOString() : null };
       const saved = await api.saveTenant(payload, brand, prefs);
       showSuccess('Sub-account saved');
+      // The token is optional here. If it fails, the sub-account is still saved and it can be added on its page.
+      if (ghlToken.trim()) {
+        try {
+          await api.setTenantGhlToken(saved, ghlToken.trim());
+          setGhlToken('');
+          const check = await api.checkTenantGhl(saved);
+          if (check.ok) showSuccess('GoHighLevel connected');
+          else notifications.show({ color: 'orange', title: 'GoHighLevel token saved, but the test failed', message: check.message, autoClose: 10000 });
+        } catch (error) {
+          notifications.show({ color: 'orange', title: 'The GoHighLevel token was not saved', message: `${(error as Error).message} You can add it on the sub-account page.`, autoClose: 10000 });
+        }
+      }
       await client.invalidateQueries();
       navigate(`/admin/sub-accounts/${saved}`);
     } catch (error) {
@@ -375,7 +400,6 @@ export function TenantFormPage() {
           <Title order={4} mb="sm">Business and plan</Title>
           <SimpleGrid cols={{ base: 1, sm: 2 }}>
             <TextInput label={hintLabel("Business name", lines([["What it is","The name of the business, as your team knows it."],["Where it shows","Only in this app, in lists and search."],["Example","Equinox Roofing"]]))} placeholder="Ridgeline Roofing" required value={tenant.name ?? ''} onChange={text(setTenant, 'name')} />
-            <TextInput label={hintLabel("GHL location ID", fieldHint("The ID of this business's GoHighLevel sub-account. Each one can only be added once.", "In GoHighLevel, open the sub-account, then Settings, Business Profile. It is shown as Location ID. It is also in the page address after /location/.", "cQwQ3iQgRx5E1llflstv"))} placeholder="e.g. aBcD1234EfGh5678IjKl" required value={tenant.ghl_location_id ?? ''} onChange={text(setTenant, 'ghl_location_id')} />
             <Select
               label={hintLabel("Division", lines([["What it is","The type of business: Home ServiceGenius (home services) or Hospitality (bars, breweries)."],["Tip","It decides which industries and plans you can pick next."]]))} required allowDeselect={false} value={tenant.division}
               data={[{ value: 'hsg', label: 'Home ServiceGenius' }, { value: 'hospitality', label: 'Hospitality' }]}
@@ -393,6 +417,16 @@ export function TenantFormPage() {
             <Select label={hintLabel("Status", lines([["What it is","Whether this business gets newsletters at all."],["Tip","Choose Paused to stop all their newsletters for now. Set it back to Active to restart."]]))} allowDeselect={false} value={tenant.status ?? 'active'} data={[{ value: 'active', label: 'Active' }, { value: 'paused', label: 'Paused' }]} onChange={(value) => setTenant((c) => ({ ...c, status: value as Tenant['status'] }))} />
           </SimpleGrid>
           {plan?.signoff_pending && <Alert color="yellow" mt="sm">This plan's commercial terms are not signed off yet, so it stays test-only.</Alert>}
+        </Paper>
+
+        <Paper withBorder p="md">
+          <Title order={4} mb="sm">{hintLabel('GoHighLevel', 'Newsletters are created and sent inside this business\'s own GoHighLevel sub-account. The location ID says which one, and the token gives permission to use it. The token is optional now and can be added later on the sub-account page.')}</Title>
+          <SimpleGrid cols={{ base: 1, sm: 2 }}>
+            <TextInput label={hintLabel("GHL location ID", fieldHint("The ID of this business's GoHighLevel sub-account. Each one can only be added once.", "In GoHighLevel, open the sub-account, then Settings, Business Profile. It is shown as Location ID. It is also in the page address after /location/.", "cQwQ3iQgRx5E1llflstv"))} placeholder="e.g. aBcD1234EfGh5678IjKl" required value={tenant.ghl_location_id ?? ''} onChange={text(setTenant, 'ghl_location_id')} />
+            <PasswordInput label={hintLabel('Private integration token', TOKEN_HINT)} autoComplete="new-password"
+              placeholder={tokenSaved ? 'Saved. Paste a new token only to replace it' : 'pit-… (optional, you can add it later)'}
+              value={ghlToken} onChange={(e) => setGhlToken(e.currentTarget.value)} />
+          </SimpleGrid>
         </Paper>
 
         <Paper withBorder p="md">
